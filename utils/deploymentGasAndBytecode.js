@@ -107,7 +107,7 @@ const logContractBytecodeLengths = (contractABIs) => {
 // Run script: log deployment gas costs and bytecode lengths for all contracts
 async function main() {
   const coreContracts = await dh.deployLiquityCoreHardhat()
-  const VSTAContracts = await dh.deployVSTAContractsHardhat()
+  const VSTAContracts = await dh.deployVSTAContractsHardhat(accounts[0])
   const testerContracts = await dh.deployTesterContractsHardhat()
 
   await dh.connectCoreContracts(coreContracts, VSTAContracts)

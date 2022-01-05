@@ -1,5 +1,6 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
+const StabilityPool = artifacts.require("./StabilityPool.sol")
 
 const { expectRevert } = require('@openzeppelin/test-helpers');
 
@@ -50,6 +51,7 @@ contract('VSTToken', async accounts => {
   let stabilityPool
   let troveManager
   let borrowerOperations
+  let erc20
 
   let tokenName
   let tokenVersion
@@ -58,10 +60,14 @@ contract('VSTToken', async accounts => {
     beforeEach(async () => {
 
       const contracts = await deploymentHelper.deployTesterContractsHardhat()
-      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
       await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+      erc20 = contracts.erc20
+      stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+      stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
 
       VSTTokenOriginal = contracts.vstToken
       if (withProxy) {
@@ -74,8 +80,6 @@ contract('VSTToken', async accounts => {
       //chainId = await web3.eth.getChainId()
       chainId = await VSTTokenOriginal.getChainId()
 
-      stabilityPool = contracts.stabilityPool
-      troveManager = contracts.stabilityPool
       borrowerOperations = contracts.borrowerOperations
 
       tokenVersion = 1
@@ -196,14 +200,6 @@ contract('VSTToken', async accounts => {
       await expectRevert.unspecified(VSTTokenTester.transfer(alice, 101, { from: bob }))
     })
 
-    it('transfer(): transferring to a blacklisted address reverts', async () => {
-      await expectRevert.unspecified(VSTTokenTester.transfer(VSTTokenTester.address, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(ZERO_ADDRESS, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(troveManager.address, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(stabilityPool.address, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(borrowerOperations.address, 1, { from: alice }))
-    })
-
     it("increaseAllowance(): increases an account's allowance by the correct amount", async () => {
       const allowance_A_Before = await VSTTokenTester.allowance(bob, alice)
       assert.equal(allowance_A_Before, '0')
@@ -268,14 +264,6 @@ contract('VSTToken', async accounts => {
         assert.equal(bob_BalanceAfter, 175)
       })
     }
-
-    it('transfer(): transferring to a blacklisted address reverts', async () => {
-      await expectRevert.unspecified(VSTTokenTester.transfer(VSTTokenTester.address, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(ZERO_ADDRESS, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(troveManager.address, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(stabilityPool.address, 1, { from: alice }))
-      await expectRevert.unspecified(VSTTokenTester.transfer(borrowerOperations.address, 1, { from: alice }))
-    })
 
     it('decreaseAllowance(): decreases allowance by the expected amount', async () => {
       await VSTTokenTester.approve(bob, dec(3, 18), { from: alice })

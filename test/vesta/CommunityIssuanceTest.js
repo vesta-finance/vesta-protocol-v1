@@ -1,6 +1,8 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
+const StabilityPool = artifacts.require('StabilityPool.sol')
+
 const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN
@@ -16,6 +18,7 @@ contract('CommunityIssuance', async accounts => {
   let stabilityPool
   let stabilityPoolERC20
   let vstaToken
+  let erc20
 
   describe("Community Issuance", async () => {
     beforeEach(async () => {
@@ -25,11 +28,18 @@ contract('CommunityIssuance', async accounts => {
 
       vstaToken = VSTAContracts.vstaToken
       communityIssuance = VSTAContracts.communityIssuance
-      stabilityPool = contracts.stabilityPool
-      stabilityPoolERC20 = contracts.stabilityPoolERC20
+      erc20 = contracts.erc20;
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
-      await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts, treasury, true)
+      await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts, true)
+
+      await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, contracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '0', 0)
+      await contracts.adminContract.addNewCollateral(erc20.address, contracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '0', 0)
+
+      stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+      stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
+      await communityIssuance.transferOwnership(treasury);
+      await VSTAContracts.vstaToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256, { from: treasury });
     })
 
     it("Owner(): Contract has been initialized, owner should be the treasury", async () => {
@@ -46,16 +56,6 @@ contract('CommunityIssuance', async accounts => {
     it("addFundToStabilityPool: Called by user, valid inputs, revert transaction", async () => {
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, dec(100, 18), { from: treasury })
       await assertRevert(communityIssuance.addFundToStabilityPool(stabilityPool.address, dec(100, 18), { from: user }))
-    })
-
-    it("addFundToStabilityPool: Called by deployer, valid inputs, add stability pool", async () => {
-      await vstaToken.unprotectedMint(owner, dec(200, 18))
-      await vstaToken.approve(communityIssuance.address, dec(200, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, dec(100, 18))
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, dec(100, 18))
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(100, 18))
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), dec(100, 18))
     })
 
     it("addFundToStabilityPool: Called by owner, valid inputs, add stability pool", async () => {

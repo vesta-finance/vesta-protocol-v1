@@ -67,7 +67,7 @@ contract('SortedTroves', async accounts => {
         contracts.stabilityPoolManager.address,
         contracts.borrowerOperations.address,
       )
-      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
       priceFeed = contracts.priceFeedTestnet
       sortedTroves = contracts.sortedTroves

@@ -12,8 +12,7 @@ contract VSTTokenTester is VSTToken {
 		VSTToken(
 			_troveManagerAddress,
 			_stabilityPoolAddress,
-			_borrowerOperationsAddress,
-			msg.sender
+			_borrowerOperationsAddress
 		)
 	{
 		_burn(msg.sender, balanceOf(msg.sender));

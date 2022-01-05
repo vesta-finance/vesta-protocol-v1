@@ -1,6 +1,7 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
+const StabilityPool = artifacts.require("./StabilityPool.sol")
 const VSTTokenTester = artifacts.require("./VSTTokenTester.sol")
 
 const th = testHelpers.TestHelper
@@ -59,15 +60,13 @@ contract('TroveManager', async accounts => {
       contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     VSTToken = contracts.vstToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
     defaultPool = contracts.defaultPool
     collSurplusPool = contracts.collSurplusPool
     borrowerOperations = contracts.borrowerOperations
@@ -94,6 +93,9 @@ contract('TroveManager', async accounts => {
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+    stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
   })
 
   it('liquidate(): closes a Trove that has ICR < MCR', async () => {

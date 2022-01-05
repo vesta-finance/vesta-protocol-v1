@@ -46,5 +46,11 @@ interface IPriceFeed {
 	);
 
 	// --- Function ---
+	function addOracle(
+		address _token,
+		address _chainlinkOracle,
+		uint256 _tellorId
+	) external;
+
 	function fetchPrice(address _token) external returns (uint256);
 }

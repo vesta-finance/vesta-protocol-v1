@@ -3,6 +3,7 @@ const IsMainnet = false;
 const externalAddrs = {
   // https://data.chain.link/eth-usd
   CHAINLINK_ETHUSD_PROXY: "0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8",
+  CHAINLINK_BTCUSD_PROXY: "0x0c9973e7a27d00e656B9f153348dA46CaD70d03d",
   CHAINLINK_FLAG_HEALTH: "0x491B1dDA0A8fa069bbC1125133A975BF4e85a91b",
   // https://docs.tellor.io/tellor/integration/reference-page
   TELLOR_MASTER: "0xbc2f9E092ac5CED686440E5062D11D6543202B24",

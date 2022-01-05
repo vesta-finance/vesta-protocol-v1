@@ -1,7 +1,7 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const VestaParameters = artifacts.require("./VestaParameters.sol")
+const StabilityPool = artifacts.require("./StabilityPool.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const VSTTokenTester = artifacts.require("VSTTokenTester")
 
@@ -29,6 +29,7 @@ contract('Gas compensation tests', async accounts => {
   let defaultPool
   let borrowerOperations
   let erc20
+  let community;
 
   let contracts
 
@@ -50,21 +51,18 @@ contract('Gas compensation tests', async accounts => {
       contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address,
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     vstToken = contracts.vstToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
+    community = VSTAContracts.communityIssuance
+
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
     erc20 = contracts.erc20
-
-    await contracts.vestaParameters.sanitizeParameters(ZERO_ADDRESS)
-    await contracts.vestaParameters.sanitizeParameters(erc20.address)
 
     let index = 0;
     for (const acc of accounts) {
@@ -80,6 +78,8 @@ contract('Gas compensation tests', async accounts => {
 
     contracts.troveManager.setVestaParameters(contracts.vestaParameters.address)
 
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+    stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
   })
 
   // --- Raw gas compensation calculations ---
@@ -385,6 +385,9 @@ contract('Gas compensation tests', async accounts => {
     const { totalDebt: C_totalDebtERC20 } = await openTrove({ asset: erc20.address, ICR: toBN(dec(2, 18)), extraVSTAmount: dec(300, 18), extraParams: { from: carol } })
     await openTrove({ asset: erc20.address, ICR: toBN(dec(2, 18)), extraVSTAmount: A_totalDebt, extraParams: { from: dennis } })
     await openTrove({ asset: erc20.address, ICR: toBN(dec(2, 18)), extraVSTAmount: B_totalDebt.add(C_totalDebt), extraParams: { from: erin } })
+
+    console.log((await community.VSTASupplyCaps(stabilityPool.address)).toString())
+    console.log((await community.VSTASupplyCaps(stabilityPoolERC20.address)).toString())
 
     // D, E each provide VST to SP
     await stabilityPool.provideToSP(A_totalDebt, { from: dennis })

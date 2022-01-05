@@ -1,7 +1,11 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const StabilityPool = artifacts.require('StabilityPool.sol')
+const testHelpers = require("../../utils/testHelpers.js")
+const th = testHelpers.TestHelper
 
 contract('Deployment script - Sets correct contract addresses dependencies after deployment', async accounts => {
   const [owner] = accounts;
+  const ZERO_ADDRESS = th.ZERO_ADDRESS
 
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
@@ -22,14 +26,13 @@ contract('Deployment script - Sets correct contract addresses dependencies after
 
   before(async () => {
     const coreContracts = await deploymentHelper.deployLiquityCore()
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = coreContracts.priceFeedTestnet
     vstToken = coreContracts.vstToken
     sortedTroves = coreContracts.sortedTroves
     troveManager = coreContracts.troveManager
     activePool = coreContracts.activePool
-    stabilityPool = coreContracts.stabilityPool
     stabilityPoolManager = coreContracts.stabilityPoolManager
     defaultPool = coreContracts.defaultPool
     functionCaller = coreContracts.functionCaller
@@ -42,6 +45,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
 
     await deploymentHelper.connectCoreContracts(coreContracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, coreContracts)
+    stabilityPool = await StabilityPool.at(await coreContracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
   })
 
   it('Check if correct Addresses in Vault Parameters', async () => {

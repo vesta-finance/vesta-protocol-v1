@@ -9,6 +9,8 @@ const fs = require('fs')
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
+const StabilityPool = artifacts.require('StabilityPool.sol')
+
 const th = testHelpers.TestHelper
 const timeValues = testHelpers.TimeValues
 const dec = th.dec
@@ -36,14 +38,13 @@ contract('Gas cost tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployTesterContractsHardhat()
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     VSTToken = contracts.vstToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
@@ -56,6 +57,7 @@ contract('Gas cost tests', async accounts => {
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
   })
 
   // --- TESTS ---

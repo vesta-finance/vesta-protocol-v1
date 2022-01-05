@@ -1,5 +1,6 @@
 
 const PriceFeed = artifacts.require("./PriceFeedTester.sol")
+const AdminContract = artifacts.require("./AdminContract.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
 const MockChainlink = artifacts.require("./MockAggregator.sol")
 const MockTellor = artifacts.require("./MockTellor.sol")
@@ -19,11 +20,13 @@ contract('PriceFeed', async accounts => {
   let priceFeedTestnet
   let priceFeed
   let zeroAddressPriceFeed
-  let mockChainlink
   let chainFlagMock
+  let mockChainlink
+  let adminContract
 
   const setAddresses = async () => {
-    await priceFeed.setAddresses(mockChainlink.address, chainFlagMock.address, tellorCaller.address, { from: owner })
+    await priceFeed.setAddresses(chainFlagMock.address, tellorCaller.address, adminContract.address, { from: owner })
+    await priceFeed.addOracle(EMPTY_ADDRESS, mockChainlink.address, 1)
   }
 
   beforeEach(async () => {
@@ -41,6 +44,9 @@ contract('PriceFeed', async accounts => {
 
     mockChainlink = await MockChainlink.new()
     MockChainlink.setAsDeployed(mockChainlink)
+
+    adminContract = await AdminContract.new()
+    AdminContract.setAsDeployed(adminContract)
 
     mockTellor = await MockTellor.new()
     MockTellor.setAsDeployed(mockTellor)
@@ -78,23 +84,22 @@ contract('PriceFeed', async accounts => {
   describe('Mainnet PriceFeed setup', async accounts => {
     it("setAddresses should fail whe called by nonOwner", async () => {
       await assertRevert(
-        priceFeed.setAddresses(mockChainlink.address, chainFlagMock.address, mockTellor.address, { from: alice }),
+        priceFeed.setAddresses(chainFlagMock.address, mockTellor.address, adminContract.address, { from: alice }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("setAddresses should fail after address has already been set", async () => {
       // Owner can successfully set any address
-      const txOwner = await priceFeed.setAddresses(mockChainlink.address, chainFlagMock.address, mockTellor.address, { from: owner })
+      const txOwner = await priceFeed.setAddresses(chainFlagMock.address, mockTellor.address, adminContract.address, { from: owner })
       assert.isTrue(txOwner.receipt.status)
 
       await assertRevert(
-        priceFeed.setAddresses(mockChainlink.address, chainFlagMock.address, mockTellor.address, { from: owner }),
-        "Ownable: caller is not the owner"
+        priceFeed.setAddresses(chainFlagMock.address, mockTellor.address, adminContract.address, { from: owner })
       )
 
       await assertRevert(
-        priceFeed.setAddresses(mockChainlink.address, chainFlagMock.address, mockTellor.address, { from: alice }),
+        priceFeed.setAddresses(chainFlagMock.address, mockTellor.address, adminContract.address, { from: alice }),
         "Ownable: caller is not the owner"
       )
     })

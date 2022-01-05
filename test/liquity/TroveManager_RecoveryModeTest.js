@@ -10,6 +10,7 @@ const timeValues = testHelpers.TimeValues
 
 const TroveManagerTester = artifacts.require("./TroveManagerTester")
 const VSTTokenTester = artifacts.require("VSTTokenTester")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 
 contract('TroveManager - in Recovery Mode', async accounts => {
@@ -62,15 +63,13 @@ contract('TroveManager - in Recovery Mode', async accounts => {
       contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address,
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     vstToken = contracts.vstToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
     defaultPool = contracts.defaultPool
     functionCaller = contracts.functionCaller
     borrowerOperations = contracts.borrowerOperations
@@ -88,6 +87,8 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+    stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
   })
 
   it("checkRecoveryMode(): Returns true if TCR falls below CCR", async () => {

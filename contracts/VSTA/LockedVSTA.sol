@@ -2,14 +2,14 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../Dependencies/CheckContract.sol";
-import "../Dependencies/OwnableDeployer.sol";
 
 /*
 This contract is reserved for Linear Vesting to the Team members and the Advisors team.
 */
-contract LockedVSTA is OwnableDeployer, CheckContract {
+contract LockedVSTA is Ownable, CheckContract {
 	using SafeERC20 for IERC20;
 	using SafeMath for uint256;
 
@@ -22,8 +22,6 @@ contract LockedVSTA is OwnableDeployer, CheckContract {
 		uint256 endVestingDate;
 		uint256 claimed;
 	}
-
-	address private deployer;
 
 	uint256 public constant SIX_MONTHS = 26 weeks;
 	uint256 public constant TWO_YEARS = 730 days;
@@ -43,21 +41,17 @@ contract LockedVSTA is OwnableDeployer, CheckContract {
 		_;
 	}
 
-	function setAddresses(address _vstaAddress, address _treasurySig)
-		public
-		onlyOwner
-	{
+	function setAddresses(address _vstaAddress) public onlyOwner {
 		checkContract(_vstaAddress);
 		require(!isInitialized, "Already Initialized");
 		isInitialized = true;
 
 		vstaToken = IERC20(_vstaAddress);
-		transferOwnership(_treasurySig);
 	}
 
 	function addEntityVesting(address _entity, uint256 _totalSupply)
 		public
-		onlyDeployerOrOwner
+		onlyOwner
 	{
 		require(address(0) != _entity, "Invalid Address");
 

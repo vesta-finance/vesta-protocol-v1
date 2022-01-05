@@ -1,6 +1,7 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 const { dec, toBN } = testHelpers.TestHelper
 const th = testHelpers.TestHelper
@@ -63,7 +64,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
 
     beforeEach(async () => {
       contracts = await deploymentHelper.deployLiquityCore()
-      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
       contracts.troveManager = await TroveManagerTester.new()
       contracts = await deploymentHelper.deployVSTToken(contracts)
 
@@ -72,13 +73,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
       activePool = contracts.activePool
-      stabilityPool = contracts.stabilityPool
-      stabilityPoolERC20 = contracts.stabilityPoolERC20
       defaultPool = contracts.defaultPool
       borrowerOperations = contracts.borrowerOperations
       erc20 = contracts.erc20
-
-
 
       let index = 0;
       for (const acc of accounts) {
@@ -91,6 +88,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
       await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+      stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+      stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
     })
 
     // --- Compounding tests ---

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./BaseMath.sol";
 import "./LiquityMath.sol";
@@ -15,7 +15,7 @@ import "../Interfaces/IVestaParameters.sol";
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-contract VestaBase is BaseMath, IVestaBase, Ownable {
+contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 	using SafeMath for uint256;
 	address public constant ETH_REF_ADDRESS = address(0);
 

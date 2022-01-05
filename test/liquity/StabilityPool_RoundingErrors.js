@@ -7,6 +7,7 @@ const toBN = th.toBN
 
 const VSTToken = artifacts.require("VSTToken")
 const TroveManagerTester = artifacts.require("TroveManagerTester")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 contract('Pool Manager: Sum-Product rounding errors', async accounts => {
   const ZERO_ADDRESS = th.ZERO_ADDRESS
@@ -32,12 +33,10 @@ contract('Pool Manager: Sum-Product rounding errors', async accounts => {
       contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
 
     priceFeed = contracts.priceFeedTestnet
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
     troveManager = contracts.troveManager
     borrowerOperations = contracts.borrowerOperations
     erc20 = contracts.erc20;
@@ -53,6 +52,9 @@ contract('Pool Manager: Sum-Product rounding errors', async accounts => {
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+    stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
   })
 
   // skipped to not slow down CI

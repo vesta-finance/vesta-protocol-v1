@@ -48,9 +48,11 @@ contract('LockedVSTATest', async accounts => {
       vstaToken = VSTAContracts.vstaToken;
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
-      await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts, treasury)
+      await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts, true)
 
       await VSTAContracts.vstaToken.approve(lockedVSTA.address, ethers.constants.MaxUint256, { from: treasury });
+
+      await lockedVSTA.transferOwnership(treasury);
       TOTAL_VSTA = await VSTAContracts.vstaToken.balanceOf(treasury)
     })
 

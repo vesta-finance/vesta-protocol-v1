@@ -6,6 +6,7 @@ const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
 const StabilityPool = artifacts.require("./StabilityPool.sol")
 const StabilityPoolManager = artifacts.require("./StabilityPoolManager.sol")
+const AdminContract = artifacts.require("./AdminContract.sol")
 const GasPool = artifacts.require("./GasPool.sol")
 const CollSurplusPool = artifacts.require("./CollSurplusPool.sol")
 const FunctionCaller = artifacts.require("./TestContracts/FunctionCaller.sol")
@@ -73,8 +74,7 @@ class DeploymentHelper {
     const sortedTroves = await SortedTroves.new()
     const troveManager = await TroveManager.new()
     const activePool = await ActivePool.new()
-    const stabilityPool = await StabilityPool.new()
-    const stabilityPoolERC20 = await StabilityPool.new()
+    const stabilityPoolTemplate = await StabilityPool.new()
     const stabilityPoolManager = await StabilityPoolManager.new()
     const vestaParameters = await VestaParameters.new()
     const gasPool = await GasPool.new()
@@ -87,9 +87,9 @@ class DeploymentHelper {
       troveManager.address,
       stabilityPoolManager.address,
       borrowerOperations.address,
-      await troveManager.owner()
     )
     const erc20 = await ERC20Test.new()
+    const adminContract = await AdminContract.new();
 
 
     VSTToken.setAsDeployed(vstToken)
@@ -98,8 +98,7 @@ class DeploymentHelper {
     SortedTroves.setAsDeployed(sortedTroves)
     TroveManager.setAsDeployed(troveManager)
     ActivePool.setAsDeployed(activePool)
-    StabilityPool.setAsDeployed(stabilityPool)
-    StabilityPool.setAsDeployed(stabilityPoolERC20)
+    StabilityPool.setAsDeployed(stabilityPoolTemplate)
     GasPool.setAsDeployed(gasPool)
     CollSurplusPool.setAsDeployed(collSurplusPool)
     FunctionCaller.setAsDeployed(functionCaller)
@@ -107,6 +106,7 @@ class DeploymentHelper {
     HintHelpers.setAsDeployed(hintHelpers)
     VestaParameters.setAsDeployed(vestaParameters);
     ERC20Test.setAsDeployed(erc20);
+    AdminContract.setAsDeployed(adminContract);
 
     const coreContracts = {
       priceFeedTestnet,
@@ -114,8 +114,7 @@ class DeploymentHelper {
       sortedTroves,
       troveManager,
       activePool,
-      stabilityPool,
-      stabilityPoolERC20,
+      stabilityPoolTemplate,
       stabilityPoolManager,
       vestaParameters,
       gasPool,
@@ -124,7 +123,8 @@ class DeploymentHelper {
       functionCaller,
       borrowerOperations,
       hintHelpers,
-      erc20
+      erc20,
+      adminContract
     }
     return coreContracts
   }
@@ -140,8 +140,7 @@ class DeploymentHelper {
     testerContracts.communityIssuance = await CommunityIssuanceTester.new()
     testerContracts.activePool = await ActivePoolTester.new()
     testerContracts.defaultPool = await DefaultPoolTester.new()
-    testerContracts.stabilityPool = await StabilityPoolTester.new()
-    testerContracts.stabilityPoolERC20 = await StabilityPoolTester.new()
+    testerContracts.stabilityPoolTemplate = await StabilityPoolTester.new()
     testerContracts.stabilityPoolManager = await StabilityPoolManager.new()
     testerContracts.vestaParameters = await VestaParameters.new()
     testerContracts.gasPool = await GasPool.new()
@@ -156,6 +155,7 @@ class DeploymentHelper {
       testerContracts.stabilityPoolManager.address,
       testerContracts.borrowerOperations.address
     )
+    testerContracts.adminContract = await AdminContract.new();
 
     return testerContracts
   }
@@ -168,10 +168,6 @@ class DeploymentHelper {
     VSTAStaking.setAsDeployed(vstaStaking)
     CommunityIssuanceTester.setAsDeployed(communityIssuance)
     LockedVSTA.setAsDeployed(lockedVSTA)
-
-    if (!treasury) {
-      treasury = await communityIssuance.owner()
-    }
 
     // Deploy VSTA Token, passing Community Issuance and Factory addresses to the constructor 
     const vstaToken = await VSTATokenTester.new(treasury)
@@ -211,7 +207,7 @@ class DeploymentHelper {
     const troveManagerScript = await TroveManagerScript.new(contracts.troveManager.address)
     contracts.troveManager = new TroveManagerProxy(owner, proxies, troveManagerScript.address, contracts.troveManager)
 
-    const stabilityPoolScript = await StabilityPoolScript.new(contracts.stabilityPool.address)
+    const stabilityPoolScript = await StabilityPoolScript.new(contracts.stabilityPoolTemplate.address)
     contracts.stabilityPool = new StabilityPoolProxy(owner, proxies, stabilityPoolScript.address, contracts.stabilityPool)
 
     contracts.sortedTroves = new SortedTrovesProxy(owner, proxies, contracts.sortedTroves)
@@ -243,7 +239,7 @@ class DeploymentHelper {
       contracts.activePool.address,
       contracts.defaultPool.address,
       contracts.priceFeedTestnet.address,
-      await contracts.vestaParameters.owner(),
+      contracts.adminContract.address
     )
 
     // set contracts in the Trove Manager
@@ -270,37 +266,16 @@ class DeploymentHelper {
       contracts.vestaParameters.address
     )
 
+    await contracts.stabilityPoolManager.setAddresses(contracts.adminContract.address)
 
-    await contracts.stabilityPoolManager.setAddresses(
-      contracts.stabilityPool.address,
-      contracts.stabilityPoolERC20.address,
-      contracts.erc20.address,
-    )
-
-    await contracts.stabilityPoolManager.addStabilityPool(contracts.erc20.address, contracts.stabilityPoolERC20.address)
-
-
-    // set contracts in the Pools
-    await contracts.stabilityPool.setAddresses(
-      ZERO_ADDRESS,
+    await contracts.adminContract.setAddresses(contracts.vestaParameters.address,
+      contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address,
       contracts.troveManager.address,
       contracts.vstToken.address,
       contracts.sortedTroves.address,
-      VSTAContracts.communityIssuance.address,
-      contracts.vestaParameters.address
+      VSTAContracts.communityIssuance.address
     )
-
-    await contracts.stabilityPoolERC20.setAddresses(
-      contracts.erc20.address,
-      contracts.borrowerOperations.address,
-      contracts.troveManager.address,
-      contracts.vstToken.address,
-      contracts.sortedTroves.address,
-      VSTAContracts.communityIssuance.address,
-      contracts.vestaParameters.address
-    )
-
 
     await contracts.activePool.setAddresses(
       contracts.borrowerOperations.address,
@@ -327,12 +302,11 @@ class DeploymentHelper {
       contracts.troveManager.address,
       contracts.vestaParameters.address
     )
+
   }
 
-  static async connectVSTAContractsToCore(VSTAContracts, coreContracts, treasurySig, communityIssuanceNoLinks = false) {
-    if (!treasurySig) {
-      treasurySig = await coreContracts.borrowerOperations.owner();
-    }
+  static async connectVSTAContractsToCore(VSTAContracts, coreContracts, skipPool = false) {
+    const treasurySig = await VSTAContracts.vstaToken.treasury();
 
     await VSTAContracts.vstaStaking.setAddresses(
       VSTAContracts.vstaToken.address,
@@ -345,23 +319,23 @@ class DeploymentHelper {
     await VSTAContracts.communityIssuance.setAddresses(
       VSTAContracts.vstaToken.address,
       coreContracts.stabilityPoolManager.address,
-      treasurySig
+      coreContracts.adminContract.address
     )
 
     await VSTAContracts.lockedVSTA.setAddresses(
-      VSTAContracts.vstaToken.address,
-      treasurySig
-    )
+      VSTAContracts.vstaToken.address)
+
+    if (skipPool) {
+      return;
+    }
+
+    if (await coreContracts.adminContract.owner() != treasurySig)
+      await coreContracts.adminContract.transferOwnership(treasurySig);
 
     await VSTAContracts.vstaToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256, { from: treasurySig });
-
-    if (communityIssuanceNoLinks)
-      return;
-
-    await VSTAContracts.communityIssuance.addFundToStabilityPool(coreContracts.stabilityPool.address, '32000000000000000000000000', { from: treasurySig });
-
+    await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '32000000000000000000000000', 0, { from: treasurySig });
     await VSTAContracts.vstaToken.unprotectedMint(treasurySig, '32000000000000000000000000')
-    await VSTAContracts.communityIssuance.addFundToStabilityPool(coreContracts.stabilityPoolERC20.address, '32000000000000000000000000', { from: treasurySig });
+    await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '32000000000000000000000000', 0, { from: treasurySig });
   }
 
   static async connectUnipool(uniPool, VSTAContracts, uniswapPairAddr, duration) {

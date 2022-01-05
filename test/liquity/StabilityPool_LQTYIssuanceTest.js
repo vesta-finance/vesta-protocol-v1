@@ -9,6 +9,7 @@ const getDifference = th.getDifference
 
 const TroveManagerTester = artifacts.require("TroveManagerTester")
 const VSTTokenTester = artifacts.require("VSTTokenTester")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 contract('StabilityPool - VSTA Rewards', async accounts => {
 
@@ -60,8 +61,6 @@ contract('StabilityPool - VSTA Rewards', async accounts => {
 
       priceFeed = contracts.priceFeedTestnet
       vstToken = contracts.vstToken
-      stabilityPool = contracts.stabilityPool
-      stabilityPoolERC20 = contracts.stabilityPoolERC20
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
       borrowerOperations = contracts.borrowerOperations
@@ -81,7 +80,10 @@ contract('StabilityPool - VSTA Rewards', async accounts => {
       }
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
-      await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts, treasury)
+      await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+      stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+      stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
 
       // Check community issuance starts with 32 million VSTA
       assert.isAtMost(getDifference(toBN(await vstaToken.balanceOf(communityIssuanceTester.address)), '64000000000000000000000000'), 1000)

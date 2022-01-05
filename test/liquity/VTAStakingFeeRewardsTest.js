@@ -51,7 +51,7 @@ contract('VSTAStaking revenue share tests', async accounts => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
     contracts = await deploymentHelper.deployVSTToken(contracts)
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)

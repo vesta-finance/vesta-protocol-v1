@@ -17,6 +17,12 @@ contract PriceFeedTestnet is IPriceFeed {
 		return _price;
 	}
 
+	function addOracle(
+		address _token,
+		address _chainlinkOracle,
+		uint256 _tellorId
+	) external override {}
+
 	function fetchPrice(address _asset) external override returns (uint256) {
 		// Fire an event just like the mainnet version would.
 		// This lets the subgraph rely on events to get the latest price even when developing locally.

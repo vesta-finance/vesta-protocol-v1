@@ -29,8 +29,6 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
   let troveManager
   let nameRegistry
   let activePool
-  let stabilityPool
-  let stabilityPoolERC20
   let defaultPool
   let functionCaller
   let borrowerOperations
@@ -47,10 +45,10 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     contracts.troveManager = await TroveManagerTester.new()
     contracts.vstToken = await VSTTokenTester.new(
       contracts.troveManager.address,
-      contracts.stabilityPool.address,
+      contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address,
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     vstToken = contracts.vstToken
@@ -58,8 +56,6 @@ contract('TroveManager - Redistribution reward calculations', async accounts => 
     troveManager = contracts.troveManager
     nameRegistry = contracts.nameRegistry
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
     defaultPool = contracts.defaultPool
     functionCaller = contracts.functionCaller
     borrowerOperations = contracts.borrowerOperations

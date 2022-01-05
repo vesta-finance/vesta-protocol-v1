@@ -17,7 +17,7 @@ interface ICommunityIssuance {
 	function setAddresses(
 		address _VSTATokenAddress,
 		address _stabilityPoolAddress,
-		address _treasurySig
+		address _adminContract
 	) external;
 
 	function issueVSTA() external returns (uint256);
@@ -26,6 +26,12 @@ interface ICommunityIssuance {
 
 	function addFundToStabilityPool(address _pool, uint256 _assignedSupply)
 		external;
+
+	function addFundToStabilityPoolFrom(
+		address _pool,
+		uint256 _assignedSupply,
+		address _spender
+	) external;
 
 	function transferFunToAnotherStabilityPool(
 		address _target,

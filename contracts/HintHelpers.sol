@@ -31,10 +31,11 @@ contract HintHelpers is VestaBase, CheckContract {
 		address _sortedTrovesAddress,
 		address _troveManagerAddress,
 		address _vaultParametersAddress
-	) external onlyOwner {
+	) external initializer {
 		checkContract(_sortedTrovesAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_vaultParametersAddress);
+		__Ownable_init();
 
 		sortedTroves = ISortedTroves(_sortedTrovesAddress);
 		troveManager = ITroveManager(_troveManagerAddress);

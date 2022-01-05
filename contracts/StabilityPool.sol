@@ -3,7 +3,7 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./Interfaces/IBorrowerOperations.sol";
@@ -16,8 +16,6 @@ import "./Interfaces/ICommunityIssuance.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/LiquitySafeMath128.sol";
 import "./Dependencies/CheckContract.sol";
-
-import "hardhat/console.sol";
 
 /*
  * The Stability Pool holds VST tokens deposited by Stability Pool depositors.
@@ -194,7 +192,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	 * During its lifetime, a deposit's value evolves from d_t to d_t * P / P_t , where P_t
 	 * is the snapshot of P taken at the instant the deposit was made. 18-digit decimal.
 	 */
-	uint256 public P = DECIMAL_PRECISION;
+	uint256 public P;
 
 	uint256 public constant SCALE_FACTOR = 1e9;
 
@@ -228,9 +226,12 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	// Error trackers for the error correction in the offset calculation
 	uint256 public lastAssetError_Offset;
 	uint256 public lastVSTLossError_Offset;
-	bool public isInitialized;
 
 	// --- Contract setters ---
+
+	function getName() external pure override returns (string memory) {
+		return NAME;
+	}
 
 	function setAddresses(
 		address _assetAddress,
@@ -240,15 +241,14 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		address _sortedTrovesAddress,
 		address _communityIssuanceAddress,
 		address _vestaParamsAddress
-	) external override onlyOwner {
-		require(!isInitialized, "Already initialized");
+	) external override initializer {
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_vstTokenAddress);
 		checkContract(_sortedTrovesAddress);
 		checkContract(_communityIssuanceAddress);
 		checkContract(_vestaParamsAddress);
-		isInitialized = true;
+		__Ownable_init();
 
 		if (_assetAddress != ETH_REF_ADDRESS) {
 			checkContract(_assetAddress);
@@ -261,8 +261,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		sortedTroves = ISortedTroves(_sortedTrovesAddress);
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 
+		P = DECIMAL_PRECISION;
+
 		setVestaParameters(_vestaParamsAddress);
-		vestaParams.sanitizeParameters(assetAddress);
 		assert(vestaParams.MIN_NET_DEBT(assetAddress) > 0);
 
 		emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
@@ -296,7 +297,6 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 initialDeposit = deposits[msg.sender];
 
 		ICommunityIssuance communityIssuanceCached = communityIssuance;
-
 		_triggerVSTAIssuance(communityIssuanceCached);
 
 		uint256 depositorETHGain = getDepositorAssetGain(msg.sender);
@@ -316,8 +316,8 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		uint256 newDeposit = compoundedVSTDeposit.add(_amount);
 		_updateDepositAndSnapshots(msg.sender, newDeposit);
-		emit UserDepositChanged(msg.sender, newDeposit);
 
+		emit UserDepositChanged(msg.sender, newDeposit);
 		emit AssetGainWithdrawn(msg.sender, depositorETHGain, VSTLoss); // VST Loss required for event log
 
 		_sendETHGainToDepositor(depositorETHGain);
@@ -816,10 +816,6 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		if (epochSnapshot < currentEpoch) {
 			return 0;
 		}
-
-		// if (snapshot_P == 0) {
-		//     snapshot_P = P;
-		// }
 
 		uint256 compoundedStake;
 		uint128 scaleDiff = currentScale.sub(scaleSnapshot);

@@ -90,14 +90,14 @@ class MainnetDeploymentHelper {
     const tellorCallerFactory = await this.getFactory("TellorCaller")
     const vaultParametersFactory = await this.getFactory("VestaParameters")
     const lockedVstaFactory = await this.getFactory("LockedVSTA")
+    const adminContractFactory = await this.getFactory("AdminContract")
 
     // Deploy txs
     const priceFeed = await this.loadOrDeploy(priceFeedFactory, 'priceFeed', deploymentState)
     const sortedTroves = await this.loadOrDeploy(sortedTrovesFactory, 'sortedTroves', deploymentState)
     const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState)
     const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
-    const stabilityPoolETH = await this.loadOrDeploy(stabilityPoolFactory, 'stabilityPoolETH', deploymentState)
-    const stabilityPoolBTC = await this.loadOrDeploy(stabilityPoolFactory, 'stabilityPoolBTC', deploymentState)
+    const stabilityPoolV1 = await this.loadOrDeploy(stabilityPoolFactory, 'stabilityPoolV1', deploymentState)
     const stabilityPoolManager = await this.loadOrDeploy(StabilityPoolManagerFactory, 'stabilityPoolManager', deploymentState)
     const gasPool = await this.loadOrDeploy(gasPoolFactory, 'gasPool', deploymentState)
     const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
@@ -107,12 +107,12 @@ class MainnetDeploymentHelper {
     const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
     const vestaParameters = await this.loadOrDeploy(vaultParametersFactory, 'vestaParameters', deploymentState)
     const lockedVsta = await this.loadOrDeploy(lockedVstaFactory, 'lockedVsta', deploymentState)
+    const adminContract = await this.loadOrDeploy(adminContractFactory, 'adminContract', deploymentState)
 
     const VSTTokenParams = [
       troveManager.address,
       stabilityPoolManager.address,
-      borrowerOperations.address,
-      multisig
+      borrowerOperations.address
     ]
     const vstToken = await this.loadOrDeploy(
       VSTTokenFactory,
@@ -128,8 +128,7 @@ class MainnetDeploymentHelper {
       await this.verifyContract('sortedTroves', deploymentState)
       await this.verifyContract('troveManager', deploymentState)
       await this.verifyContract('activePool', deploymentState)
-      await this.verifyContract('stabilityPoolETH', deploymentState)
-      await this.verifyContract('stabilityPoolBTC', deploymentState)
+      await this.verifyContract('stabilityPoolV1', deploymentState)
       await this.verifyContract('stabilityPoolManager', deploymentState)
       await this.verifyContract('gasPool', deploymentState)
       await this.verifyContract('defaultPool', deploymentState)
@@ -140,6 +139,7 @@ class MainnetDeploymentHelper {
       await this.verifyContract('VSTToken', deploymentState, VSTTokenParams)
       await this.verifyContract('vestaParameters', deploymentState)
       await this.verifyContract('lockedVsta', deploymentState)
+      await this.verifyContract('adminContract', deploymentState)
     }
 
     const coreContracts = {
@@ -149,8 +149,8 @@ class MainnetDeploymentHelper {
       troveManager,
       activePool,
       stabilityPoolManager,
-      stabilityPoolETH,
-      stabilityPoolBTC,
+      stabilityPoolV1,
+      adminContract,
       gasPool,
       defaultPool,
       collSurplusPool,
@@ -244,12 +244,16 @@ class MainnetDeploymentHelper {
     return zeroAddressOwner;
   }
   // Connect contracts to their dependencies
-  async connectCoreContractsMainnet(contracts, VSTAContracts, chainlinkProxyAddress, chainlinkFlagAddress, multiSign, treasury, BTCAddress) {
-    console.log("Chainlink addr ", chainlinkProxyAddress);
+  async connectCoreContractsMainnet(contracts, VSTAContracts, chainlinkFlagAddress) {
+
     const gasPrice = this.configParams.GAS_PRICE
 
     await this.isOwnershipRenounced(contracts.priceFeed) ||
-      await this.sendAndWaitForTransaction(contracts.priceFeed.setAddresses(chainlinkProxyAddress, chainlinkFlagAddress, contracts.tellorCaller.address, { gasPrice }))
+      await this.sendAndWaitForTransaction(contracts.priceFeed.setAddresses(
+        chainlinkFlagAddress,
+        contracts.tellorCaller.address,
+        contracts.adminContract.address,
+        { gasPrice }))
 
     await this.isOwnershipRenounced(contracts.sortedTroves) ||
       await this.sendAndWaitForTransaction(contracts.sortedTroves.setParams(
@@ -261,7 +265,6 @@ class MainnetDeploymentHelper {
     await this.isOwnershipRenounced(contracts.lockedVsta) ||
       await this.sendAndWaitForTransaction(contracts.lockedVsta.setAddresses(
         VSTAContracts.VSTAToken.address,
-        treasury,
         { gasPrice }
       ))
 
@@ -270,7 +273,6 @@ class MainnetDeploymentHelper {
         contracts.activePool.address,
         contracts.defaultPool.address,
         contracts.priceFeed.address,
-        multiSign,
         { gasPrice }
       ))
 
@@ -300,36 +302,9 @@ class MainnetDeploymentHelper {
         { gasPrice }
       ))
 
-    await this.isOwnershipRenounced(contracts.stabilityPoolETH) ||
-      await this.sendAndWaitForTransaction(contracts.stabilityPoolETH.setAddresses(
-        ZERO_ADDRESS,
-        contracts.borrowerOperations.address,
-        contracts.troveManager.address,
-        contracts.vstToken.address,
-        contracts.sortedTroves.address,
-        VSTAContracts.communityIssuance.address,
-        contracts.vestaParameters.address,
-        { gasPrice }
-      ))
-
-
-    await this.isOwnershipRenounced(contracts.stabilityPoolBTC) ||
-      await this.sendAndWaitForTransaction(contracts.stabilityPoolBTC.setAddresses(
-        ZERO_ADDRESS,
-        contracts.borrowerOperations.address,
-        contracts.troveManager.address,
-        contracts.vstToken.address,
-        contracts.sortedTroves.address,
-        VSTAContracts.communityIssuance.address,
-        contracts.vestaParameters.address,
-        { gasPrice }
-      ))
-
     await this.isOwnershipRenounced(contracts.stabilityPoolManager) ||
       await this.sendAndWaitForTransaction(contracts.stabilityPoolManager.setAddresses(
-        contracts.stabilityPoolETH.address,
-        contracts.stabilityPoolBTC.address,
-        BTCAddress,
+        contracts.adminContract.address,
         { gasPrice }
       ))
 
@@ -368,7 +343,7 @@ class MainnetDeploymentHelper {
       ))
   }
 
-  async connectVSTAContractsToCoreMainnet(VSTAContracts, coreContracts, treasury) {
+  async connectVSTAContractsToCoreMainnet(VSTAContracts, coreContracts) {
     const gasPrice = this.configParams.GAS_PRICE
     await this.isOwnershipRenounced(VSTAContracts.VSTAStaking) ||
       await this.sendAndWaitForTransaction(VSTAContracts.VSTAStaking.setAddresses(
@@ -384,7 +359,7 @@ class MainnetDeploymentHelper {
       await this.sendAndWaitForTransaction(VSTAContracts.communityIssuance.setAddresses(
         VSTAContracts.VSTAToken.address,
         coreContracts.stabilityPoolManager.address,
-        treasury,
+        coreContracts.adminContract.address,
         { gasPrice }
       ))
   }

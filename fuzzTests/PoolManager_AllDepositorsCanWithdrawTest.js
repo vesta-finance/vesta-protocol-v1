@@ -1,5 +1,6 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -215,18 +216,17 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
     beforeEach(async () => {
       contracts = await deploymentHelper.deployLiquityCore()
-      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
-      stabilityPool = contracts.stabilityPool
       priceFeed = contracts.priceFeedTestnet
       VSTToken = contracts.vstToken
-      stabilityPool = contracts.stabilityPool
       troveManager = contracts.troveManager
       borrowerOperations = contracts.borrowerOperations
       sortedTroves = contracts.sortedTroves
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
       await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+      stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
     })
 
     // mixed deposits/liquidations

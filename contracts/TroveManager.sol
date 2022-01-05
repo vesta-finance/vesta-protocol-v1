@@ -115,7 +115,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		address _sortedTrovesAddress,
 		address _vstaStakingAddress,
 		address _vestaParamsAddress
-	) external override onlyOwner {
+	) external override initializer {
 		require(!isInitialized, "Already initialized");
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_stabilityPoolManagerAddress);
@@ -126,6 +126,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		checkContract(_vstaStakingAddress);
 		checkContract(_vestaParamsAddress);
 		isInitialized = true;
+		__Ownable_init();
+
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		stabilityPoolManager = IStabilityPoolManager(
@@ -1232,6 +1234,11 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _maxIterations,
 		uint256 _maxFeePercentage
 	) external override {
+		require(
+			block.timestamp >= vestaParams.redemptionBlock(_asset),
+			"TroveManager: Redemption is blocked"
+		);
+
 		ContractsCache memory contractsCache = ContractsCache(
 			vestaParams.activePool(),
 			vestaParams.defaultPool(),

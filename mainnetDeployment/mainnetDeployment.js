@@ -98,17 +98,15 @@ async function mainnetDeploy(configParams) {
     VSTAContracts,
     config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
     config.externalAddrs.CHAINLINK_FLAG_HEALTH,
-    config.vestaAddresses.ADMIN_MULTI,
-    TREASURY_WALLET,
     BTCAddress)
 
   console.log("Connect VSTA Contract to Core");
-  await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, liquityCore, TREASURY_WALLET)
+  await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, liquityCore)
 
-  //Activate StabilityPool
-  await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
-  await VSTAContracts.communityIssuance.addFundToStabilityPool(liquityCore.stabilityPoolETH.address, dec(333_334, 18))
-  await VSTAContracts.communityIssuance.addFundToStabilityPool(liquityCore.stabilityPoolBTC.address, dec(333_333, 18))
+  //Add collaterals
+  await VSTAContracts.VSTAToken.approve(liquityCore.adminContract.address, ethers.constants.MaxUint256)
+  await liquityCore.adminContract.addNewCollateral(ZERO_ADDRESS, liquityCore.stabilityPoolV1.address, config.externalAddrs.CHAINLINK_ETHUSD_PROXY, 1, dec(333_334, 18), 14);
+  await liquityCore.adminContract.addNewCollateral(BTCAddress, liquityCore.stabilityPoolV1.address, config.externalAddrs.CHAINLINK_BTCUSD_PROXY, 0, dec(333_333, 18), 14);
 
   // Deploy a read-only multi-trove getter
   await mdh.deployMultiTroveGetterMainnet(liquityCore, deploymentState)
@@ -152,6 +150,15 @@ async function mainnetDeploy(configParams) {
   console.log(`PriceFeed initial status: ${priceFeedInitialStatus}`)
 
   await uniswapPoolTryAddFund();
+
+  await transferOwnership(liquityCore.adminContract, ADMIN_WALLET);
+  await transferOwnership(liquityCore.priceFeed, ADMIN_WALLET);
+  await transferOwnership(liquityCore.vestaParameters, ADMIN_WALLET);
+  await transferOwnership(liquityCore.stabilityPoolManager, ADMIN_WALLET);
+  await transferOwnership(liquityCore.vstToken, ADMIN_WALLET);
+
+  await transferOwnership(VSTAContracts.lockedVsta, TREASURY_WALLET);
+  await transferOwnership(VSTAContracts.communityIssuance, TREASURY_WALLET);
 }
 
 function loadContracts() {
@@ -177,6 +184,14 @@ async function createUniswapPool_VST() {
   WETHUSDVPairAddr = await uniswapV2Factory.getPair(config.externalAddrs.WETH_ERC20, liquityCore.vstToken.address)
   console.log(`VST-WETH pair contract address after Uniswap pair creation: ${VSTWETHPairAddr}`)
   assert.equal(WETHUSDVPairAddr, VSTWETHPairAddr)
+}
+
+async function transferOwnership(contract, newOwner) {
+  if (!newOwner)
+    throw "Transfering ownership to null address";
+
+  if (await contract.owner() != newOwner)
+    await contract.transferOwnership(newOwner)
 }
 
 function getPoolFee() {

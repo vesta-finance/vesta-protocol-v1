@@ -30,7 +30,6 @@ contract('TroveManager', async accounts => {
   let sortedTroves
   let troveManager
   let activePool
-  let stabilityPool
   let collSurplusPool
   let defaultPool
   let borrowerOperations
@@ -53,17 +52,16 @@ contract('TroveManager', async accounts => {
     contracts.troveManager = await TroveManagerTester.new()
     contracts.vstToken = await VSTTokenTester.new(
       contracts.troveManager.address,
-      contracts.stabilityPool.address,
+      contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     VSTToken = contracts.vstToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
     defaultPool = contracts.defaultPool
     collSurplusPool = contracts.collSurplusPool
     borrowerOperations = contracts.borrowerOperations

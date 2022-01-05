@@ -10,9 +10,9 @@ import "./IVestaBase.sol";
 import "./IVestaParameters.sol";
 
 abstract contract IVestaParameters is Ownable, CheckContract {
-	string public constant NAME = "VestaParameters";
-
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
+
+	uint256 public constant REDEMPTION_BLOCK_DAY = 14;
 
 	uint256 public _100pct = 1000000000000000000; // 1e18 == 100%
 
@@ -50,9 +50,12 @@ abstract contract IVestaParameters is Ownable, CheckContract {
 
 	mapping(address => bool) internal hasCollateralConfigured;
 
+	mapping(address => uint256) public redemptionBlock;
+
 	IActivePool public activePool;
 	IDefaultPool public defaultPool;
 	IPriceFeed public priceFeed;
+	address public adminContract;
 
 	bool public isInitialized;
 
@@ -79,24 +82,31 @@ abstract contract IVestaParameters is Ownable, CheckContract {
 
 	event PriceFeedChanged(address indexed addr);
 
+	modifier isController() {
+		require(
+			msg.sender == owner() || msg.sender == adminContract,
+			"Invalid Permissions"
+		);
+		_;
+	}
+
 	function setAddresses(
 		address _activePool,
 		address _defaultPool,
 		address _priceFeed,
-		address _multiSig
+		address _adminContract
 	) public onlyOwner {
-		require(_multiSig != address(0), "Invalid Multisig address");
 		require(!isInitialized, "Already initalized");
 		checkContract(_activePool);
 		checkContract(_defaultPool);
 		checkContract(_priceFeed);
-
+		checkContract(_adminContract);
 		isInitialized = true;
+
+		adminContract = _adminContract;
 		activePool = IActivePool(_activePool);
 		defaultPool = IDefaultPool(_defaultPool);
 		priceFeed = IPriceFeed(_priceFeed);
-
-		transferOwnership(_multiSig);
 	}
 
 	function setPriceFeed(address _priceFeed) public onlyOwner {
@@ -113,6 +123,21 @@ abstract contract IVestaParameters is Ownable, CheckContract {
 	}
 
 	function setAsDefault(address _asset) public onlyOwner {
+		_setAsDefault(_asset);
+	}
+
+	function setAsDefaultWithRemptionBlock(
+		address _asset,
+		uint256 blockInDays
+	) public isController {
+		if (blockInDays > 14) {
+			blockInDays = REDEMPTION_BLOCK_DAY;
+		}
+
+		if (redemptionBlock[_asset] == 0) {
+			redemptionBlock[_asset] = block.timestamp * (blockInDays * 1 days);
+		}
+
 		_setAsDefault(_asset);
 	}
 

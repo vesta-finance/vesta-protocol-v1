@@ -53,12 +53,9 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
-    contracts.stabilityPool = await StabilityPool.new()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
     contracts = await deploymentHelper.deployVSTToken(contracts)
 
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
     borrowerOperations = contracts.borrowerOperations
     erc20 = contracts.erc20
 
@@ -67,6 +64,8 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+    stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
   })
 
   // Accuracy tests

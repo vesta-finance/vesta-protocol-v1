@@ -33,10 +33,10 @@ contract('CollSurplusPool', async accounts => {
     contracts.troveManager = await TroveManagerTester.new()
     contracts.vstToken = await VSTTokenTester.new(
       contracts.troveManager.address,
-      contracts.stabilityPool.address,
+      contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address,
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     collSurplusPool = contracts.collSurplusPool

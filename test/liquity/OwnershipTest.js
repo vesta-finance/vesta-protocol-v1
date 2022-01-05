@@ -1,3 +1,4 @@
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const { TestHelper: th, MoneyValues: mv } = require("../../utils/testHelpers.js")
 
@@ -17,26 +18,30 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
   let troveManager
   let activePool
   let stabilityPool
+  let stabilityPoolManager
   let defaultPool
   let borrowerOperations
 
   let vstaStaking
   let communityIssuance
   let vstaToken
+  let adminContract
 
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.borrowerOperations = await BorrowerOperationsTester.new()
     contracts = await deploymentHelper.deployVSTToken(contracts)
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     vstToken = contracts.vstToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
+    stabilityPool = contracts.stabilityPoolTemplate
+    stabilityPoolManager = contracts.stabilityPoolManager
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
+    adminContract = contracts.adminContract
 
     vstaStaking = VSTAContracts.vstaStaking
     communityIssuance = VSTAContracts.communityIssuance
@@ -61,13 +66,13 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
     const dumbContract = await GasPool.new()
     const params = Array(numberOfAddresses).fill(dumbContract.address)
 
+    const v = await VestaParameters.new();
+    await v.sanitizeParameters(params[0]);
+
     if (useVaultParams) {
       params[params.length - 2] = communityIssuance.address;
-      params[params.length - 1] = (await VestaParameters.new()).address;
+      params[params.length - 1] = v.address;
     }
-
-    // Attempt call from alice
-    await th.assertRevert(contract.setAddresses(...params, { from: alice }))
 
     // Attempt to use zero address
     await testZeroAddress(contract, params)
@@ -135,13 +140,12 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('CommunityIssuance', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      const params = [vstaToken.address, stabilityPool.address, treasury]
-      await th.assertRevert(communityIssuance.setAddresses(...params, { from: alice }))
+      const params = [vstaToken.address, stabilityPoolManager.address, adminContract.address]
 
       // Attempt to use zero address
       await testZeroAddress(communityIssuance, params)
       // Attempt to use non contract
-      await testNonContractAddress(communityIssuance, params, skip = 0, offset = 1)
+      await testNonContractAddress(communityIssuance, params)
 
       // Owner can successfully set any address
       const txOwner = await communityIssuance.setAddresses(...params, { from: owner })

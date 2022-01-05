@@ -39,8 +39,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 	constructor(
 		address _troveManagerAddress,
 		address _stabilityPoolManagerAddress,
-		address _borrowerOperationsAddress,
-		address _multiSig
+		address _borrowerOperationsAddress
 	) ERC20("Vesta Stable", "VST") {
 		checkContract(_troveManagerAddress);
 		checkContract(_stabilityPoolManagerAddress);
@@ -59,8 +58,6 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 
 		//mint 5000 for Initial Liquidity Pool. the extra is burned.
 		_mint(msg.sender, 5000 ether);
-
-		transferOwnership(_multiSig);
 	}
 
 	// --- Functions for intra-Liquity calls ---
@@ -80,7 +77,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 		address _account,
 		uint256 _amount
 	) external override {
-		//_requireCallerIsBorrowerOperations();
+		_requireCallerIsBorrowerOperations();
 		require(
 			!emergencyStopMintingCollateral[_asset],
 			"Mint is blocked on this collateral"

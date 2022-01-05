@@ -1,6 +1,7 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("TroveManagerTester")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 const th = testHelpers.TestHelper
 const timeValues = testHelpers.TimeValues
@@ -61,7 +62,8 @@ contract('Access Control: Liquity functions with the caller restricted to Liquit
     communityIssuance = VSTAContracts.communityIssuance
 
     await deploymentHelper.connectCoreContracts(coreContracts, VSTAContracts)
-    await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, coreContracts, treasury, false)
+    await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, coreContracts)
+    stabilityPool = await StabilityPool.at(await coreContracts.stabilityPoolManager.getAssetStabilityPool(EMPTY_ADDRESS))
 
     for (account of accounts.slice(0, 10)) {
       await th.openTrove(coreContracts, { extraVSTAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: account } })

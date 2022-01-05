@@ -4,6 +4,7 @@ const { toBN, dec, ZERO_ADDRESS } = th
 
 const TroveManagerTester = artifacts.require("./TroveManagerTester")
 const VSTTokenTester = artifacts.require("VSTTokenTester")
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 contract('TroveManager - in Recovery Mode - back to normal mode in 1 tx', async accounts => {
   const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
@@ -32,11 +33,9 @@ contract('TroveManager - in Recovery Mode - back to normal mode in 1 tx', async 
       contracts.stabilityPoolManager.address,
       contracts.borrowerOperations.address,
     )
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     troveManager = contracts.troveManager
-    stabilityPool = contracts.stabilityPool
-    stabilityPoolERC20 = contracts.stabilityPoolERC20
     priceFeed = contracts.priceFeedTestnet
     sortedTroves = contracts.sortedTroves
     erc20 = contracts.erc20
@@ -52,6 +51,8 @@ contract('TroveManager - in Recovery Mode - back to normal mode in 1 tx', async 
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+    stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
   })
 
   context('Batch liquidations', () => {

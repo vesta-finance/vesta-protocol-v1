@@ -9,6 +9,7 @@ const timeValues = testHelpers.TimeValues
 const VSTTokenTester = artifacts.require("VSTTokenTester")
 const TroveManagerTester = artifacts.require("TroveManagerTester")
 const NonPayable = artifacts.require('NonPayable.sol')
+const StabilityPool = artifacts.require('StabilityPool.sol')
 
 const ZERO = toBN('0')
 const ZERO_ADDRESS = th.ZERO_ADDRESS
@@ -59,15 +60,13 @@ contract('StabilityPool', async accounts => {
         contracts.stabilityPoolManager.address,
         contracts.borrowerOperations.address,
       )
-      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
       priceFeed = contracts.priceFeedTestnet
       vstToken = contracts.vstToken
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
       activePool = contracts.activePool
-      stabilityPool = contracts.stabilityPool
-      stabilityPoolERC20 = contracts.stabilityPoolERC20
       defaultPool = contracts.defaultPool
       borrowerOperations = contracts.borrowerOperations
       hintHelpers = contracts.hintHelpers
@@ -88,6 +87,9 @@ contract('StabilityPool', async accounts => {
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
       await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+      stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+      stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
     })
 
     // --- provideToSP() ---

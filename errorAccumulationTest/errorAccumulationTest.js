@@ -3,6 +3,8 @@ const testHelpers = require("../utils/testHelpers.js")
 const th = testHelpers.TestHelper
 const dec = th.dec
 
+const StabilityPool = artifacts.require('StabilityPool.sol')
+
 const randAmountInWei = th.randAmountInWei
 //const randAmountInGwei = th.randAmountInGwei
 
@@ -23,14 +25,13 @@ contract('TroveManager', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     VSTToken = contracts.vstToken
     priceFeed = contracts.priceFeedTestnet
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
-    stabilityPool = contracts.stabilityPool
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
 
@@ -40,6 +41,9 @@ contract('TroveManager', async accounts => {
 
     await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
     await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
+
+    stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
+
   })
 
   // --- Check accumulation from repeatedly applying rewards ---

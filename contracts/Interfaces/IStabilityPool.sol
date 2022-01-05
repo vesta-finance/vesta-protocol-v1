@@ -37,7 +37,6 @@ import "./IDeposit.sol";
  */
 interface IStabilityPool is IDeposit {
 	// --- Events ---
-
 	event StabilityPoolAssetBalanceUpdated(uint256 _newBalance);
 	event StabilityPoolVSTBalanceUpdated(uint256 _newBalance);
 
@@ -200,4 +199,6 @@ interface IStabilityPool is IDeposit {
 	 * Only callable by Active Pool, it just accounts for ETH received
 	 * receive() external payable;
 	 */
+
+	function getName() external view returns (string memory);
 }

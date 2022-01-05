@@ -96,7 +96,7 @@ contract('VSTA Token', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+    const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
     vstaStaking = VSTAContracts.vstaStaking
     vstaTokenTester = VSTAContracts.vstaToken
@@ -228,15 +228,6 @@ contract('VSTA Token', async accounts => {
 
     const txPromise = vstaTokenTester.transfer(A, dec(101, 18), { from: B })
     await assertRevert(txPromise)
-  })
-
-  it('transfer(): transfer to a blacklisted address reverts', async () => {
-    await mintToABC()
-
-    await assertRevert(vstaTokenTester.transfer(vstaTokenTester.address, 1, { from: A }))
-    await assertRevert(vstaTokenTester.transfer(ZERO_ADDRESS, 1, { from: A }))
-    await assertRevert(vstaTokenTester.transfer(communityIssuance.address, 1, { from: A }))
-    await assertRevert(vstaTokenTester.transfer(vstaStaking.address, 1, { from: A }))
   })
 
   it('transfer(): transfer to or from the zero-address reverts', async () => {

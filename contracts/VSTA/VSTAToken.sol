@@ -11,7 +11,7 @@ contract VSTAToken is CheckContract, ERC20Permit {
 	// uint for use with SafeMath
 	uint256 internal _1_MILLION = 1e24; // 1e6 * 1e18 = 1e24
 
-	// uint256 internal immutable lpRewardsEntitlement;
+	address public immutable treasury;
 
 	constructor(address _treasurySig) ERC20("Vesta", "VSTA") {
 		uint256 lockedVSTA = _1_MILLION; //TODO
@@ -32,6 +32,7 @@ contract VSTAToken is CheckContract, ERC20Permit {
 			totalForExecutions
 		);
 
+		treasury = _treasurySig;
 		_mint(_treasurySig, multisigEntitlement);
 	}
 }

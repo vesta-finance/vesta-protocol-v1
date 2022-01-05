@@ -9,7 +9,7 @@ async function main() {
   const [borrower, A, B] = accounts
 
   const coreContracts = await dh.deployLiquityCoreHardhat()
-  const VSTAContracts = await dh.deployVSTAContractsHardhat()
+  const VSTAContracts = await dh.deployVSTAContractsHardhat(accounts[0])
 
   const { troveManager, borrowerOperations, hintHelpers, sortedTroves, priceFeedTestnet } = coreContracts
 

@@ -4,17 +4,17 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../Interfaces/IStabilityPoolManager.sol";
 import "../Interfaces/ICommunityIssuance.sol";
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/LiquityMath.sol";
 import "../Dependencies/CheckContract.sol";
-import "../Dependencies/OwnableDeployer.sol";
 
 contract CommunityIssuance is
 	ICommunityIssuance,
-	OwnableDeployer,
+	OwnableUpgradeable,
 	CheckContract,
 	BaseMath
 {
@@ -47,6 +47,8 @@ contract CommunityIssuance is
 	mapping(address => uint256) public deploymentTime;
 	mapping(address => uint256) public VSTASupplyCaps;
 
+	address public adminContract;
+
 	bool public isInitialized = false;
 
 	modifier activeStabilityPoolOnly(address _pool) {
@@ -57,18 +59,28 @@ contract CommunityIssuance is
 		_;
 	}
 
+	modifier isController() {
+		require(
+			msg.sender == owner() || msg.sender == adminContract,
+			"Invalid Permission"
+		);
+		_;
+	}
+
 	// --- Functions ---
 	function setAddresses(
 		address _vstaTokenAddress,
 		address _stabilityPoolManagerAddress,
-		address _treasurySig
-	) external override onlyOwner {
+		address _adminContract
+	) external override initializer {
 		require(!isInitialized, "Already initialized");
-		isInitialized = true;
-
 		checkContract(_vstaTokenAddress);
 		checkContract(_stabilityPoolManagerAddress);
-		require(_treasurySig != address(0));
+		checkContract(_adminContract);
+		isInitialized = true;
+		__Ownable_init();
+
+		adminContract = _adminContract;
 
 		vstaToken = IERC20(_vstaTokenAddress);
 		stabilityPoolManager = IStabilityPoolManager(
@@ -77,15 +89,29 @@ contract CommunityIssuance is
 
 		emit VSTATokenAddressSet(_vstaTokenAddress);
 		emit StabilityPoolAddressSet(_stabilityPoolManagerAddress);
-
-		transferOwnership(_treasurySig);
 	}
 
 	function addFundToStabilityPool(address _pool, uint256 _assignedSupply)
 		external
 		override
-		onlyDeployerOrOwner
+		isController
 	{
+		_addFundToStabilityPoolFrom(_pool, _assignedSupply, msg.sender);
+	}
+
+	function addFundToStabilityPoolFrom(
+		address _pool,
+		uint256 _assignedSupply,
+		address _spender
+	) external override isController {
+		_addFundToStabilityPoolFrom(_pool, _assignedSupply, _spender);
+	}
+
+	function _addFundToStabilityPoolFrom(
+		address _pool,
+		uint256 _assignedSupply,
+		address _spender
+	) internal {
 		require(
 			stabilityPoolManager.isStabilityPool(_pool),
 			"CommunityIssuance: Invalid Stability Pool"
@@ -96,7 +122,7 @@ contract CommunityIssuance is
 		}
 
 		VSTASupplyCaps[_pool] += _assignedSupply;
-		vstaToken.safeTransferFrom(msg.sender, address(this), _assignedSupply);
+		vstaToken.safeTransferFrom(_spender, address(this), _assignedSupply);
 	}
 
 	function transferFunToAnotherStabilityPool(

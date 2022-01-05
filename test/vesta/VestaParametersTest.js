@@ -40,7 +40,7 @@ contract('VestaParameters', async accounts => {
         beforeEach(async () => {
             contracts = await deploymentHelper.deployLiquityCore()
             contracts.troveManager = await TroveManagerTester.new()
-            const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+            const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
             priceFeed = contracts.priceFeedTestnet
             troveManager = contracts.troveManager

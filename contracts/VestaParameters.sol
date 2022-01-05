@@ -3,6 +3,8 @@ pragma solidity ^0.8.10;
 import "./Interfaces/IVestaParameters.sol";
 
 contract VestaParameters is IVestaParameters {
+	string public constant NAME = "VestaParameters";
+
 	error SafeCheckError(
 		string parameter,
 		uint256 valueEntered,

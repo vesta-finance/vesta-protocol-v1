@@ -36,8 +36,6 @@ contract('BorrowerOperations', async accounts => {
   let sortedTroves
   let troveManager
   let activePool
-  let stabilityPool
-  let stabilityPoolManager
   let defaultPool
   let borrowerOperations
   let vstaStaking
@@ -72,7 +70,7 @@ contract('BorrowerOperations', async accounts => {
       contracts.borrowerOperations = await BorrowerOperationsTester.new()
       contracts.troveManager = await TroveManagerTester.new()
       contracts = await deploymentHelper.deployVSTToken(contracts)
-      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat()
+      const VSTAContracts = await deploymentHelper.deployVSTAContractsHardhat(accounts[0])
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
       await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts)
@@ -87,8 +85,6 @@ contract('BorrowerOperations', async accounts => {
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
       activePool = contracts.activePool
-      stabilityPool = contracts.stabilityPool
-      stabilityPoolManager = contracts.stabilityPoolManager;
       defaultPool = contracts.defaultPool
       borrowerOperations = contracts.borrowerOperations
       hintHelpers = contracts.hintHelpers

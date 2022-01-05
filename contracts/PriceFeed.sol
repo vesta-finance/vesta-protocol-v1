@@ -40,43 +40,42 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
 
 	bool public isInitialized = false;
 
+	address public adminContract;
+
 	IPriceFeed.Status public status;
 	mapping(address => RegisterOracle) public registeredOracles;
 	mapping(address => uint256) public lastGoodPrice;
 
+	modifier isController() {
+		require(
+			msg.sender == owner() || msg.sender == adminContract,
+			"Invalid Permission"
+		);
+		_;
+	}
+
 	function setAddresses(
-		address _ethAggregatorAddress,
 		address _chainlinkFlag,
-		address _tellorCallerAddress
+		address _tellorCallerAddress,
+		address _adminContract
 	) external onlyOwner {
 		require(!isInitialized);
-		checkContract(_ethAggregatorAddress);
 		checkContract(_tellorCallerAddress);
 		checkContract(_chainlinkFlag);
+		checkContract(_adminContract);
+		isInitialized = true;
 
+		adminContract = _adminContract;
 		chainlinkFlags = FlagsInterface(_chainlinkFlag);
 		tellorCaller = ITellorCaller(_tellorCallerAddress);
 		status = Status.chainlinkWorking;
-
-		//Adding ETH
-		_addOracle(address(0), _ethAggregatorAddress, 1);
-
-		isInitialized = true;
 	}
 
 	function addOracle(
 		address _token,
 		address _chainlinkOracle,
 		uint256 _tellorId
-	) public onlyOwner {
-		_addOracle(_token, _chainlinkOracle, _tellorId);
-	}
-
-	function _addOracle(
-		address _token,
-		address _chainlinkOracle,
-		uint256 _tellorId
-	) private {
+	) external override isController {
 		AggregatorV3Interface priceOracle = AggregatorV3Interface(
 			_chainlinkOracle
 		);
@@ -636,8 +635,7 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
 	function _getCurrentChainlinkResponse(
 		AggregatorV3Interface _priceAggregator
 	) internal view returns (ChainlinkResponse memory chainlinkResponse) {
-		bool isRaised = chainlinkFlags.getFlag(FLAG_ARBITRUM_SEQ_OFFLINE);
-		if (isRaised) {
+		if (chainlinkFlags.getFlag(FLAG_ARBITRUM_SEQ_OFFLINE)) {
 			return chainlinkResponse;
 		}
 
