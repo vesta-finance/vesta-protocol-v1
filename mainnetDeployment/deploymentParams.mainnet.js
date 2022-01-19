@@ -2,7 +2,7 @@ const externalAddrs = {
   // https://data.chain.link/eth-usd
   CHAINLINK_ETHUSD_PROXY: "0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8",
   CHAINLINK_BTCUSD_PROXY: "0x6ce185860a4963106506C203335A2910413708e9",
-  CHAINLINK_FLAG_HEALTH: "0x491B1dDA0A8fa069bbC1125133A975BF4e85a91b",
+  CHAINLINK_FLAG_HEALTH: "0x3C14e07Edd0dC67442FA96f1Ec6999c57E810a83",
   // https://docs.tellor.io/tellor/integration/reference-page
   TELLOR_MASTER: "0xbc2f9E092ac5CED686440E5062D11D6543202B24",
   // https://uniswap.org/docs/v2/smart-contracts/factory/
@@ -59,6 +59,8 @@ const beneficiaries = {
   ACCOUNT_34: "0x895870D281E4761237f4465AFb51D16c3e124EFC"
 }
 
+const REDEMPTION_SAFETY = 14;
+
 const OUTPUT_FILE = './mainnetDeployment/mainnetDeploymentOutput.json'
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -80,4 +82,5 @@ module.exports = {
   GAS_PRICE,
   TX_CONFIRMATIONS,
   ETHERSCAN_BASE_URL,
+  REDEMPTION_SAFETY
 };

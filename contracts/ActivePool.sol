@@ -34,6 +34,8 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 
 	IStabilityPoolManager public stabilityPoolManager;
 
+	bool public isInitialized;
+
 	mapping(address => uint256) internal assetsBalance;
 	mapping(address => uint256) internal VSTDebts;
 
@@ -46,11 +48,14 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 		address _defaultPoolAddress,
 		address _collSurplusPoolAddress
 	) external onlyOwner {
+		require(!isInitialized, "Already initialized");
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_stabilityManagerAddress);
 		checkContract(_defaultPoolAddress);
 		checkContract(_collSurplusPoolAddress);
+
+		isInitialized = true;
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		troveManagerAddress = _troveManagerAddress;

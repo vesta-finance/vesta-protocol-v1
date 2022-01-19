@@ -20,6 +20,8 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 	address public troveManagerAddress;
 	address public activePoolAddress;
 
+	bool public isInitialized;
+
 	// deposited ether tracker
 	mapping(address => uint256) balances;
 	// Collateral surplus claimable by trove owners
@@ -32,10 +34,12 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 		address _troveManagerAddress,
 		address _activePoolAddress
 	) external override onlyOwner {
+		require(!isInitialized, "Already initialized");
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_activePoolAddress);
 
+		isInitialized = true;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		troveManagerAddress = _troveManagerAddress;
 		activePoolAddress = _activePoolAddress;

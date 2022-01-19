@@ -200,5 +200,5 @@ interface IStabilityPool is IDeposit {
 	 * receive() external payable;
 	 */
 
-	function getName() external view returns (string memory);
+	function getNameBytes() external view returns (bytes32);
 }

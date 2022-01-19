@@ -25,6 +25,9 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 
 	address public troveManagerAddress;
 	address public activePoolAddress;
+
+	bool public isInitialized;
+
 	mapping(address => uint256) internal assetsBalance;
 	mapping(address => uint256) internal VSTDebts; // debt
 
@@ -34,9 +37,11 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 		address _troveManagerAddress,
 		address _activePoolAddress
 	) external onlyOwner {
+		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_activePoolAddress);
 
+		isInitialized = true;
 		troveManagerAddress = _troveManagerAddress;
 		activePoolAddress = _activePoolAddress;
 

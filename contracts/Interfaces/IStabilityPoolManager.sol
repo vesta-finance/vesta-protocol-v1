@@ -14,4 +14,9 @@ interface IStabilityPoolManager {
 		external
 		view
 		returns (IStabilityPool);
+
+	function unsafeGetAssetStabilityPool(address asset)
+		external
+		view
+		returns (address);
 }

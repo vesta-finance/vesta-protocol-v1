@@ -151,6 +151,8 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	using SafeERC20 for IERC20;
 
 	string public constant NAME = "StabilityPool";
+	bytes32 public constant STABILITY_POOL_BYTES =
+		0xf704b47f65a99b2219b7213612db4be4a436cdf50624f4baca1373ef0de0aac7;
 
 	IBorrowerOperations public borrowerOperations;
 
@@ -227,10 +229,12 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	uint256 public lastAssetError_Offset;
 	uint256 public lastVSTLossError_Offset;
 
+	bool public isInitialized;
+
 	// --- Contract setters ---
 
-	function getName() external pure override returns (string memory) {
-		return NAME;
+	function getNameBytes() external pure override returns (bytes32) {
+		return STABILITY_POOL_BYTES;
 	}
 
 	function setAddresses(
@@ -242,12 +246,15 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		address _communityIssuanceAddress,
 		address _vestaParamsAddress
 	) external override initializer {
+		require(!isInitialized, "Already initialized");
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_vstTokenAddress);
 		checkContract(_sortedTrovesAddress);
 		checkContract(_communityIssuanceAddress);
 		checkContract(_vestaParamsAddress);
+
+		isInitialized = true;
 		__Ownable_init();
 
 		if (_assetAddress != ETH_REF_ADDRESS) {
@@ -260,11 +267,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		vstToken = IVSTToken(_vstTokenAddress);
 		sortedTroves = ISortedTroves(_sortedTrovesAddress);
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
+		setVestaParameters(_vestaParamsAddress);
 
 		P = DECIMAL_PRECISION;
-
-		setVestaParameters(_vestaParamsAddress);
-		assert(vestaParams.MIN_NET_DEBT(assetAddress) > 0);
 
 		emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
 		emit TroveManagerAddressChanged(_troveManagerAddress);

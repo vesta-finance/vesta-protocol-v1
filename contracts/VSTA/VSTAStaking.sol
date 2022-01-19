@@ -49,6 +49,8 @@ contract VSTAStaking is
 	address public borrowerOperationsAddress;
 	address public activePoolAddress;
 
+	bool public isInitialized;
+
 	// --- Functions ---
 
 	function setAddresses(
@@ -58,11 +60,15 @@ contract VSTAStaking is
 		address _borrowerOperationsAddress,
 		address _activePoolAddress
 	) external override onlyOwner {
+		require(!isInitialized, "Already Initialized");
+
 		checkContract(_vstaTokenAddress);
 		checkContract(_vstTokenAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_activePoolAddress);
+
+		isInitialized = true;
 
 		vstaToken = IERC20(_vstaTokenAddress);
 		vstToken = IERC20(_vstTokenAddress);

@@ -61,9 +61,18 @@ contract StabilityPoolManager is
 		returns (IStabilityPool)
 	{
 		require(
-			address(stabilityPools[asset]) != address(0),
+			stabilityPools[asset] != address(0),
 			"Invalid asset StabilityPool"
 		);
 		return IStabilityPool(stabilityPools[asset]);
+	}
+
+	function unsafeGetAssetStabilityPool(address _asset)
+		external
+		view
+		override
+		returns (address)
+	{
+		return stabilityPools[_asset];
 	}
 }

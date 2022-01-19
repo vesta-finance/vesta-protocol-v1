@@ -42,8 +42,8 @@ contract LockedVSTA is Ownable, CheckContract {
 	}
 
 	function setAddresses(address _vstaAddress) public onlyOwner {
-		checkContract(_vstaAddress);
 		require(!isInitialized, "Already Initialized");
+		checkContract(_vstaAddress);
 		isInitialized = true;
 
 		vstaToken = IERC20(_vstaAddress);

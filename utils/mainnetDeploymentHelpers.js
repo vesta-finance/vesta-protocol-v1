@@ -63,15 +63,12 @@ class MainnetDeploymentHelper {
   }
 
 
-  async deployMockERC20Contract(deploymentState, contracts) {
-    const gasPrice = this.configParams.GAS_PRICE
+  async deployMockERC20Contract(deploymentState) {
     const ERC20TestFactory = await this.getFactory("ERC20Test")
     const erc20Mock = await this.loadOrDeploy(ERC20TestFactory, 'erc20Mock', deploymentState)
 
-    await contracts.priceFeed.addOracle(erc20Mock.address, "0x0c9973e7a27d00e656B9f153348dA46CaD70d03d", 2, { gasPrice });
     return erc20Mock.address
   }
-
 
   async deployLiquityCoreMainnet(tellorMasterAddr, deploymentState, multisig) {
     // Get contract factories
@@ -232,20 +229,12 @@ class MainnetDeploymentHelper {
   // --- Connector methods ---
 
   async isOwnershipRenounced(contract) {
-    let isInitialized = false;
-    try {
-      isInitialized = await contract.isInitialized();
-    }
-    catch {
-    }
-
-    const zeroAddressOwner = ((await contract.owner()) == ZERO_ADDRESS) || isInitialized;
-    console.log("%s Is Initalized / Renounced Ownership: %s", await contract.NAME(), zeroAddressOwner);
-    return zeroAddressOwner;
+    const isInitialized = await contract.isInitialized();
+    console.log("%s Is Initalized : %s", await contract.NAME(), isInitialized);
+    return isInitialized;
   }
   // Connect contracts to their dependencies
   async connectCoreContractsMainnet(contracts, VSTAContracts, chainlinkFlagAddress) {
-
     const gasPrice = this.configParams.GAS_PRICE
 
     await this.isOwnershipRenounced(contracts.priceFeed) ||
@@ -273,6 +262,7 @@ class MainnetDeploymentHelper {
         contracts.activePool.address,
         contracts.defaultPool.address,
         contracts.priceFeed.address,
+        contracts.adminContract.address,
         { gasPrice }
       ))
 
@@ -333,6 +323,18 @@ class MainnetDeploymentHelper {
         { gasPrice }
       ))
 
+    await this.isOwnershipRenounced(contracts.adminContract) ||
+      await this.sendAndWaitForTransaction(contracts.adminContract.setAddresses(
+        contracts.vestaParameters.address,
+        contracts.stabilityPoolManager.address,
+        contracts.borrowerOperations.address,
+        contracts.troveManager.address,
+        contracts.vstToken.address,
+        contracts.sortedTroves.address,
+        VSTAContracts.communityIssuance.address,
+        { gasPrice }
+      ))
+
     // set contracts in HintHelpers
     await this.isOwnershipRenounced(contracts.hintHelpers) ||
       await this.sendAndWaitForTransaction(contracts.hintHelpers.setAddresses(
@@ -362,12 +364,6 @@ class MainnetDeploymentHelper {
         coreContracts.adminContract.address,
         { gasPrice }
       ))
-  }
-
-  async connectUnipoolMainnet(uniPool, VSTAContracts, VSTWETHPairAddr, duration) {
-    const gasPrice = this.configParams.GAS_PRICE
-    await this.isOwnershipRenounced(uniPool) ||
-      await this.sendAndWaitForTransaction(uniPool.setParams(VSTAContracts.VSTAToken.address, VSTWETHPairAddr, duration, { gasPrice }))
   }
 
   // --- Verify on Ethrescan ---

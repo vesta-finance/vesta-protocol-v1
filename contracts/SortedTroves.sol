@@ -44,6 +44,8 @@ import "./Dependencies/CheckContract.sol";
 contract SortedTroves is Ownable, CheckContract, ISortedTroves {
 	using SafeMath for uint256;
 
+	bool public isInitialized;
+
 	string public constant NAME = "SortedTroves";
 	address constant ETH_REF_ADDRESS = address(0);
 	uint256 constant MAX_UINT256 = type(uint256).max;
@@ -78,8 +80,10 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
 		address _troveManagerAddress,
 		address _borrowerOperationsAddress
 	) external override onlyOwner {
+		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_borrowerOperationsAddress);
+		isInitialized = true;
 
 		data[ETH_REF_ADDRESS].maxSize = MAX_UINT256;
 

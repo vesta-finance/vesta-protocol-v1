@@ -111,7 +111,6 @@ contract BorrowerOperations is
 		address _VSTAStakingAddress,
 		address _vestaParamsAddress
 	) external override initializer {
-		// This makes impossible to open a trove with zero withdrawn VST
 		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_stabilityPoolManagerAddress);

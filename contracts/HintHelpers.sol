@@ -20,6 +20,8 @@ contract HintHelpers is VestaBase, CheckContract {
 	ISortedTroves public sortedTroves;
 	ITroveManager public troveManager;
 
+	bool public isInitialized;
+
 	// --- Events ---
 
 	event SortedTrovesAddressChanged(address _sortedTrovesAddress);
@@ -32,11 +34,14 @@ contract HintHelpers is VestaBase, CheckContract {
 		address _troveManagerAddress,
 		address _vaultParametersAddress
 	) external initializer {
+		require(!isInitialized, "Already initialized");
+
 		checkContract(_sortedTrovesAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_vaultParametersAddress);
 		__Ownable_init();
 
+		isInitialized = true;
 		sortedTroves = ISortedTroves(_sortedTrovesAddress);
 		troveManager = ITroveManager(_troveManagerAddress);
 

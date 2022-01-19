@@ -18,8 +18,6 @@ const LockedVSTA = artifacts.require("./LockedVSTA.sol")
 const VSTAStaking = artifacts.require("./VSTAStaking.sol")
 const CommunityIssuance = artifacts.require("./CommunityIssuance.sol")
 
-const Unipool = artifacts.require("./Unipool.sol")
-
 const VSTATokenTester = artifacts.require("./VSTATokenTester.sol")
 const CommunityIssuanceTester = artifacts.require("./CommunityIssuanceTester.sol")
 const StabilityPoolTester = artifacts.require("./StabilityPoolTester.sol")
@@ -336,10 +334,6 @@ class DeploymentHelper {
     await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '32000000000000000000000000', 0, { from: treasurySig });
     await VSTAContracts.vstaToken.unprotectedMint(treasurySig, '32000000000000000000000000')
     await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '32000000000000000000000000', 0, { from: treasurySig });
-  }
-
-  static async connectUnipool(uniPool, VSTAContracts, uniswapPairAddr, duration) {
-    await uniPool.setParams(VSTAContracts.vstaToken.address, uniswapPairAddr, duration)
   }
 }
 module.exports = DeploymentHelper

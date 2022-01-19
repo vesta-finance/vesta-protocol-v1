@@ -1,4 +1,4 @@
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -12,8 +12,11 @@ import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICommunityIssuance.sol";
 
 contract AdminContract is ProxyAdmin {
-	string public constant STABILITY_POOL = "StabilityPool";
-	bool private isInitialized;
+	string public constant NAME = "AdminContract";
+
+	bytes32 public constant STABILITY_POOL_BYTES =
+		0xf704b47f65a99b2219b7213612db4be4a436cdf50624f4baca1373ef0de0aac7;
+	bool public isInitialized;
 
 	IVestaParameters private vestaParameters;
 	IStabilityPoolManager private stabilityPoolManager;
@@ -23,9 +26,6 @@ contract AdminContract is ProxyAdmin {
 	address troveManagerAddress;
 	address vstTokenAddress;
 	address sortedTrovesAddress;
-
-	mapping(address => TransparentUpgradeableProxy)
-		private assetsStabilityPoolProxy;
 
 	function setAddresses(
 		address _paramaters,
@@ -56,6 +56,7 @@ contract AdminContract is ProxyAdmin {
 		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManager);
 	}
 
+	//Needs to approve Community Issuance to use this fonction.
 	function addNewCollateral(
 		address _asset,
 		address _stabilityPoolImplementation,
@@ -64,14 +65,29 @@ contract AdminContract is ProxyAdmin {
 		uint256 assignedToken,
 		uint256 redemptionLockInDay
 	) external onlyOwner {
+		require(
+			stabilityPoolManager.unsafeGetAssetStabilityPool(_asset) ==
+				address(0),
+			"This collateral already exists"
+		);
+		require(
+			IStabilityPool(_stabilityPoolImplementation).getNameBytes() ==
+				STABILITY_POOL_BYTES,
+			"Invalid Stability pool"
+		);
 		vestaParameters.priceFeed().addOracle(_asset, _chainlink, _tellorId);
 		vestaParameters.setAsDefaultWithRemptionBlock(
 			_asset,
 			redemptionLockInDay
 		);
 
+		address clonedStabilityPool = ClonesUpgradeable.clone(
+			_stabilityPoolImplementation
+		);
+		require(clonedStabilityPool != address(0), "Failed to clone contract");
+
 		TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-			ClonesUpgradeable.clone(_stabilityPoolImplementation),
+			clonedStabilityPool,
 			address(this),
 			abi.encodeWithSignature(
 				"setAddresses(address,address,address,address,address,address,address)",
@@ -86,9 +102,7 @@ contract AdminContract is ProxyAdmin {
 		);
 
 		address proxyAddress = address(proxy);
-
 		stabilityPoolManager.addStabilityPool(_asset, proxyAddress);
-
 		communityIssuance.addFundToStabilityPoolFrom(
 			proxyAddress,
 			assignedToken,
