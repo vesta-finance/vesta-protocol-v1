@@ -311,8 +311,11 @@ class DeploymentHelper {
       coreContracts.vstToken.address,
       coreContracts.troveManager.address,
       coreContracts.borrowerOperations.address,
-      coreContracts.activePool.address
+      coreContracts.activePool.address,
+      treasurySig
     )
+
+    await VSTAContracts.vstaStaking.unpause();
 
     await VSTAContracts.communityIssuance.setAddresses(
       VSTAContracts.vstaToken.address,

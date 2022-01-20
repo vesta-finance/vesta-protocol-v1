@@ -4,8 +4,8 @@ pragma solidity ^0.8.10;
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 
 /*
@@ -41,8 +41,8 @@ import "./Dependencies/CheckContract.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedTroves is Ownable, CheckContract, ISortedTroves {
-	using SafeMath for uint256;
+contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
+	using SafeMathUpgradeable for uint256;
 
 	bool public isInitialized;
 
@@ -79,11 +79,13 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
 	function setParams(
 		address _troveManagerAddress,
 		address _borrowerOperationsAddress
-	) external override onlyOwner {
+	) external override initializer {
 		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_borrowerOperationsAddress);
 		isInitialized = true;
+
+		__Ownable_init();
 
 		data[ETH_REF_ADDRESS].maxSize = MAX_UINT256;
 

@@ -1,13 +1,13 @@
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "./Dependencies/CheckContract.sol";
 import "./Interfaces/IStabilityPoolManager.sol";
 
 contract StabilityPoolManager is
-	Ownable,
+	OwnableUpgradeable,
 	CheckContract,
 	IStabilityPoolManager
 {
@@ -16,7 +16,7 @@ contract StabilityPoolManager is
 
 	string public constant NAME = "StabilityPoolManager";
 
-	bool public isInitialized = false;
+	bool public isInitialized;
 	address public adminContact;
 
 	modifier isController() {
@@ -27,9 +27,12 @@ contract StabilityPoolManager is
 		_;
 	}
 
-	function setAddresses(address _adminContract) external onlyOwner {
+	function setAddresses(address _adminContract) external initializer {
 		require(!isInitialized, "Already initialized");
 		isInitialized = true;
+
+		__Ownable_init();
+
 		adminContact = _adminContract;
 	}
 

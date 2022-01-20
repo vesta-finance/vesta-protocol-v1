@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/IStabilityPool.sol";
@@ -146,9 +146,9 @@ import "./Dependencies/CheckContract.sol";
  *
  */
 contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 	using LiquitySafeMath128 for uint128;
-	using SafeERC20 for IERC20;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
 	bytes32 public constant STABILITY_POOL_BYTES =
@@ -880,7 +880,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 			(bool success, ) = msg.sender.call{ value: _amount }("");
 			require(success, "StabilityPool: sending ETH failed");
 		} else {
-			IERC20(assetAddress).safeTransfer(msg.sender, _amount);
+			IERC20Upgradeable(assetAddress).safeTransfer(msg.sender, _amount);
 		}
 	}
 

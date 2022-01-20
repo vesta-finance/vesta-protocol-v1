@@ -11,7 +11,7 @@ let mdh;
 let config;
 let deployerWallet;
 let gasPrice;
-let liquityCore;
+let vestaCore;
 let VSTAContracts;
 
 let ADMIN_WALLET
@@ -41,9 +41,9 @@ async function mainnetDeploy(configParams) {
   console.log(`deployer's ETH balance before deployments: ${deployerETHBalance}`)
 
   // Deploy core logic contracts
-  liquityCore = await mdh.deployLiquityCoreMainnet(config.externalAddrs.TELLOR_MASTER, deploymentState, ADMIN_WALLET)
+  vestaCore = await mdh.deployLiquityCoreMainnet(config.externalAddrs.TELLOR_MASTER, deploymentState, ADMIN_WALLET)
 
-  await mdh.logContractObjects(liquityCore)
+  await mdh.logContractObjects(vestaCore)
 
   // Deploy VSTA Contracts
   VSTAContracts = await mdh.deployVSTAContractsMainnet(
@@ -56,13 +56,13 @@ async function mainnetDeploy(configParams) {
 
 
   await mdh.connectCoreContractsMainnet(
-    liquityCore,
+    vestaCore,
     VSTAContracts,
     config.externalAddrs.CHAINLINK_FLAG_HEALTH,
   )
 
   console.log("Connect VSTA Contract to Core");
-  await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, liquityCore)
+  await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
 
   //Add collaterals
 
@@ -71,16 +71,16 @@ async function mainnetDeploy(configParams) {
   if (allowance == 0)
     await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
 
-  console.log(await VSTAContracts.communityIssuance.adminContract(), liquityCore.adminContract.address);
+  console.log(await VSTAContracts.communityIssuance.adminContract(), vestaCore.adminContract.address);
 
-  if ((await liquityCore.stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS)) == ZERO_ADDRESS) {
+  if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - ETH")
 
     const txReceiptProxyETH = await mdh
       .sendAndWaitForTransaction(
-        liquityCore.adminContract.addNewCollateral(
+        vestaCore.adminContract.addNewCollateral(
           ZERO_ADDRESS,
-          liquityCore.stabilityPoolV1.address,
+          vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
           1,
           dec(333_334, 18),
@@ -89,7 +89,7 @@ async function mainnetDeploy(configParams) {
       })
 
     deploymentState["ProxyStabilityPoolETH"] = {
-      address: await liquityCore.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS),
+      address: await vestaCore.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS),
       txHash: txReceiptProxyETH.transactionHash
     }
   }
@@ -102,21 +102,21 @@ async function mainnetDeploy(configParams) {
     throw ("CANNOT FIND THE renBTC Address")
 
 
-  if ((await liquityCore.stabilityPoolManager.unsafeGetAssetStabilityPool(BTCAddress)) == ZERO_ADDRESS) {
+  if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(BTCAddress)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - BTC")
 
     const txReceiptProxyBTC = await mdh
       .sendAndWaitForTransaction(
-        liquityCore.adminContract.addNewCollateral(
+        vestaCore.adminContract.addNewCollateral(
           BTCAddress,
-          liquityCore.stabilityPoolV1.address,
+          vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
           2,
           dec(333_333, 18),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolRenBTC"] = {
-      address: await liquityCore.stabilityPoolManager.getAssetStabilityPool(BTCAddress),
+      address: await vestaCore.stabilityPoolManager.getAssetStabilityPool(BTCAddress),
       txHash: txReceiptProxyBTC.transactionHash
     }
   }
@@ -124,7 +124,7 @@ async function mainnetDeploy(configParams) {
   mdh.saveDeployment(deploymentState)
 
   // Deploy a read-only multi-trove getter
-  await mdh.deployMultiTroveGetterMainnet(liquityCore, deploymentState)
+  await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
 
   // Log VSTA  
   await mdh.logContractObjects(VSTAContracts)
@@ -132,16 +132,16 @@ async function mainnetDeploy(configParams) {
   // create vesting rule to beneficiaries
   console.log("Beneficiaries")
 
-  if ((await VSTAContracts.VSTAToken.allowance(deployerWallet.address, liquityCore.lockedVsta.address)) == 0)
-    await VSTAContracts.VSTAToken.approve(liquityCore.lockedVsta.address, ethers.constants.MaxUint256)
+  if ((await VSTAContracts.VSTAToken.allowance(deployerWallet.address, vestaCore.lockedVsta.address)) == 0)
+    await VSTAContracts.VSTAToken.approve(vestaCore.lockedVsta.address, ethers.constants.MaxUint256)
 
   for (const [wallet, amount] of Object.entries(config.beneficiaries)) {
     console.log("Beneficiary: %s for %s", wallet, amount)
 
     if (amount == 0) continue
 
-    if (!(await liquityCore.lockedVsta.isEntityExits(wallet))) {
-      const txReceipt = await mdh.sendAndWaitForTransaction(liquityCore.lockedVsta.addEntityVesting(wallet, dec(amount, 18)))
+    if (!(await vestaCore.lockedVsta.isEntityExits(wallet))) {
+      const txReceipt = await mdh.sendAndWaitForTransaction(vestaCore.lockedVsta.addEntityVesting(wallet, dec(amount, 18)))
 
       deploymentState[wallet] = {
         amount: amount,
@@ -152,8 +152,8 @@ async function mainnetDeploy(configParams) {
     }
   }
 
-  const lastGoodPrice = await liquityCore.priceFeed.lastGoodPrice(ZERO_ADDRESS)
-  const priceFeedInitialStatus = await liquityCore.priceFeed.status()
+  const lastGoodPrice = await vestaCore.priceFeed.lastGoodPrice(ZERO_ADDRESS)
+  const priceFeedInitialStatus = await vestaCore.priceFeed.status()
   th.logBN('PriceFeed first stored price', lastGoodPrice)
   console.log(`PriceFeed initial status: ${priceFeedInitialStatus}`)
   console.log(`PriceFeed initial status: ${priceFeedInitialStatus}`)
@@ -161,19 +161,20 @@ async function mainnetDeploy(configParams) {
   // Manually deploy
   // await uniswapPoolTryAddFund();
 
-  await transferOwnership(liquityCore.adminContract, ADMIN_WALLET);
-  await transferOwnership(liquityCore.priceFeed, ADMIN_WALLET);
-  await transferOwnership(liquityCore.vestaParameters, ADMIN_WALLET);
-  await transferOwnership(liquityCore.stabilityPoolManager, ADMIN_WALLET);
-  await transferOwnership(liquityCore.vstToken, ADMIN_WALLET);
+  await transferOwnership(vestaCore.adminContract, ADMIN_WALLET);
+  await transferOwnership(vestaCore.priceFeed, ADMIN_WALLET);
+  await transferOwnership(vestaCore.vestaParameters, ADMIN_WALLET);
+  await transferOwnership(vestaCore.stabilityPoolManager, ADMIN_WALLET);
+  await transferOwnership(vestaCore.vstToken, ADMIN_WALLET);
+  await transferOwnership(VSTAContracts.VSTAStaking, ADMIN_WALLET);
 
-  await transferOwnership(VSTAContracts.lockedVsta, TREASURY_WALLET);
+  await transferOwnership(vestaCore.lockedVsta, TREASURY_WALLET);
   await transferOwnership(VSTAContracts.communityIssuance, TREASURY_WALLET);
 }
 
 async function transferOwnership(contract, newOwner) {
 
-  console.log("Transfering Ownership of ", await contract.NAME())
+  console.log("Transfering Ownership of", contract.address)
 
   if (!newOwner)
     throw "Transfering ownership to null address";
@@ -184,13 +185,13 @@ async function transferOwnership(contract, newOwner) {
 
 async function OpenTrove() {
   // Open trove if not yet opened
-  const troveStatus = await liquityCore.troveManager.getTroveStatus(ZERO_ADDRESS, deployerWallet.address)
+  const troveStatus = await vestaCore.troveManager.getTroveStatus(ZERO_ADDRESS, deployerWallet.address)
   if (troveStatus.toString() != '1') {
     let _3kLUSDWithdrawal = th.dec(5000, 18) // 5000 LUSD
     let _3ETHcoll = th.dec(5, 'ether') // 5 ETH
     console.log('Opening trove...')
     await mdh.sendAndWaitForTransaction(
-      liquityCore.borrowerOperations.openTrove(
+      vestaCore.borrowerOperations.openTrove(
         ZERO_ADDRESS,
         _3ETHcoll,
         th._100pct,
@@ -205,16 +206,16 @@ async function OpenTrove() {
   }
 
   // Check deployer now has an open trove
-  console.log(`deployer is in sorted list after making trove: ${await liquityCore.sortedTroves.contains(ZERO_ADDRESS, deployerWallet.address)}`)
+  console.log(`deployer is in sorted list after making trove: ${await vestaCore.sortedTroves.contains(ZERO_ADDRESS, deployerWallet.address)}`)
 
-  const deployerTrove = await liquityCore.troveManager.Troves(ZERO_ADDRESS, deployerWallet.address)
+  const deployerTrove = await vestaCore.troveManager.Troves(ZERO_ADDRESS, deployerWallet.address)
   th.logBN('deployer debt', deployerTrove[0])
   th.logBN('deployer coll', deployerTrove[1])
   th.logBN('deployer stake', deployerTrove[2])
   console.log(`deployer's trove status: ${deployerTrove[3]}`)
 
   // Check deployer has LUSD
-  let deployerLUSDBal = await liquityCore.vstToken.balanceOf(deployerWallet.address)
+  let deployerLUSDBal = await vestaCore.vstToken.balanceOf(deployerWallet.address)
   th.logBN("deployer's LUSD balance", deployerLUSDBal)
 }
 

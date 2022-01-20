@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Interfaces/IDefaultPool.sol";
 import "./Dependencies/CheckContract.sol";
@@ -15,9 +15,9 @@ import "./Dependencies/CheckContract.sol";
  * When a trove makes an operation that applies its pending ETH and VST debt, its pending ETH and VST debt is moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is Ownable, CheckContract, IDefaultPool {
-	using SafeMath for uint256;
-	using SafeERC20 for IERC20;
+contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
+	using SafeMathUpgradeable for uint256;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "DefaultPool";
 
@@ -36,12 +36,14 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 	function setAddresses(
 		address _troveManagerAddress,
 		address _activePoolAddress
-	) external onlyOwner {
+	) external initializer {
 		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_activePoolAddress);
-
 		isInitialized = true;
+
+		__Ownable_init();
+
 		troveManagerAddress = _troveManagerAddress;
 		activePoolAddress = _activePoolAddress;
 
@@ -87,7 +89,7 @@ contract DefaultPool is Ownable, CheckContract, IDefaultPool {
 		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
 
 		if (_asset != ETH_REF_ADDRESS) {
-			IERC20(_asset).safeTransfer(activePool, _amount);
+			IERC20Upgradeable(_asset).safeTransfer(activePool, _amount);
 			IDeposit(activePool).receivedERC20(_asset, _amount);
 		} else {
 			(bool success, ) = activePool.call{ value: _amount }("");

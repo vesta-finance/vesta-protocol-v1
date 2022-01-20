@@ -7,7 +7,7 @@ import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 
 contract HintHelpers is VestaBase, CheckContract {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 	string public constant NAME = "HintHelpers";
 
 	struct LocalRedemptionVars {
@@ -35,13 +35,13 @@ contract HintHelpers is VestaBase, CheckContract {
 		address _vaultParametersAddress
 	) external initializer {
 		require(!isInitialized, "Already initialized");
-
 		checkContract(_sortedTrovesAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_vaultParametersAddress);
+		isInitialized = true;
+
 		__Ownable_init();
 
-		isInitialized = true;
 		sortedTroves = ISortedTroves(_sortedTrovesAddress);
 		troveManager = ITroveManager(_troveManagerAddress);
 

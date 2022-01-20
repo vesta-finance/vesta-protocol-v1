@@ -2,16 +2,20 @@
 
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Interfaces/ICollSurplusPool.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 
-contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
-	using SafeMath for uint256;
-	using SafeERC20 for IERC20;
+contract CollSurplusPool is
+	OwnableUpgradeable,
+	CheckContract,
+	ICollSurplusPool
+{
+	using SafeMathUpgradeable for uint256;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CollSurplusPool";
 	address constant ETH_REF_ADDRESS = address(0);
@@ -33,13 +37,15 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 		address _borrowerOperationsAddress,
 		address _troveManagerAddress,
 		address _activePoolAddress
-	) external override onlyOwner {
+	) external override initializer {
 		require(!isInitialized, "Already initialized");
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_activePoolAddress);
-
 		isInitialized = true;
+
+		__Ownable_init();
+
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		troveManagerAddress = _troveManagerAddress;
 		activePoolAddress = _activePoolAddress;
@@ -104,7 +110,7 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 			(bool success, ) = _account.call{ value: claimableColl }("");
 			require(success, "CollSurplusPool: sending ETH failed");
 		} else {
-			IERC20(_asset).safeTransfer(_account, claimableColl);
+			IERC20Upgradeable(_asset).safeTransfer(_account, claimableColl);
 		}
 	}
 

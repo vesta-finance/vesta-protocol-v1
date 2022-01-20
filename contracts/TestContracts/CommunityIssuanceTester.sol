@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "../VSTA/CommunityIssuance.sol";
 
 contract CommunityIssuanceTester is CommunityIssuance {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	function obtainVSTA(uint256 _amount) external {
 		vstaToken.transfer(msg.sender, _amount);

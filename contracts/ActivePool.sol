@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IDefaultPool.sol";
@@ -20,9 +20,9 @@ import "./Dependencies/CheckContract.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is Ownable, CheckContract, IActivePool {
-	using SafeERC20 for IERC20;
-	using SafeMath for uint256;
+contract ActivePool is OwnableUpgradeable, CheckContract, IActivePool {
+	using SafeERC20Upgradeable for IERC20Upgradeable;
+	using SafeMathUpgradeable for uint256;
 
 	string public constant NAME = "ActivePool";
 	address constant ETH_REF_ADDRESS = address(0);
@@ -47,15 +47,16 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 		address _stabilityManagerAddress,
 		address _defaultPoolAddress,
 		address _collSurplusPoolAddress
-	) external onlyOwner {
+	) external initializer {
 		require(!isInitialized, "Already initialized");
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_stabilityManagerAddress);
 		checkContract(_defaultPoolAddress);
 		checkContract(_collSurplusPoolAddress);
-
 		isInitialized = true;
+
+		__Ownable_init();
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		troveManagerAddress = _troveManagerAddress;
@@ -113,7 +114,7 @@ contract ActivePool is Ownable, CheckContract, IActivePool {
 		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
 
 		if (_asset != ETH_REF_ADDRESS) {
-			IERC20(_asset).safeTransfer(_account, _amount);
+			IERC20Upgradeable(_asset).safeTransfer(_account, _amount);
 
 			if (isERC20DepositContract(_account)) {
 				IDeposit(_account).receivedERC20(_asset, _amount);

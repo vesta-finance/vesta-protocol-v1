@@ -9,20 +9,20 @@ import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";
 import "../Interfaces/IPriceFeed.sol";
 import "../Interfaces/IVestaBase.sol";
-import "../Interfaces/IVestaParameters.sol";
+import "../Interfaces/BaseVestaParameters.sol";
 
 /*
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
 contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 	address public constant ETH_REF_ADDRESS = address(0);
 
-	IVestaParameters public override vestaParams;
+	BaseVestaParameters public override vestaParams;
 
 	function setVestaParameters(address _vaultParams) public onlyOwner {
-		vestaParams = IVestaParameters(_vaultParams);
+		vestaParams = BaseVestaParameters(_vaultParams);
 		emit VaultParametersBaseChanged(_vaultParams);
 	}
 

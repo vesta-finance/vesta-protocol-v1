@@ -85,7 +85,7 @@ contract('PriceFeed', async accounts => {
     it("setAddresses should fail whe called by nonOwner", async () => {
       await assertRevert(
         priceFeed.setAddresses(chainFlagMock.address, mockTellor.address, adminContract.address, { from: alice }),
-        "Ownable: caller is not the owner"
+        "OwnableUpgradeable: caller is not the owner"
       )
     })
 
@@ -100,7 +100,7 @@ contract('PriceFeed', async accounts => {
 
       await assertRevert(
         priceFeed.setAddresses(chainFlagMock.address, mockTellor.address, adminContract.address, { from: alice }),
-        "Ownable: caller is not the owner"
+        "OwnableUpgradeable: caller is not the owner"
       )
     })
   })

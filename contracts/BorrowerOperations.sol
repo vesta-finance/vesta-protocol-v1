@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/ITroveManager.sol";
@@ -19,8 +19,8 @@ contract BorrowerOperations is
 	CheckContract,
 	IBorrowerOperations
 {
-	using SafeMath for uint256;
-	using SafeERC20 for IERC20;
+	using SafeMathUpgradeable for uint256;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "BorrowerOperations";
 
@@ -120,9 +120,9 @@ contract BorrowerOperations is
 		checkContract(_vstTokenAddress);
 		checkContract(_VSTAStakingAddress);
 		checkContract(_vestaParamsAddress);
-		__Ownable_init();
-
 		isInitialized = true;
+
+		__Ownable_init();
 
 		troveManager = ITroveManager(_troveManagerAddress);
 		stabilityPoolManager = IStabilityPoolManager(
@@ -779,7 +779,7 @@ contract BorrowerOperations is
 			require(success, "BorrowerOps: Sending ETH to ActivePool failed");
 		} else {
 			_activePool.receivedERC20(_asset, _amount);
-			IERC20(_asset).safeTransferFrom(
+			IERC20Upgradeable(_asset).safeTransferFrom(
 				msg.sender,
 				address(_activePool),
 				_amount

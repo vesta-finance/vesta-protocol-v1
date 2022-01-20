@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 
 import "./Interfaces/IStabilityPoolManager.sol";
-import "./Interfaces/IVestaParameters.sol";
+import "./Interfaces/BaseVestaParameters.sol";
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICommunityIssuance.sol";
 
@@ -18,7 +18,7 @@ contract AdminContract is ProxyAdmin {
 		0xf704b47f65a99b2219b7213612db4be4a436cdf50624f4baca1373ef0de0aac7;
 	bool public isInitialized;
 
-	IVestaParameters private vestaParameters;
+	BaseVestaParameters private vestaParameters;
 	IStabilityPoolManager private stabilityPoolManager;
 	ICommunityIssuance private communityIssuance;
 
@@ -52,7 +52,7 @@ contract AdminContract is ProxyAdmin {
 		sortedTrovesAddress = _sortedTrovesAddress;
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 
-		vestaParameters = IVestaParameters(_paramaters);
+		vestaParameters = BaseVestaParameters(_paramaters);
 		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManager);
 	}
 

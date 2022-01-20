@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/CheckContract.sol";
@@ -13,13 +15,16 @@ import "../Interfaces/IDeposit.sol";
 
 contract VSTAStaking is
 	IVSTAStaking,
-	Ownable,
+	PausableUpgradeable,
+	OwnableUpgradeable,
 	CheckContract,
 	BaseMath,
-	ReentrancyGuard
+	ReentrancyGuardUpgradeable
 {
-	using SafeMath for uint256;
-	using SafeERC20 for IERC20;
+	using SafeMathUpgradeable for uint256;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
+
+	bool public isInitialized;
 
 	// --- Data ---
 	string public constant NAME = "VSTAStaking";
@@ -41,40 +46,44 @@ contract VSTAStaking is
 
 	address[] ASSET_TYPE;
 	mapping(address => bool) isAssetTracked;
+	mapping(address => uint256) public sentToTreasuryTracker;
 
-	IERC20 public override vstaToken;
-	IERC20 public vstToken;
+	IERC20Upgradeable public override vstaToken;
+	IERC20Upgradeable public vstToken;
 
 	address public troveManagerAddress;
 	address public borrowerOperationsAddress;
 	address public activePoolAddress;
-
-	bool public isInitialized;
+	address public treasury;
 
 	// --- Functions ---
-
 	function setAddresses(
 		address _vstaTokenAddress,
 		address _vstTokenAddress,
 		address _troveManagerAddress,
 		address _borrowerOperationsAddress,
-		address _activePoolAddress
-	) external override onlyOwner {
+		address _activePoolAddress,
+		address _treasury
+	) external override initializer {
 		require(!isInitialized, "Already Initialized");
-
 		checkContract(_vstaTokenAddress);
 		checkContract(_vstTokenAddress);
 		checkContract(_troveManagerAddress);
 		checkContract(_borrowerOperationsAddress);
 		checkContract(_activePoolAddress);
-
 		isInitialized = true;
 
-		vstaToken = IERC20(_vstaTokenAddress);
-		vstToken = IERC20(_vstTokenAddress);
+		__Pausable_init();
+		__ReentrancyGuard_init();
+		__Ownable_init();
+		_pause();
+
+		vstaToken = IERC20Upgradeable(_vstaTokenAddress);
+		vstToken = IERC20Upgradeable(_vstTokenAddress);
 		troveManagerAddress = _troveManagerAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		activePoolAddress = _activePoolAddress;
+		treasury = _treasury;
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
 		ASSET_TYPE.push(ETH_REF_ADDRESS);
@@ -84,12 +93,15 @@ contract VSTAStaking is
 		emit TroveManagerAddressSet(_troveManagerAddress);
 		emit BorrowerOperationsAddressSet(_borrowerOperationsAddress);
 		emit ActivePoolAddressSet(_activePoolAddress);
-
-		renounceOwnership();
 	}
 
 	// If caller has a pre-existing stake, send any accumulated ETH and VST gains to them.
-	function stake(uint256 _VSTAamount) external override nonReentrant {
+	function stake(uint256 _VSTAamount)
+		external
+		override
+		nonReentrant
+		whenNotPaused
+	{
 		require(_VSTAamount > 0);
 
 		uint256 currentStake = stakes[msg.sender];
@@ -176,6 +188,19 @@ contract VSTAStaking is
 		}
 	}
 
+	function pause() public onlyOwner {
+		_pause();
+	}
+
+	function unpause() public onlyOwner {
+		_unpause();
+	}
+
+	function changeTreasuryAddress(address _treasury) public onlyOwner {
+		treasury = _treasury;
+		emit TreasuryAddressChanged(_treasury);
+	}
+
 	// --- Reward-per-unit-staked increase functions. Called by Liquity core contracts ---
 
 	function increaseF_Asset(address _asset, uint256 _AssetFee)
@@ -183,6 +208,11 @@ contract VSTAStaking is
 		override
 		callerIsTroveManager
 	{
+		if (paused()) {
+			sendToTreasury(_asset, _AssetFee);
+			return;
+		}
+
 		if (!isAssetTracked[_asset]) {
 			isAssetTracked[_asset] = true;
 			ASSET_TYPE.push(_asset);
@@ -205,6 +235,11 @@ contract VSTAStaking is
 		override
 		callerIsBorrowerOperations
 	{
+		if (paused()) {
+			sendToTreasury(address(vstToken), _VSTFee);
+			return;
+		}
+
 		uint256 VSTFeePerVSTAStaked;
 
 		if (totalVSTAStaked > 0) {
@@ -215,6 +250,13 @@ contract VSTAStaking is
 
 		F_VST = F_VST.add(VSTFeePerVSTAStaked);
 		emit F_VSTUpdated(F_VST);
+	}
+
+	function sendToTreasury(address _asset, uint256 _amount) internal {
+		_sendAsset(treasury, _asset, _amount);
+		sentToTreasuryTracker[_asset] += _amount;
+
+		emit SentToTreasury(_asset, _amount);
 	}
 
 	// --- Pending reward functions ---
@@ -272,16 +314,23 @@ contract VSTAStaking is
 	function _sendAssetGainToUser(address _asset, uint256 _assetGain)
 		internal
 	{
+		_sendAsset(msg.sender, _asset, _assetGain);
 		emit AssetSent(_asset, msg.sender, _assetGain);
+	}
 
+	function _sendAsset(
+		address _sendTo,
+		address _asset,
+		uint256 _amount
+	) internal {
 		if (_asset == ETH_REF_ADDRESS) {
-			(bool success, ) = msg.sender.call{ value: _assetGain }("");
+			(bool success, ) = _sendTo.call{ value: _amount }("");
 			require(
 				success,
 				"VSTAStaking: Failed to send accumulated AssetGain"
 			);
 		} else {
-			IERC20(_asset).safeTransfer(msg.sender, _assetGain);
+			IERC20Upgradeable(_asset).safeTransfer(_sendTo, _amount);
 		}
 	}
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 library LiquityMath {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	uint256 internal constant DECIMAL_PRECISION = 1 ether;
 

@@ -1,20 +1,23 @@
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../Dependencies/CheckContract.sol";
 
 import "./IActivePool.sol";
 import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 import "./IVestaBase.sol";
-import "./IVestaParameters.sol";
+import "./BaseVestaParameters.sol";
 
-abstract contract IVestaParameters is Ownable, CheckContract {
+abstract contract BaseVestaParameters is
+	OwnableUpgradeable,
+	CheckContract
+{
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
 
 	uint256 public constant REDEMPTION_BLOCK_DAY = 14;
 
-	uint256 public _100pct = 1000000000000000000; // 1e18 == 100%
+	uint256 public constant _100pct = 1000000000000000000; // 1e18 == 100%
 
 	// Minimum collateral ratio for individual troves
 	uint256 public constant MCR_DEFAULT = 1100000000000000000; // 110%
@@ -95,13 +98,15 @@ abstract contract IVestaParameters is Ownable, CheckContract {
 		address _defaultPool,
 		address _priceFeed,
 		address _adminContract
-	) public onlyOwner {
+	) public initializer {
 		require(!isInitialized, "Already initalized");
 		checkContract(_activePool);
 		checkContract(_defaultPool);
 		checkContract(_priceFeed);
 		checkContract(_adminContract);
 		isInitialized = true;
+
+		__Ownable_init();
 
 		adminContract = _adminContract;
 		activePool = IActivePool(_activePool);

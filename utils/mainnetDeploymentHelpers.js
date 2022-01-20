@@ -43,13 +43,16 @@ class MainnetDeploymentHelper {
     return minedTx
   }
 
-  async loadOrDeploy(factory, name, deploymentState, params = []) {
+  async loadOrDeploy(factory, name, deploymentState, proxy, params = []) {
     if (deploymentState[name] && deploymentState[name].address) {
       console.log(`Using previously deployed ${name} contract at address ${deploymentState[name].address}`)
       return await factory.attach(deploymentState[name].address);
     }
 
-    const contract = await factory.deploy(...params, { gasPrice: this.configParams.GAS_PRICE })
+    const contract = proxy
+      ? await upgrades.deployProxy(factory)
+      : await factory.deploy(...params, { gasPrice: this.configParams.GAS_PRICE });
+
     await this.deployerWallet.provider.waitForTransaction(contract.deployTransaction.hash, this.configParams.TX_CONFIRMATIONS)
 
     deploymentState[name] = {
@@ -90,19 +93,23 @@ class MainnetDeploymentHelper {
     const adminContractFactory = await this.getFactory("AdminContract")
 
     // Deploy txs
-    const priceFeed = await this.loadOrDeploy(priceFeedFactory, 'priceFeed', deploymentState)
-    const sortedTroves = await this.loadOrDeploy(sortedTrovesFactory, 'sortedTroves', deploymentState)
-    const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState)
-    const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState)
+
+    //// USE PROXY
+    const priceFeed = await this.loadOrDeploy(priceFeedFactory, 'priceFeed', deploymentState, true)
+    const sortedTroves = await this.loadOrDeploy(sortedTrovesFactory, 'sortedTroves', deploymentState, true)
+    const troveManager = await this.loadOrDeploy(troveManagerFactory, 'troveManager', deploymentState, true)
+    const activePool = await this.loadOrDeploy(activePoolFactory, 'activePool', deploymentState, true)
+    const stabilityPoolManager = await this.loadOrDeploy(StabilityPoolManagerFactory, 'stabilityPoolManager', deploymentState, true)
+    const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState, true)
+    const collSurplusPool = await this.loadOrDeploy(collSurplusPoolFactory, 'collSurplusPool', deploymentState, true)
+    const borrowerOperations = await this.loadOrDeploy(borrowerOperationsFactory, 'borrowerOperations', deploymentState, true)
+    const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState, true)
+    const vestaParameters = await this.loadOrDeploy(vaultParametersFactory, 'vestaParameters', deploymentState, true)
+
+    //// NO PROXY
     const stabilityPoolV1 = await this.loadOrDeploy(stabilityPoolFactory, 'stabilityPoolV1', deploymentState)
-    const stabilityPoolManager = await this.loadOrDeploy(StabilityPoolManagerFactory, 'stabilityPoolManager', deploymentState)
     const gasPool = await this.loadOrDeploy(gasPoolFactory, 'gasPool', deploymentState)
-    const defaultPool = await this.loadOrDeploy(defaultPoolFactory, 'defaultPool', deploymentState)
-    const collSurplusPool = await this.loadOrDeploy(collSurplusPoolFactory, 'collSurplusPool', deploymentState)
-    const borrowerOperations = await this.loadOrDeploy(borrowerOperationsFactory, 'borrowerOperations', deploymentState)
-    const hintHelpers = await this.loadOrDeploy(hintHelpersFactory, 'hintHelpers', deploymentState)
-    const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, [tellorMasterAddr])
-    const vestaParameters = await this.loadOrDeploy(vaultParametersFactory, 'vestaParameters', deploymentState)
+    const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, false, [tellorMasterAddr])
     const lockedVsta = await this.loadOrDeploy(lockedVstaFactory, 'lockedVsta', deploymentState)
     const adminContract = await this.loadOrDeploy(adminContractFactory, 'adminContract', deploymentState)
 
@@ -115,6 +122,7 @@ class MainnetDeploymentHelper {
       VSTTokenFactory,
       'VSTToken',
       deploymentState,
+      false,
       VSTTokenParams
     )
 
@@ -165,14 +173,15 @@ class MainnetDeploymentHelper {
     const communityIssuanceFactory = await this.getFactory("CommunityIssuance")
     const VSTATokenFactory = await this.getFactory("VSTAToken")
 
-    const VSTAStaking = await this.loadOrDeploy(VSTAStakingFactory, 'VSTAStaking', deploymentState)
-    const communityIssuance = await this.loadOrDeploy(communityIssuanceFactory, 'communityIssuance', deploymentState)
+    const VSTAStaking = await this.loadOrDeploy(VSTAStakingFactory, 'VSTAStaking', deploymentState, true)
+    const communityIssuance = await this.loadOrDeploy(communityIssuanceFactory, 'communityIssuance', deploymentState, true)
 
     // Deploy VSTA Token, passing Community Issuance and Factory addresses to the constructor
     const VSTAToken = await this.loadOrDeploy(
       VSTATokenFactory,
       'VSTAToken',
       deploymentState,
+      false,
       [treasurySigAddress]
     )
 
@@ -192,19 +201,6 @@ class MainnetDeploymentHelper {
     return VSTAContracts
   }
 
-  async deployUnipoolMainnet(deploymentState) {
-    const unipoolFactory = await this.getFactory("Unipool")
-    const unipool = await this.loadOrDeploy(unipoolFactory, 'unipool', deploymentState)
-
-    if (!this.configParams.ETHERSCAN_BASE_URL) {
-      console.log('No Etherscan Url defined, skipping verification')
-    } else {
-      await this.verifyContract('unipool', deploymentState)
-    }
-
-    return unipool
-  }
-
   async deployMultiTroveGetterMainnet(liquityCore, deploymentState) {
     const multiTroveGetterFactory = await this.getFactory("MultiTroveGetter")
     const multiTroveGetterParams = [
@@ -215,6 +211,7 @@ class MainnetDeploymentHelper {
       multiTroveGetterFactory,
       'multiTroveGetter',
       deploymentState,
+      false,
       multiTroveGetterParams
     )
 
@@ -345,7 +342,7 @@ class MainnetDeploymentHelper {
       ))
   }
 
-  async connectVSTAContractsToCoreMainnet(VSTAContracts, coreContracts) {
+  async connectVSTAContractsToCoreMainnet(VSTAContracts, coreContracts, treasuryAddress) {
     const gasPrice = this.configParams.GAS_PRICE
     await this.isOwnershipRenounced(VSTAContracts.VSTAStaking) ||
       await this.sendAndWaitForTransaction(VSTAContracts.VSTAStaking.setAddresses(
@@ -354,6 +351,7 @@ class MainnetDeploymentHelper {
         coreContracts.troveManager.address,
         coreContracts.borrowerOperations.address,
         coreContracts.activePool.address,
+        treasuryAddress,
         { gasPrice }
       ))
 

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../Interfaces/IStabilityPoolManager.sol";
@@ -18,8 +18,8 @@ contract CommunityIssuance is
 	CheckContract,
 	BaseMath
 {
-	using SafeMath for uint256;
-	using SafeERC20 for IERC20;
+	using SafeMathUpgradeable for uint256;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CommunityIssuance";
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
@@ -40,7 +40,7 @@ contract CommunityIssuance is
 	 */
 	uint256 public constant ISSUANCE_FACTOR = 999998681227695000;
 
-	IERC20 public vstaToken;
+	IERC20Upgradeable public vstaToken;
 	IStabilityPoolManager public stabilityPoolManager;
 
 	mapping(address => uint256) public totalVSTAIssued;
@@ -49,7 +49,7 @@ contract CommunityIssuance is
 
 	address public adminContract;
 
-	bool public isInitialized = false;
+	bool public isInitialized;
 
 	modifier activeStabilityPoolOnly(address _pool) {
 		require(
@@ -82,7 +82,7 @@ contract CommunityIssuance is
 
 		adminContract = _adminContract;
 
-		vstaToken = IERC20(_vstaTokenAddress);
+		vstaToken = IERC20Upgradeable(_vstaTokenAddress);
 		stabilityPoolManager = IStabilityPoolManager(
 			_stabilityPoolManagerAddress
 		);

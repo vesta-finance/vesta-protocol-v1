@@ -7,7 +7,7 @@ import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 
 contract TroveManager is VestaBase, CheckContract, ITroveManager {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 	string public constant NAME = "TroveManager";
 
 	// --- Connected contract declarations ---
@@ -86,7 +86,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	mapping(address => uint256) public lastETHError_Redistribution;
 	mapping(address => uint256) public lastVSTDebtError_Redistribution;
 
-	bool public isInitialized = false;
+	bool public isInitialized;
 
 	modifier onlyBorrowerOperations() {
 		require(
@@ -126,8 +126,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		checkContract(_vstaStakingAddress);
 		checkContract(_vestaParamsAddress);
 		isInitialized = true;
-		__Ownable_init();
 
+		__Ownable_init();
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		stabilityPoolManager = IStabilityPoolManager(

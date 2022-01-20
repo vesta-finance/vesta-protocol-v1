@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Dependencies/LiquityMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../Interfaces/IBorrowerOperations.sol";
@@ -18,7 +18,7 @@ contract BorrowerWrappersScript is
 	ETHTransferScript,
 	VSTAStakingScript
 {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	struct Local_var {
 		address _asset;

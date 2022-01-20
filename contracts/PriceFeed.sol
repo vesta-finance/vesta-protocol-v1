@@ -4,8 +4,8 @@ pragma solidity ^0.8.10;
 import "./Interfaces/IPriceFeed.sol";
 import "./Interfaces/ITellorCaller.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/LiquityMath.sol";
@@ -18,8 +18,13 @@ import "./Dependencies/LiquityMath.sol";
  * switching oracles based on oracle failures, timeouts, and conditions for returning to the primary
  * Chainlink oracle.
  */
-contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
-	using SafeMath for uint256;
+contract PriceFeed is
+	OwnableUpgradeable,
+	CheckContract,
+	BaseMath,
+	IPriceFeed
+{
+	using SafeMathUpgradeable for uint256;
 
 	string public constant NAME = "PriceFeed";
 	address public constant FLAG_ARBITRUM_SEQ_OFFLINE =
@@ -38,7 +43,7 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
 	uint256 public constant MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 5e17; // 50%
 	uint256 public constant MAX_PRICE_DIFFERENCE_BETWEEN_ORACLES = 5e16; // 5%
 
-	bool public isInitialized = false;
+	bool public isInitialized;
 
 	address public adminContract;
 
@@ -58,12 +63,14 @@ contract PriceFeed is Ownable, CheckContract, BaseMath, IPriceFeed {
 		address _chainlinkFlag,
 		address _tellorCallerAddress,
 		address _adminContract
-	) external onlyOwner {
+	) external initializer {
 		require(!isInitialized);
 		checkContract(_tellorCallerAddress);
 		checkContract(_chainlinkFlag);
 		checkContract(_adminContract);
 		isInitialized = true;
+
+		__Ownable_init();
 
 		adminContract = _adminContract;
 		chainlinkFlags = FlagsInterface(_chainlinkFlag);

@@ -2,11 +2,13 @@
 
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 interface IVSTAStaking {
 	// --- Events --
 
+	event TreasuryAddressChanged(address _treausury);
+	event SentToTreasury(address indexed _asset, uint256 _amount);
 	event VSTATokenAddressSet(address _VSTATokenAddress);
 	event VSTTokenAddressSet(address _vstTokenAddress);
 	event TroveManagerAddressSet(address _troveManager);
@@ -34,7 +36,7 @@ interface IVSTAStaking {
 		uint256 _F_VST
 	);
 
-	function vstaToken() external view returns (IERC20);
+	function vstaToken() external view returns (IERC20Upgradeable);
 
 	// --- Functions ---
 
@@ -43,7 +45,8 @@ interface IVSTAStaking {
 		address _vstTokenAddress,
 		address _troveManagerAddress,
 		address _borrowerOperationsAddress,
-		address _activePoolAddress
+		address _activePoolAddress,
+		address _treasury
 	) external;
 
 	function stake(uint256 _VSTAamount) external;

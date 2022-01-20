@@ -1,8 +1,8 @@
 pragma solidity ^0.8.10;
 
-import "./Interfaces/IVestaParameters.sol";
+import "./Interfaces/BaseVestaParameters.sol";
 
-contract VestaParameters is IVestaParameters {
+contract VestaParameters is BaseVestaParameters {
 	string public constant NAME = "VestaParameters";
 
 	error SafeCheckError(

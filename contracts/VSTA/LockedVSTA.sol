@@ -13,8 +13,6 @@ contract LockedVSTA is Ownable, CheckContract {
 	using SafeERC20 for IERC20;
 	using SafeMath for uint256;
 
-	string public constant NAME = "LockedVSTA";
-
 	struct Rule {
 		uint256 createdDate;
 		uint256 totalSupply;
@@ -23,15 +21,16 @@ contract LockedVSTA is Ownable, CheckContract {
 		uint256 claimed;
 	}
 
+	string public constant NAME = "LockedVSTA";
 	uint256 public constant SIX_MONTHS = 26 weeks;
 	uint256 public constant TWO_YEARS = 730 days;
+
+	bool public isInitialized;
 
 	IERC20 private vstaToken;
 	uint256 private assignedVSTATokens;
 
 	mapping(address => Rule) public entitiesVesting;
-
-	bool public isInitialized;
 
 	modifier entityRuleExists(address _entity) {
 		require(

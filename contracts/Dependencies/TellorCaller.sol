@@ -3,7 +3,7 @@
 pragma solidity ^0.8.10;
 import "../Interfaces/ITellorCaller.sol";
 import "./ITellor.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 /*
  * This contract has a single external function that calls Tellor: getTellorCurrentValue().
@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
  *
  */
 contract TellorCaller is ITellorCaller {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	ITellor public tellor;
 

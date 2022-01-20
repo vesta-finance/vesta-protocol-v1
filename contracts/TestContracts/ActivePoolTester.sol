@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "../ActivePool.sol";
 
 contract ActivePoolTester is ActivePool {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	function unprotectedIncreaseVSTDebt(address _asset, uint256 _amount)
 		external
