@@ -141,11 +141,10 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 		override
 		callerIsActivePool
 	{
+		require(_asset != ETH_REF_ADDRESS, "ETH Cannot use this functions");
+
 		assetsBalance[_asset] = assetsBalance[_asset].add(_amount);
-		emit DefaultPoolAssetBalanceUpdated(
-			_asset,
-			assetsBalance[ETH_REF_ADDRESS]
-		);
+		emit DefaultPoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
 	}
 
 	// --- Fallback function ---

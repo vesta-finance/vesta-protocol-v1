@@ -125,7 +125,7 @@ contract CommunityIssuance is
 		vstaToken.safeTransferFrom(_spender, address(this), _assignedSupply);
 	}
 
-	function transferFunToAnotherStabilityPool(
+	function transferFundToAnotherStabilityPool(
 		address _target,
 		address _receiver,
 		uint256 _quantity

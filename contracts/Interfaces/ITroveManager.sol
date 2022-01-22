@@ -414,8 +414,4 @@ interface ITroveManager is IVestaBase {
 	function checkRecoveryMode(address _asset, uint256 _price)
 		external
 		returns (bool);
-
-	function isValidAsset(address asset) external view returns (bool);
-
-	function addNewAsset(address asset) external;
 }

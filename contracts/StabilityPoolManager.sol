@@ -1,7 +1,6 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "./Dependencies/CheckContract.sol";
 import "./Interfaces/IStabilityPoolManager.sol";
@@ -29,6 +28,7 @@ contract StabilityPoolManager is
 
 	function setAddresses(address _adminContract) external initializer {
 		require(!isInitialized, "Already initialized");
+		checkContract(_adminContract);
 		isInitialized = true;
 
 		__Ownable_init();
@@ -52,6 +52,14 @@ contract StabilityPoolManager is
 	{
 		CheckContract(asset);
 		CheckContract(stabilityPool);
+		require(
+			!validStabilityPools[stabilityPool],
+			"StabilityPool already created."
+		);
+		require(
+			IStabilityPool(stabilityPool).getAssetType() == asset,
+			"Stability Pool doesn't have the same asset type. Is it initialized?"
+		);
 
 		stabilityPools[asset] = stabilityPool;
 		validStabilityPools[stabilityPool] = true;

@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IDefaultPool.sol";
@@ -20,7 +21,12 @@ import "./Dependencies/CheckContract.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is OwnableUpgradeable, CheckContract, IActivePool {
+contract ActivePool is
+	OwnableUpgradeable,
+	ReentrancyGuardUpgradeable,
+	CheckContract,
+	IActivePool
+{
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 	using SafeMathUpgradeable for uint256;
 
@@ -57,6 +63,7 @@ contract ActivePool is OwnableUpgradeable, CheckContract, IActivePool {
 		isInitialized = true;
 
 		__Ownable_init();
+		__ReentrancyGuard_init();
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		troveManagerAddress = _troveManagerAddress;
@@ -103,7 +110,7 @@ contract ActivePool is OwnableUpgradeable, CheckContract, IActivePool {
 		address _asset,
 		address _account,
 		uint256 _amount
-	) external override callerIsBOorTroveMorSP {
+	) external override nonReentrant callerIsBOorTroveMorSP {
 		if (stabilityPoolManager.isStabilityPool(msg.sender)) {
 			assert(
 				address(stabilityPoolManager.getAssetStabilityPool(_asset)) ==
@@ -194,10 +201,7 @@ contract ActivePool is OwnableUpgradeable, CheckContract, IActivePool {
 		callerIsBorrowerOperationOrDefaultPool
 	{
 		assetsBalance[_asset] = assetsBalance[_asset].add(_amount);
-		emit ActivePoolAssetBalanceUpdated(
-			_asset,
-			assetsBalance[ETH_REF_ADDRESS]
-		);
+		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
 	}
 
 	// --- Fallback function ---

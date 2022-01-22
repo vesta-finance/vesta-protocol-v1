@@ -14,15 +14,17 @@ contract BorrowerOperationsScript is CheckContract {
 
 	function openTrove(
 		address _asset,
-		uint256 _amount,
+		uint256 _assetAmountSent,
 		uint256 _maxFee,
 		uint256 _VSTAmount,
 		address _upperHint,
 		address _lowerHint
 	) external payable {
-		borrowerOperations.openTrove{ value: getValueOrArg(_asset, _amount) }(
+		borrowerOperations.openTrove{
+			value: getValueOrArg(_asset, _assetAmountSent)
+		}(
 			_asset,
-			_amount,
+			_assetAmountSent,
 			_maxFee,
 			_VSTAmount,
 			_upperHint,
@@ -32,16 +34,13 @@ contract BorrowerOperationsScript is CheckContract {
 
 	function addColl(
 		address _asset,
-		uint256 _amount,
+		uint256 _assetAmountSent,
 		address _upperHint,
 		address _lowerHint
 	) external payable {
-		borrowerOperations.addColl{ value: getValueOrArg(_asset, _amount) }(
-			_asset,
-			_amount,
-			_upperHint,
-			_lowerHint
-		);
+		borrowerOperations.addColl{
+			value: getValueOrArg(_asset, _assetAmountSent)
+		}(_asset, _assetAmountSent, _upperHint, _lowerHint);
 	}
 
 	function withdrawColl(
@@ -89,7 +88,7 @@ contract BorrowerOperationsScript is CheckContract {
 
 	function adjustTrove(
 		address _asset,
-		uint256 _amount,
+		uint256 _assetAmountSent,
 		uint256 _maxFee,
 		uint256 _collWithdrawal,
 		uint256 _debtChange,
@@ -98,10 +97,10 @@ contract BorrowerOperationsScript is CheckContract {
 		address _lowerHint
 	) external payable {
 		borrowerOperations.adjustTrove{
-			value: getValueOrArg(_asset, _amount)
+			value: getValueOrArg(_asset, _assetAmountSent)
 		}(
 			_asset,
-			_amount,
+			_assetAmountSent,
 			_maxFee,
 			_collWithdrawal,
 			_debtChange,
@@ -115,10 +114,10 @@ contract BorrowerOperationsScript is CheckContract {
 		borrowerOperations.claimCollateral(_asset);
 	}
 
-	function getValueOrArg(address _asset, uint256 _amount)
+	function getValueOrArg(address _asset, uint256 _assetAmountSent)
 		private
 		returns (uint256)
 	{
-		return _asset == address(0) ? msg.value : _amount;
+		return _asset == address(0) ? msg.value : _assetAmountSent;
 	}
 }

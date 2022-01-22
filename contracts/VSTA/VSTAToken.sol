@@ -14,6 +14,8 @@ contract VSTAToken is CheckContract, ERC20Permit {
 	address public immutable treasury;
 
 	constructor(address _treasurySig) ERC20("Vesta", "VSTA") {
+		require(_treasurySig != address(0), "Invalid Treasury Sig");
+
 		uint256 lockedVSTA = _1_MILLION; //TODO
 		uint256 ethStabilityPoolSupply = 333_334 ether;
 		uint256 btcStabilityPoolSupply = 333_333 ether;

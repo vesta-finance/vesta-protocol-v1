@@ -194,11 +194,13 @@ interface IStabilityPool is IDeposit {
 	 */
 	function getCompoundedTotalStake() external view returns (uint256);
 
+	function getNameBytes() external view returns (bytes32);
+
+	function getAssetType() external view returns (address);
+
 	/*
 	 * Fallback function
 	 * Only callable by Active Pool, it just accounts for ETH received
 	 * receive() external payable;
 	 */
-
-	function getNameBytes() external view returns (bytes32);
 }

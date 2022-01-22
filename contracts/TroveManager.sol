@@ -47,7 +47,6 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	// The timestamp of the latest fee operation (redemption or new VST issuance)
 	mapping(address => uint256) public lastFeeOperationTime;
 
-	mapping(address => bool) validTroveAsset;
 	mapping(address => mapping(address => Trove)) public Troves;
 
 	mapping(address => uint256) public totalStakes;
@@ -2205,18 +2204,5 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 newDebt = Troves[_borrower][_asset].debt.sub(_debtDecrease);
 		Troves[_borrower][_asset].debt = newDebt;
 		return newDebt;
-	}
-
-	function isValidAsset(address _asset)
-		external
-		view
-		override
-		returns (bool)
-	{
-		return validTroveAsset[_asset];
-	}
-
-	function addNewAsset(address _asset) external override onlyOwner {
-		validTroveAsset[_asset] = true;
 	}
 }

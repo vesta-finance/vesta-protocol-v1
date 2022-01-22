@@ -33,7 +33,7 @@ interface ICommunityIssuance {
 		address _spender
 	) external;
 
-	function transferFunToAnotherStabilityPool(
+	function transferFundToAnotherStabilityPool(
 		address _target,
 		address _receiver,
 		uint256 _quantity

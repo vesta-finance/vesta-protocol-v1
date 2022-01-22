@@ -237,6 +237,10 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		return STABILITY_POOL_BYTES;
 	}
 
+	function getAssetType() external view override returns (address) {
+		return assetAddress;
+	}
+
 	function setAddresses(
 		address _assetAddress,
 		address _borrowerOperationsAddress,
@@ -304,7 +308,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		ICommunityIssuance communityIssuanceCached = communityIssuance;
 		_triggerVSTAIssuance(communityIssuanceCached);
 
-		uint256 depositorETHGain = getDepositorAssetGain(msg.sender);
+		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
 		uint256 VSTLoss = initialDeposit.sub(compoundedVSTDeposit); // Needed only for event log
 
@@ -323,9 +327,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		_updateDepositAndSnapshots(msg.sender, newDeposit);
 
 		emit UserDepositChanged(msg.sender, newDeposit);
-		emit AssetGainWithdrawn(msg.sender, depositorETHGain, VSTLoss); // VST Loss required for event log
+		emit AssetGainWithdrawn(msg.sender, depositorAssetGain, VSTLoss); // VST Loss required for event log
 
-		_sendETHGainToDepositor(depositorETHGain);
+		_sendAssetGainToDepositor(depositorAssetGain);
 	}
 
 	/*  withdrawFromSP():
@@ -347,7 +351,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		_triggerVSTAIssuance(communityIssuanceCached);
 
-		uint256 depositorETHGain = getDepositorAssetGain(msg.sender);
+		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
 
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
 		uint256 VSTtoWithdraw = LiquityMath._min(
@@ -372,9 +376,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		_updateDepositAndSnapshots(msg.sender, newDeposit);
 		emit UserDepositChanged(msg.sender, newDeposit);
 
-		emit AssetGainWithdrawn(msg.sender, depositorETHGain, VSTLoss); // VST Loss required for event log
+		emit AssetGainWithdrawn(msg.sender, depositorAssetGain, VSTLoss); // VST Loss required for event log
 
-		_sendETHGainToDepositor(depositorETHGain);
+		_sendAssetGainToDepositor(depositorAssetGain);
 	}
 
 	/* withdrawETHGainToTrove:
@@ -396,7 +400,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		_triggerVSTAIssuance(communityIssuanceCached);
 
-		uint256 depositorETHGain = getDepositorAssetGain(msg.sender);
+		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
 
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
 		uint256 VSTLoss = initialDeposit.sub(compoundedVSTDeposit); // Needed only for event log
@@ -414,16 +418,22 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		/* Emit events before transferring ETH gain to Trove.
          This lets the event log make more sense (i.e. so it appears that first the ETH gain is withdrawn
         and then it is deposited into the Trove, not the other way around). */
-		emit AssetGainWithdrawn(msg.sender, depositorETHGain, VSTLoss);
+		emit AssetGainWithdrawn(msg.sender, depositorAssetGain, VSTLoss);
 		emit UserDepositChanged(msg.sender, compoundedVSTDeposit);
 
-		assetBalance = assetBalance.sub(depositorETHGain);
+		assetBalance = assetBalance.sub(depositorAssetGain);
 		emit StabilityPoolAssetBalanceUpdated(assetBalance);
-		emit AssetSent(msg.sender, depositorETHGain);
+		emit AssetSent(msg.sender, depositorAssetGain);
 
 		borrowerOperations.moveETHGainToTrove{
-			value: assetAddress == address(0) ? depositorETHGain : 0
-		}(assetAddress, depositorETHGain, msg.sender, _upperHint, _lowerHint);
+			value: assetAddress == address(0) ? depositorAssetGain : 0
+		}(
+			assetAddress,
+			depositorAssetGain,
+			msg.sender,
+			_upperHint,
+			_lowerHint
+		);
 	}
 
 	// --- VSTA issuance functions ---
@@ -508,11 +518,14 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		_triggerVSTAIssuance(communityIssuance);
 
 		(
-			uint256 ETHGainPerUnitStaked,
+			uint256 AssetGainPerUnitStaked,
 			uint256 VSTLossPerUnitStaked
 		) = _computeRewardsPerUnitStaked(_collToAdd, _debtToOffset, totalVST);
 
-		_updateRewardSumAndProduct(ETHGainPerUnitStaked, VSTLossPerUnitStaked); // updates S and P
+		_updateRewardSumAndProduct(
+			AssetGainPerUnitStaked,
+			VSTLossPerUnitStaked
+		); // updates S and P
 
 		_moveOffsetCollAndDebt(_collToAdd, _debtToOffset);
 	}
@@ -525,7 +538,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 _totalVSTDeposits
 	)
 		internal
-		returns (uint256 ETHGainPerUnitStaked, uint256 VSTLossPerUnitStaked)
+		returns (uint256 AssetGainPerUnitStaked, uint256 VSTLossPerUnitStaked)
 	{
 		/*
 		 * Compute the VST and ETH rewards. Uses a "feedback" error correction, to keep
@@ -538,7 +551,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		 * 4) Store these errors for use in the next correction when this function is called.
 		 * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
 		 */
-		uint256 ETHNumerator = _collToAdd.mul(DECIMAL_PRECISION).add(
+		uint256 AssetNumerator = _collToAdd.mul(DECIMAL_PRECISION).add(
 			lastAssetError_Offset
 		);
 
@@ -562,17 +575,17 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 			).sub(VSTLossNumerator);
 		}
 
-		ETHGainPerUnitStaked = ETHNumerator.div(_totalVSTDeposits);
-		lastAssetError_Offset = ETHNumerator.sub(
-			ETHGainPerUnitStaked.mul(_totalVSTDeposits)
+		AssetGainPerUnitStaked = AssetNumerator.div(_totalVSTDeposits);
+		lastAssetError_Offset = AssetNumerator.sub(
+			AssetGainPerUnitStaked.mul(_totalVSTDeposits)
 		);
 
-		return (ETHGainPerUnitStaked, VSTLossPerUnitStaked);
+		return (AssetGainPerUnitStaked, VSTLossPerUnitStaked);
 	}
 
 	// Update the Stability Pool reward sum S and product P
 	function _updateRewardSumAndProduct(
-		uint256 _ETHGainPerUnitStaked,
+		uint256 _AssetGainPerUnitStaked,
 		uint256 _VSTLossPerUnitStaked
 	) internal {
 		uint256 currentP = P;
@@ -600,8 +613,8 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		 *
 		 * Since S corresponds to ETH gain, and P to deposit loss, we update S first.
 		 */
-		uint256 marginalETHGain = _ETHGainPerUnitStaked.mul(currentP);
-		uint256 newS = currentS.add(marginalETHGain);
+		uint256 marginalAssetGain = _AssetGainPerUnitStaked.mul(currentP);
+		uint256 newS = currentS.add(marginalAssetGain);
 		epochToScaleToSum[currentEpochCached][currentScaleCached] = newS;
 		emit S_Updated(newS, currentEpochCached, currentScaleCached);
 
@@ -867,7 +880,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		emit StabilityPoolVSTBalanceUpdated(newTotalVSTDeposits);
 	}
 
-	function _sendETHGainToDepositor(uint256 _amount) internal {
+	function _sendAssetGainToDepositor(uint256 _amount) internal {
 		if (_amount == 0) {
 			return;
 		}

@@ -104,7 +104,7 @@ contract CollSurplusPool is
 		emit CollBalanceUpdated(_account, 0);
 
 		balances[_asset] = balances[_asset].sub(claimableColl);
-		emit EtherSent(_account, claimableColl);
+		emit AssetSent(_account, claimableColl);
 
 		if (_asset == ETH_REF_ADDRESS) {
 			(bool success, ) = _account.call{ value: claimableColl }("");
