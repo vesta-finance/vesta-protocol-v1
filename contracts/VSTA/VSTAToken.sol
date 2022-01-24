@@ -19,10 +19,12 @@ contract VSTAToken is CheckContract, ERC20Permit {
 		uint256 lockedVSTA = _1_MILLION; //TODO
 		uint256 ethStabilityPoolSupply = 333_334 ether;
 		uint256 btcStabilityPoolSupply = 333_333 ether;
+		uint256 ohmStabilityPoolSupply = 333_333 ether;
 
 		uint256 totalForExecutions = lockedVSTA
 			.add(ethStabilityPoolSupply)
-			.add(btcStabilityPoolSupply);
+			.add(btcStabilityPoolSupply)
+			.add(ohmStabilityPoolSupply);
 
 		_mint(msg.sender, totalForExecutions);
 

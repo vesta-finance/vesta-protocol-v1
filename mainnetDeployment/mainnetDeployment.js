@@ -63,7 +63,6 @@ async function mainnetDeploy(configParams) {
 
   console.log("Connect VSTA Contract to Core");
   await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
-
   //Add collaterals
 
   const allowance = (await VSTAContracts.VSTAToken.allowance(deployerWallet.address, VSTAContracts.communityIssuance.address));
@@ -72,6 +71,7 @@ async function mainnetDeploy(configParams) {
     await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
 
   console.log(await VSTAContracts.communityIssuance.adminContract(), vestaCore.adminContract.address);
+
 
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - ETH")
@@ -95,7 +95,7 @@ async function mainnetDeploy(configParams) {
   }
 
   const BTCAddress = !config.IsMainnet
-    ? await mdh.deployMockERC20Contract(deploymentState)
+    ? await mdh.deployMockERC20Contract(deploymentState, "renBTC")
     : config.externalAddrs.REN_BTC
 
   if (!BTCAddress)
@@ -118,6 +118,45 @@ async function mainnetDeploy(configParams) {
     deploymentState["ProxyStabilityPoolRenBTC"] = {
       address: await vestaCore.stabilityPoolManager.getAssetStabilityPool(BTCAddress),
       txHash: txReceiptProxyBTC.transactionHash
+    }
+  }
+
+  const OHMAddress = !config.IsMainnet
+    ? await mdh.deployMockERC20Contract(deploymentState, "gOHM")
+    : config.externalAddrs.OHM
+
+  if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(OHMAddress)) == ZERO_ADDRESS) {
+    console.log("Creating Collateral - OHM")
+    let txReceiptProxyOHM;
+    if (config.IsMainnet) {
+      //TODO : VFS-6
+      txReceiptProxyOHM = await mdh
+        .sendAndWaitForTransaction(
+          vestaCore.adminContract.addNewCollateralWithIndexOracle(
+            OHMAddress,
+            vestaCore.stabilityPoolV1.address,
+            config.externalAddrs.CHAINLINK_OHM_PROXY,
+            config.externalAddrs.CHAINLINK_OHM_INDEX_PROXY,
+            2,
+            dec(333_333, 18),
+            config.REDEMPTION_SAFETY))
+    }
+    else { //IGNORE INDEX SYSTEM, USE FAKE ORACLE (LINK-USD)
+      txReceiptProxyOHM = await mdh
+        .sendAndWaitForTransaction(
+          vestaCore.adminContract.addNewCollateral(
+            OHMAddress,
+            vestaCore.stabilityPoolV1.address,
+            config.externalAddrs.CHAINLINK_OHM_PROXY,
+            2,
+            dec(333_333, 18),
+            config.REDEMPTION_SAFETY))
+    }
+
+
+    deploymentState["ProxyStabilityPoolOHM"] = {
+      address: await vestaCore.stabilityPoolManager.getAssetStabilityPool(OHMAddress),
+      txHash: txReceiptProxyOHM.transactionHash
     }
   }
 

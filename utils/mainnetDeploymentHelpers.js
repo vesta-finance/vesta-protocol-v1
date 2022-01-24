@@ -66,9 +66,9 @@ class MainnetDeploymentHelper {
   }
 
 
-  async deployMockERC20Contract(deploymentState) {
-    const ERC20TestFactory = await this.getFactory("ERC20Test")
-    const erc20Mock = await this.loadOrDeploy(ERC20TestFactory, 'erc20Mock', deploymentState)
+  async deployMockERC20Contract(deploymentState, name) {
+    const ERC20MockFactory = await this.getFactory("ERC20Mock")
+    const erc20Mock = await this.loadOrDeploy(ERC20MockFactory, name, deploymentState, false, [name, name, ZERO_ADDRESS, 0])
 
     return erc20Mock.address
   }

@@ -689,8 +689,8 @@ contract BorrowerOperations is
 		_requireUserAcceptsFee(VSTFee, _VSTAmount, _maxFeePercentage);
 
 		// Send fee to VSTA staking contract
-		VSTAStaking.increaseF_VST(VSTFee);
 		_VSTToken.mint(_asset, VSTAStakingAddress, VSTFee);
+		VSTAStaking.increaseF_VST(VSTFee);
 
 		return VSTFee;
 	}
@@ -778,12 +778,12 @@ contract BorrowerOperations is
 			(bool success, ) = address(_activePool).call{ value: _amount }("");
 			require(success, "BorrowerOps: Sending ETH to ActivePool failed");
 		} else {
-			_activePool.receivedERC20(_asset, _amount);
 			IERC20Upgradeable(_asset).safeTransferFrom(
 				msg.sender,
 				address(_activePool),
 				_amount
 			);
+			_activePool.receivedERC20(_asset, _amount);
 		}
 	}
 
