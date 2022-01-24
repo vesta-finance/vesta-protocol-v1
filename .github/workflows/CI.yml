@@ -1,0 +1,19 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  run-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      
+      - name: Install Components
+        run: yarn
+        
+      - name: Add secrets
+        run: mv git.secrets.js secrets.js
+
+      - name: Run tests
+        run: npm run test
