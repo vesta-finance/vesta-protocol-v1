@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"hardhat": "hardhat",
-		"test": "hardhat test",
+		"test": "hardhat test --max-memory 4096 ",
 		"deploy-testnet": "npx hardhat run --network rinkeby mainnetDeployment/rinkebyDeployment.js",
 		"deploy-local": "npx hardhat run --network localhost mainnetDeployment/localHostDeployment.js"
 	},
