@@ -13,6 +13,7 @@ let deployerWallet;
 let gasPrice;
 let vestaCore;
 let VSTAContracts;
+let deploymentState;
 
 let ADMIN_WALLET
 let TREASURY_WALLET
@@ -29,16 +30,53 @@ async function mainnetDeploy(configParams) {
   deployerWallet = (await ethers.getSigners())[0]
   mdh = new MainnetDeploymentHelper(config, deployerWallet)
 
-  const deploymentState = mdh.loadPreviousDeployment()
+  deploymentState = mdh.loadPreviousDeployment()
 
   console.log(`deployer address: ${deployerWallet.address}`)
+  assert.equal(deployerWallet.address, config.vestaAddresses.DEPLOYER)
 
-  // assert.equal(deployerWallet.address, config.vestaAddresses.DEPLOYER)
-  let deployerETHBalance = await ethers.provider.getBalance(deployerWallet.address)
-  console.log(`deployerETHBalance before: ${deployerETHBalance}`)
+  console.log(`deployerETHBalance before: ${await ethers.provider.getBalance(deployerWallet.address)}`)
 
-  deployerETHBalance = await ethers.provider.getBalance(deployerWallet.address)
-  console.log(`deployer's ETH balance before deployments: ${deployerETHBalance}`)
+  if (config.VSTA_TOKEN_ONLY) {
+    const partialContracts = await mdh.deployPartially(TREASURY_WALLET, deploymentState);
+
+    // create vesting rule to beneficiaries
+    console.log("Beneficiaries")
+
+    if ((await partialContracts.VSTAToken.allowance(deployerWallet.address, partialContracts.lockedVsta.address)) == 0)
+      await partialContracts.VSTAToken.approve(partialContracts.lockedVsta.address, ethers.constants.MaxUint256)
+
+    for (const [wallet, amount] of Object.entries(config.beneficiaries)) {
+
+      if (amount == 0) continue
+
+      if (!(await partialContracts.lockedVsta.isEntityExits(wallet))) {
+        console.log("Beneficiary: %s for %s", wallet, amount)
+
+        const txReceipt = await mdh.sendAndWaitForTransaction(partialContracts.lockedVsta.addEntityVesting(wallet, dec(amount, 18)))
+
+        deploymentState[wallet] = {
+          amount: amount,
+          txHash: txReceipt.transactionHash
+        }
+
+        mdh.saveDeployment(deploymentState)
+      }
+    }
+
+
+
+    await transferOwnership(partialContracts.lockedVsta, TREASURY_WALLET);
+
+
+    const balance = await partialContracts.VSTAToken.balanceOf(deployerWallet.address);
+    console.log(`Sending ${balance} VSTA to ${TREASURY_WALLET}`);
+    await partialContracts.VSTAToken.transfer(TREASURY_WALLET, balance)
+
+    console.log(`deployerETHBalance after: ${await ethers.provider.getBalance(deployerWallet.address)}`)
+
+    return;
+  }
 
   // Deploy core logic contracts
   vestaCore = await mdh.deployLiquityCoreMainnet(config.externalAddrs.TELLOR_MASTER, deploymentState, ADMIN_WALLET)
@@ -63,16 +101,27 @@ async function mainnetDeploy(configParams) {
 
   console.log("Connect VSTA Contract to Core");
   await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
-  //Add collaterals
 
+
+  console.log("Adding Collaterals");
   const allowance = (await VSTAContracts.VSTAToken.allowance(deployerWallet.address, VSTAContracts.communityIssuance.address));
-
   if (allowance == 0)
     await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
 
-  console.log(await VSTAContracts.communityIssuance.adminContract(), vestaCore.adminContract.address);
 
+  await addETHCollaterals();
+  await addBTCCollaterals();
+  await addGOHMCollaterals();
 
+  mdh.saveDeployment(deploymentState)
+
+  await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
+  await mdh.logContractObjects(VSTAContracts)
+
+  await giveContractsOwnerships();
+}
+
+async function addETHCollaterals() {
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - ETH")
 
@@ -93,7 +142,9 @@ async function mainnetDeploy(configParams) {
       txHash: txReceiptProxyETH.transactionHash
     }
   }
+}
 
+async function addBTCCollaterals() {
   const BTCAddress = !config.IsMainnet
     ? await mdh.deployMockERC20Contract(deploymentState, "renBTC")
     : config.externalAddrs.REN_BTC
@@ -120,7 +171,9 @@ async function mainnetDeploy(configParams) {
       txHash: txReceiptProxyBTC.transactionHash
     }
   }
+}
 
+async function addGOHMCollaterals() {
   const OHMAddress = !config.IsMainnet
     ? await mdh.deployMockERC20Contract(deploymentState, "gOHM")
     : config.externalAddrs.OHM
@@ -159,47 +212,9 @@ async function mainnetDeploy(configParams) {
       txHash: txReceiptProxyOHM.transactionHash
     }
   }
+}
 
-  mdh.saveDeployment(deploymentState)
-
-  // Deploy a read-only multi-trove getter
-  await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
-
-  // Log VSTA  
-  await mdh.logContractObjects(VSTAContracts)
-
-  // create vesting rule to beneficiaries
-  console.log("Beneficiaries")
-
-  if ((await VSTAContracts.VSTAToken.allowance(deployerWallet.address, vestaCore.lockedVsta.address)) == 0)
-    await VSTAContracts.VSTAToken.approve(vestaCore.lockedVsta.address, ethers.constants.MaxUint256)
-
-  for (const [wallet, amount] of Object.entries(config.beneficiaries)) {
-    console.log("Beneficiary: %s for %s", wallet, amount)
-
-    if (amount == 0) continue
-
-    if (!(await vestaCore.lockedVsta.isEntityExits(wallet))) {
-      const txReceipt = await mdh.sendAndWaitForTransaction(vestaCore.lockedVsta.addEntityVesting(wallet, dec(amount, 18)))
-
-      deploymentState[wallet] = {
-        amount: amount,
-        txHash: txReceipt.transactionHash
-      }
-
-      mdh.saveDeployment(deploymentState)
-    }
-  }
-
-  const lastGoodPrice = await vestaCore.priceFeed.lastGoodPrice(ZERO_ADDRESS)
-  const priceFeedInitialStatus = await vestaCore.priceFeed.status()
-  th.logBN('PriceFeed first stored price', lastGoodPrice)
-  console.log(`PriceFeed initial status: ${priceFeedInitialStatus}`)
-  console.log(`PriceFeed initial status: ${priceFeedInitialStatus}`)
-
-  // Manually deploy
-  // await uniswapPoolTryAddFund();
-
+async function giveContractsOwnerships() {
   await transferOwnership(vestaCore.adminContract, ADMIN_WALLET);
   await transferOwnership(vestaCore.priceFeed, ADMIN_WALLET);
   await transferOwnership(vestaCore.vestaParameters, ADMIN_WALLET);
@@ -220,6 +235,9 @@ async function transferOwnership(contract, newOwner) {
 
   if (await contract.owner() != newOwner)
     await contract.transferOwnership(newOwner)
+
+  console.log("Transfered Ownership of", contract.address)
+
 }
 
 async function OpenTrove() {

@@ -73,6 +73,43 @@ class MainnetDeploymentHelper {
     return erc20Mock.address
   }
 
+  async deployPartially(treasurySigAddress, deploymentState) {
+    const VSTATokenFactory = await this.getFactory("VSTAToken")
+    const lockedVstaFactory = await this.getFactory("LockedVSTA")
+
+    const lockedVsta = await this.loadOrDeploy(lockedVstaFactory, 'lockedVsta', deploymentState)
+
+    // Deploy VSTA Token, passing Community Issuance and Factory addresses to the constructor
+    const VSTAToken = await this.loadOrDeploy(
+      VSTATokenFactory,
+      'VSTAToken',
+      deploymentState,
+      false,
+      [treasurySigAddress]
+    )
+
+    if (!this.configParams.ETHERSCAN_BASE_URL) {
+      console.log('No Etherscan Url defined, skipping verification')
+    } else {
+      await this.verifyContract('LockedVSTA', deploymentState, [treasurySigAddress])
+      await this.verifyContract('VSTAToken', deploymentState, [treasurySigAddress])
+    }
+
+    await this.isOwnershipRenounced(lockedVsta) ||
+      await this.sendAndWaitForTransaction(lockedVsta.setAddresses(
+        VSTAToken.address,
+        { gasPrice: this.configParams.GAS_PRICE }
+      ))
+
+    const partialContracts = {
+      lockedVsta,
+      VSTAToken
+    }
+
+    return partialContracts
+  }
+
+
   async deployLiquityCoreMainnet(tellorMasterAddr, deploymentState, multisig) {
     // Get contract factories
     const priceFeedFactory = await this.getFactory("PriceFeed")

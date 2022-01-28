@@ -62,11 +62,10 @@ module.exports = {
       gas: 20000000,  // tx gas limit
     },
     mainnet: {
-      url: alchemyUrl(),
+      url: "https://arb1.arbitrum.io/rpc",
       gasPrice: process.env.GAS_PRICE ? parseInt(process.env.GAS_PRICE) : 20000000000,
       accounts: [
-        getSecret('DEPLOYER_PRIVATEKEY', '0x0'),
-        getSecret('ACCOUNT2_PRIVATEKEY', '0x0')
+        getSecret('DEPLOYER_PRIVATEKEY', '0x0')
       ]
     },
     rinkeby: {

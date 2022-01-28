@@ -15,28 +15,11 @@ contract VSTAToken is CheckContract, ERC20Permit {
 
 	constructor(address _treasurySig) ERC20("Vesta", "VSTA") {
 		require(_treasurySig != address(0), "Invalid Treasury Sig");
-
-		uint256 lockedVSTA = _1_MILLION; //TODO
-		uint256 ethStabilityPoolSupply = 333_334 ether;
-		uint256 btcStabilityPoolSupply = 333_333 ether;
-		uint256 ohmStabilityPoolSupply = 333_333 ether;
-
-		uint256 totalForExecutions = lockedVSTA
-			.add(ethStabilityPoolSupply)
-			.add(btcStabilityPoolSupply)
-			.add(ohmStabilityPoolSupply);
-
-		_mint(msg.sender, totalForExecutions);
-
-		// uint256 _lpRewardsEntitlement = _1_MILLION.mul(4).div(3); // Allocate 1.33 million for LP rewards
-		// lpRewardsEntitlement = _lpRewardsEntitlement;
-		// _mint(msg.sender, _lpRewardsEntitlement);
-
-		uint256 multisigEntitlement = _1_MILLION.mul(100).sub(
-			totalForExecutions
-		);
-
 		treasury = _treasurySig;
-		_mint(_treasurySig, multisigEntitlement);
+
+		//Lazy Mint to setup protocol.
+		//After the deployment scripts, deployer addr automatically send the fund to the treasury.
+		_mint(msg.sender, _1_MILLION.mul(50));
+		_mint(_treasurySig, _1_MILLION.mul(50));
 	}
 }
