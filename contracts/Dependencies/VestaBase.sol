@@ -60,9 +60,7 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 		returns (uint256 entireSystemColl)
 	{
 		uint256 activeColl = vestaParams.activePool().getAssetBalance(_asset);
-		uint256 liquidatedColl = vestaParams.defaultPool().getAssetBalance(
-			_asset
-		);
+		uint256 liquidatedColl = vestaParams.defaultPool().getAssetBalance(_asset);
 
 		return activeColl.add(liquidatedColl);
 	}
@@ -86,11 +84,7 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 		uint256 entireSystemColl = getEntireSystemColl(_asset);
 		uint256 entireSystemDebt = getEntireSystemDebt(_asset);
 
-		TCR = LiquityMath._computeCR(
-			entireSystemColl,
-			entireSystemDebt,
-			_price
-		);
+		TCR = LiquityMath._computeCR(entireSystemColl, entireSystemDebt, _price);
 
 		return TCR;
 	}

@@ -12,10 +12,7 @@ contract DefaultPoolTester is DefaultPool {
 		VSTDebts[_asset] = VSTDebts[_asset].add(_amount);
 	}
 
-	function unprotectedPayable(address _asset, uint256 amount)
-		external
-		payable
-	{
+	function unprotectedPayable(address _asset, uint256 amount) external payable {
 		amount = _asset == address(0) ? msg.value : amount;
 		assetsBalance[_asset] = assetsBalance[_asset].add(msg.value);
 	}

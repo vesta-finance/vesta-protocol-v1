@@ -274,7 +274,6 @@ class MainnetDeploymentHelper {
     await this.isOwnershipRenounced(contracts.priceFeed) ||
       await this.sendAndWaitForTransaction(contracts.priceFeed.setAddresses(
         chainlinkFlagAddress,
-        contracts.tellorCaller.address,
         contracts.adminContract.address,
         { gasPrice }))
 

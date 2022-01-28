@@ -131,7 +131,7 @@ async function addETHCollaterals() {
           ZERO_ADDRESS,
           vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
-          1,
+          ZERO_ADDRESS,
           dec(333_334, 18),
           config.REDEMPTION_SAFETY), {
         gasPrice,
@@ -162,7 +162,7 @@ async function addBTCCollaterals() {
           BTCAddress,
           vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
-          2,
+          ZERO_ADDRESS,
           dec(333_333, 18),
           config.REDEMPTION_SAFETY))
 
@@ -181,31 +181,17 @@ async function addGOHMCollaterals() {
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(OHMAddress)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - OHM")
     let txReceiptProxyOHM;
-    if (config.IsMainnet) {
-      //TODO : VFS-6
-      txReceiptProxyOHM = await mdh
-        .sendAndWaitForTransaction(
-          vestaCore.adminContract.addNewCollateralWithIndexOracle(
-            OHMAddress,
-            vestaCore.stabilityPoolV1.address,
-            config.externalAddrs.CHAINLINK_OHM_PROXY,
-            config.externalAddrs.CHAINLINK_OHM_INDEX_PROXY,
-            2,
-            dec(333_333, 18),
-            config.REDEMPTION_SAFETY))
-    }
-    else { //IGNORE INDEX SYSTEM, USE FAKE ORACLE (LINK-USD)
-      txReceiptProxyOHM = await mdh
-        .sendAndWaitForTransaction(
-          vestaCore.adminContract.addNewCollateral(
-            OHMAddress,
-            vestaCore.stabilityPoolV1.address,
-            config.externalAddrs.CHAINLINK_OHM_PROXY,
-            2,
-            dec(333_333, 18),
-            config.REDEMPTION_SAFETY))
-    }
 
+    txReceiptProxyOHM = await mdh
+      .sendAndWaitForTransaction(
+        vestaCore.adminContract.addNewCollateralWithIndexOracle(
+          OHMAddress,
+          vestaCore.stabilityPoolV1.address,
+          config.externalAddrs.CHAINLINK_OHM_PROXY,
+          config.IsMainnet ? config.externalAddrs.CHAINLINK_OHM_INDEX_PROXY : ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          dec(333_333, 18),
+          config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolOHM"] = {
       address: await vestaCore.stabilityPoolManager.getAssetStabilityPool(OHMAddress),

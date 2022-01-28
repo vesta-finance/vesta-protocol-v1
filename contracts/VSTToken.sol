@@ -48,9 +48,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 		troveManagerAddress = _troveManagerAddress;
 		emit TroveManagerAddressChanged(_troveManagerAddress);
 
-		stabilityPoolManager = IStabilityPoolManager(
-			_stabilityPoolManagerAddress
-		);
+		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManagerAddress);
 		emit StabilityPoolAddressChanged(_stabilityPoolManagerAddress);
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;

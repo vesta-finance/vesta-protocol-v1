@@ -54,17 +54,9 @@ contract MultiTroveGetter {
 			}
 
 			if (descend) {
-				_troves = _getMultipleSortedTrovesFromHead(
-					_asset,
-					startIdx,
-					_count
-				);
+				_troves = _getMultipleSortedTrovesFromHead(_asset, startIdx, _count);
 			} else {
-				_troves = _getMultipleSortedTrovesFromTail(
-					_asset,
-					startIdx,
-					_count
-				);
+				_troves = _getMultipleSortedTrovesFromTail(_asset, startIdx, _count);
 			}
 		}
 	}
@@ -94,10 +86,8 @@ contract MultiTroveGetter {
 				,
 
 			) = troveManager.Troves(_asset, currentTroveowner);
-			(
-				_troves[idx].snapshotAsset,
-				_troves[idx].snapshotVSTDebt
-			) = troveManager.rewardSnapshots(_asset, currentTroveowner);
+			(_troves[idx].snapshotAsset, _troves[idx].snapshotVSTDebt) = troveManager
+				.rewardSnapshots(_asset, currentTroveowner);
 
 			currentTroveowner = sortedTroves.getNext(_asset, currentTroveowner);
 		}
@@ -128,10 +118,8 @@ contract MultiTroveGetter {
 				,
 
 			) = troveManager.Troves(_asset, currentTroveowner);
-			(
-				_troves[idx].snapshotAsset,
-				_troves[idx].snapshotVSTDebt
-			) = troveManager.rewardSnapshots(_asset, currentTroveowner);
+			(_troves[idx].snapshotAsset, _troves[idx].snapshotVSTDebt) = troveManager
+				.rewardSnapshots(_asset, currentTroveowner);
 
 			currentTroveowner = sortedTroves.getPrev(_asset, currentTroveowner);
 		}

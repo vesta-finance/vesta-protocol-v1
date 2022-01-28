@@ -9,10 +9,7 @@ import "./IPriceFeed.sol";
 import "./IVestaBase.sol";
 import "./BaseVestaParameters.sol";
 
-abstract contract BaseVestaParameters is
-	OwnableUpgradeable,
-	CheckContract
-{
+abstract contract BaseVestaParameters is OwnableUpgradeable, CheckContract {
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
 
 	uint256 public constant REDEMPTION_BLOCK_DAY = 14;
@@ -66,10 +63,7 @@ abstract contract BaseVestaParameters is
 	event CCRChanged(uint256 oldCCR, uint256 newCCR);
 	event GasCompensationChanged(uint256 oldGasComp, uint256 newGasComp);
 	event MinNetDebtChanged(uint256 oldMinNet, uint256 newMinNet);
-	event PercentDivisorChanged(
-		uint256 oldPercentDiv,
-		uint256 newPercentDiv
-	);
+	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
 	event BorrowingFeeFloorChanged(
 		uint256 oldBorrowingFloorFee,
 		uint256 newBorrowingFloorFee
@@ -131,10 +125,10 @@ abstract contract BaseVestaParameters is
 		_setAsDefault(_asset);
 	}
 
-	function setAsDefaultWithRemptionBlock(
-		address _asset,
-		uint256 blockInDays
-	) public isController {
+	function setAsDefaultWithRemptionBlock(address _asset, uint256 blockInDays)
+		public
+		isController
+	{
 		if (blockInDays > 14) {
 			blockInDays = REDEMPTION_BLOCK_DAY;
 		}
@@ -190,9 +184,7 @@ abstract contract BaseVestaParameters is
 		public
 		virtual;
 
-	function setMinNetDebt(address _asset, uint256 minNetDebt)
-		public
-		virtual;
+	function setMinNetDebt(address _asset, uint256 minNetDebt) public virtual;
 
 	function setPercentDivisor(address _asset, uint256 precentDivisor)
 		public
@@ -206,8 +198,7 @@ abstract contract BaseVestaParameters is
 		public
 		virtual;
 
-	function setRedemptionFeeFloor(
-		address _asset,
-		uint256 redemptionFeeFloor
-	) public virtual;
+	function setRedemptionFeeFloor(address _asset, uint256 redemptionFeeFloor)
+		public
+		virtual;
 }

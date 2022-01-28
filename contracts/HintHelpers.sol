@@ -114,18 +114,13 @@ contract HintHelpers is VestaBase, CheckContract {
 		}
 
 		while (
-			currentTroveuser != address(0) &&
-			remainingVST > 0 &&
-			_maxIterations-- > 0
+			currentTroveuser != address(0) && remainingVST > 0 && _maxIterations-- > 0
 		) {
 			uint256 netVSTDebt = _getNetDebt(
 				vars._asset,
 				troveManager.getTroveDebt(vars._asset, currentTroveuser)
 			).add(
-					troveManager.getPendingVSTDebtReward(
-						vars._asset,
-						currentTroveuser
-					)
+					troveManager.getPendingVSTDebtReward(vars._asset, currentTroveuser)
 				);
 
 			if (netVSTDebt > remainingVST) {
@@ -138,10 +133,7 @@ contract HintHelpers is VestaBase, CheckContract {
 					uint256 ETH = troveManager
 						.getTroveColl(vars._asset, currentTroveuser)
 						.add(
-							troveManager.getPendingAssetReward(
-								vars._asset,
-								currentTroveuser
-							)
+							troveManager.getPendingAssetReward(vars._asset, currentTroveuser)
 						);
 
 					uint256 newColl = ETH.sub(
@@ -210,19 +202,14 @@ contract HintHelpers is VestaBase, CheckContract {
 		uint256 i = 1;
 
 		while (i < _numTrials) {
-			latestRandomSeed = uint256(
-				keccak256(abi.encodePacked(latestRandomSeed))
-			);
+			latestRandomSeed = uint256(keccak256(abi.encodePacked(latestRandomSeed)));
 
 			uint256 arrayIndex = latestRandomSeed % arrayLength;
 			address currentAddress = troveManager.getTroveFromTroveOwnersArray(
 				_asset,
 				arrayIndex
 			);
-			uint256 currentNICR = troveManager.getNominalICR(
-				_asset,
-				currentAddress
-			);
+			uint256 currentNICR = troveManager.getNominalICR(_asset, currentAddress);
 
 			// check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
 			uint256 currentDiff = LiquityMath._getAbsoluteDifference(

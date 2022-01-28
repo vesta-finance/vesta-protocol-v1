@@ -41,9 +41,7 @@ contract BorrowerWrappersScript is
 		address _troveManagerAddress,
 		address _VSTAStakingAddress
 	)
-		BorrowerOperationsScript(
-			IBorrowerOperations(_borrowerOperationsAddress)
-		)
+		BorrowerOperationsScript(IBorrowerOperations(_borrowerOperationsAddress))
 		VSTAStakingScript(_VSTAStakingAddress)
 	{
 		checkContract(_troveManagerAddress);
@@ -55,9 +53,7 @@ contract BorrowerWrappersScript is
 		checkContract(address(stabilityPoolCached));
 		stabilityPoolManager = stabilityPoolCached;
 
-		IPriceFeed priceFeedCached = troveManagerCached
-			.vestaParams()
-			.priceFeed();
+		IPriceFeed priceFeedCached = troveManagerCached.vestaParams().priceFeed();
 		checkContract(address(priceFeedCached));
 		priceFeed = priceFeedCached;
 
@@ -95,21 +91,12 @@ contract BorrowerWrappersScript is
 		// already checked in CollSurplusPool
 		assert(balanceAfter > balanceBefore);
 
-		uint256 totalCollateral = balanceAfter.sub(balanceBefore).add(
-			msg.value
-		);
+		uint256 totalCollateral = balanceAfter.sub(balanceBefore).add(msg.value);
 
 		// Open trove with obtained collateral, plus collateral sent by user
 		borrowerOperations.openTrove{
 			value: _asset == address(0) ? totalCollateral : 0
-		}(
-			_asset,
-			totalCollateral,
-			_maxFee,
-			_VSTAmount,
-			_upperHint,
-			_lowerHint
-		);
+		}(_asset, totalCollateral, _maxFee, _VSTAmount, _upperHint, _lowerHint);
 	}
 
 	function claimSPRewardsAndRecycle(
@@ -129,9 +116,7 @@ contract BorrowerWrappersScript is
 		uint256 VSTABalanceBefore = vstaToken.balanceOf(address(this));
 
 		// Claim rewards
-		stabilityPoolManager.getAssetStabilityPool(vars._asset).withdrawFromSP(
-				0
-			);
+		stabilityPoolManager.getAssetStabilityPool(vars._asset).withdrawFromSP(0);
 
 		uint256 collBalanceAfter = address(this).balance;
 		uint256 VSTABalanceAfter = vstaToken.balanceOf(address(this));
@@ -189,12 +174,8 @@ contract BorrowerWrappersScript is
 		// Claim gains
 		vstaStaking.unstake(0);
 
-		uint256 gainedCollateral = address(this).balance.sub(
-			collBalanceBefore
-		); // stack too deep issues :'(
-		uint256 gainedVST = vstToken.balanceOf(address(this)).sub(
-			VSTBalanceBefore
-		);
+		uint256 gainedCollateral = address(this).balance.sub(collBalanceBefore); // stack too deep issues :'(
+		uint256 gainedVST = vstToken.balanceOf(address(this)).sub(VSTBalanceBefore);
 
 		// Top up trove and get more VST, keeping ICR constant
 		if (gainedCollateral > 0) {
@@ -216,9 +197,7 @@ contract BorrowerWrappersScript is
 
 		uint256 totalVST = gainedVST.add(vars.netVSTAmount);
 		if (totalVST > 0) {
-			stabilityPoolManager.getAssetStabilityPool(_asset).provideToSP(
-				totalVST
-			);
+			stabilityPoolManager.getAssetStabilityPool(_asset).provideToSP(totalVST);
 
 			// Providing to Stability Pool also triggers VSTA claim, so stake it if any
 			uint256 VSTABalanceAfter = vstaToken.balanceOf(address(this));

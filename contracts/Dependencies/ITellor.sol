@@ -105,9 +105,7 @@ interface ITellor {
 	 * @param _amount amount the spender is being approved for
 	 * @return true if spender appproved successfully
 	 */
-	function approve(address _spender, uint256 _amount)
-		external
-		returns (bool);
+	function approve(address _spender, uint256 _amount) external returns (bool);
 
 	/**
 	 * @dev Allows for a transfer of tokens to _to
@@ -477,10 +475,10 @@ interface ITellor {
 	 * @param _timestamp is the timestampt to look up miners for
 	 * @return address[5] array of 5 addresses ofminers that mined the requestId
 	 */
-	function getSubmissionsByTimestamp(
-		uint256 _requestId,
-		uint256 _timestamp
-	) external view returns (uint256[5] memory);
+	function getSubmissionsByTimestamp(uint256 _requestId, uint256 _timestamp)
+		external
+		view
+		returns (uint256[5] memory);
 
 	/**
 	 * @dev Gets the timestamp for the value based on their index
@@ -488,10 +486,10 @@ interface ITellor {
 	 * @param _index is the value index to look up
 	 * @return uint timestamp
 	 */
-	function getTimestampbyRequestIDandIndex(
-		uint256 _requestID,
-		uint256 _index
-	) external view returns (uint256);
+	function getTimestampbyRequestIDandIndex(uint256 _requestID, uint256 _index)
+		external
+		view
+		returns (uint256);
 
 	/**
 	 * @dev Getter for the variables saved under the TellorStorageStruct uintVars variable

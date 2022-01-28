@@ -71,10 +71,7 @@ contract StabilityPoolManager is
 		override
 		returns (IStabilityPool)
 	{
-		require(
-			stabilityPools[asset] != address(0),
-			"Invalid asset StabilityPool"
-		);
+		require(stabilityPools[asset] != address(0), "Invalid asset StabilityPool");
 		return IStabilityPool(stabilityPools[asset]);
 	}
 

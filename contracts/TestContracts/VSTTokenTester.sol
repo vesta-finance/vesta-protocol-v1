@@ -77,14 +77,7 @@ contract VSTTokenTester is VSTToken {
 					uint16(0x1901),
 					DOMAIN_SEPARATOR,
 					keccak256(
-						abi.encode(
-							PERMIT_TYPEHASH,
-							owner,
-							spender,
-							amount,
-							nonce,
-							deadline
-						)
+						abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce, deadline)
 					)
 				)
 			);

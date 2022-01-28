@@ -122,9 +122,7 @@ interface ITroveManager is IVestaBase {
 
 	// --- Events ---
 
-	event BorrowerOperationsAddressChanged(
-		address _newBorrowerOperationsAddress
-	);
+	event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
 	event VSTTokenAddressChanged(address _newVSTTokenAddress);
 	event StabilityPoolAddressChanged(address _stabilityPoolAddress);
 	event GasPoolAddressChanged(address _gasPoolAddress);
@@ -162,14 +160,8 @@ interface ITroveManager is IVestaBase {
 		uint8 operation
 	);
 	event BaseRateUpdated(address indexed _asset, uint256 _baseRate);
-	event LastFeeOpTimeUpdated(
-		address indexed _asset,
-		uint256 _lastFeeOpTime
-	);
-	event TotalStakesUpdated(
-		address indexed _asset,
-		uint256 _newTotalStakes
-	);
+	event LastFeeOpTimeUpdated(address indexed _asset, uint256 _lastFeeOpTime);
+	event TotalStakesUpdated(address indexed _asset, uint256 _newTotalStakes);
 	event SystemSnapshotsUpdated(
 		address indexed _asset,
 		uint256 _totalStakesSnapshot,
@@ -227,19 +219,13 @@ interface ITroveManager is IVestaBase {
 		address _vestaParamsAddress
 	) external;
 
-	function stabilityPoolManager()
-		external
-		view
-		returns (IStabilityPoolManager);
+	function stabilityPoolManager() external view returns (IStabilityPoolManager);
 
 	function vstToken() external view returns (IVSTToken);
 
 	function vstaStaking() external view returns (IVSTAStaking);
 
-	function getTroveOwnersCount(address _asset)
-		external
-		view
-		returns (uint256);
+	function getTroveOwnersCount(address _asset) external view returns (uint256);
 
 	function getTroveFromTroveOwnersArray(address _asset, uint256 _index)
 		external
@@ -261,10 +247,8 @@ interface ITroveManager is IVestaBase {
 
 	function liquidateTroves(address _asset, uint256 _n) external;
 
-	function batchLiquidateTroves(
-		address _asset,
-		address[] memory _troveArray
-	) external;
+	function batchLiquidateTroves(address _asset, address[] memory _troveArray)
+		external;
 
 	function redeemCollateral(
 		address _asset,
@@ -319,10 +303,7 @@ interface ITroveManager is IVestaBase {
 
 	function removeStake(address _asset, address _borrower) external;
 
-	function getRedemptionRate(address _asset)
-		external
-		view
-		returns (uint256);
+	function getRedemptionRate(address _asset) external view returns (uint256);
 
 	function getRedemptionRateWithDecay(address _asset)
 		external
@@ -334,10 +315,7 @@ interface ITroveManager is IVestaBase {
 		view
 		returns (uint256);
 
-	function getBorrowingRate(address _asset)
-		external
-		view
-		returns (uint256);
+	function getBorrowingRate(address _asset) external view returns (uint256);
 
 	function getBorrowingRateWithDecay(address _asset)
 		external

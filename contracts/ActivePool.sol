@@ -95,12 +95,7 @@ contract ActivePool is
 		return assetsBalance[_asset];
 	}
 
-	function getVSTDebt(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getVSTDebt(address _asset) external view override returns (uint256) {
 		return VSTDebts[_asset];
 	}
 

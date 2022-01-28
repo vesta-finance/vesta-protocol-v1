@@ -114,10 +114,7 @@ contract CollSurplusPool is
 		}
 	}
 
-	function receivedERC20(address _asset, uint256 _amount)
-		external
-		override
-	{
+	function receivedERC20(address _asset, uint256 _amount) external override {
 		_requireCallerIsActivePool();
 		balances[_asset] = balances[_asset].add(_amount);
 	}

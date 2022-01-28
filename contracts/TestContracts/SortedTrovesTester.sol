@@ -34,11 +34,7 @@ contract SortedTrovesTester {
 		sortedTroves.reInsert(_asset, _id, _newNICR, _prevId, _nextId);
 	}
 
-	function getNominalICR(address, address)
-		external
-		pure
-		returns (uint256)
-	{
+	function getNominalICR(address, address) external pure returns (uint256) {
 		return 1;
 	}
 

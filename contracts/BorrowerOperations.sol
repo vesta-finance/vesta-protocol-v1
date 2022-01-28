@@ -14,11 +14,7 @@ import "./Interfaces/IStabilityPoolManager.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 
-contract BorrowerOperations is
-	VestaBase,
-	CheckContract,
-	IBorrowerOperations
-{
+contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -125,9 +121,7 @@ contract BorrowerOperations is
 		__Ownable_init();
 
 		troveManager = ITroveManager(_troveManagerAddress);
-		stabilityPoolManager = IStabilityPoolManager(
-			_stabilityPoolManagerAddress
-		);
+		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManagerAddress);
 		gasPoolAddress = _gasPoolAddress;
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -205,10 +199,7 @@ contract BorrowerOperations is
 			vars.compositeDebt,
 			vars.price
 		);
-		vars.NICR = LiquityMath._computeNominalCR(
-			_tokenAmount,
-			vars.compositeDebt
-		);
+		vars.NICR = LiquityMath._computeNominalCR(_tokenAmount, vars.compositeDebt);
 
 		if (isRecoveryMode) {
 			_requireICRisAboveCCR(vars.asset, vars.ICR);
@@ -261,11 +252,7 @@ contract BorrowerOperations is
 		emit TroveCreated(vars.asset, msg.sender, vars.arrayIndex);
 
 		// Move the ether to the Active Pool, and mint the VSTAmount to the borrower
-		_activePoolAddColl(
-			vars.asset,
-			contractsCache.activePool,
-			_tokenAmount
-		);
+		_activePoolAddColl(vars.asset, contractsCache.activePool, _tokenAmount);
 		_withdrawVST(
 			vars.asset,
 			contractsCache.activePool,
@@ -465,11 +452,7 @@ contract BorrowerOperations is
 		}
 		_requireSingularCollChange(_collWithdrawal, _assetSent);
 		_requireNonZeroAdjustment(_collWithdrawal, _VSTChange, _assetSent);
-		_requireTroveisActive(
-			vars.asset,
-			contractsCache.troveManager,
-			_borrower
-		);
+		_requireTroveisActive(vars.asset, contractsCache.troveManager, _borrower);
 
 		// Confirm the operation is either a borrower adjusting their own trove, or a pure ETH transfer from the Stability Pool to a trove
 		assert(
@@ -501,14 +484,8 @@ contract BorrowerOperations is
 			vars.netDebtChange = vars.netDebtChange.add(vars.VSTFee); // The raw debt change includes the fee
 		}
 
-		vars.debt = contractsCache.troveManager.getTroveDebt(
-			vars.asset,
-			_borrower
-		);
-		vars.coll = contractsCache.troveManager.getTroveColl(
-			vars.asset,
-			_borrower
-		);
+		vars.debt = contractsCache.troveManager.getTroveDebt(vars.asset, _borrower);
+		vars.coll = contractsCache.troveManager.getTroveColl(vars.asset, _borrower);
 
 		// Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
 		vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
@@ -880,10 +857,7 @@ contract BorrowerOperations is
 		);
 	}
 
-	function _requireNoCollWithdrawal(uint256 _collWithdrawal)
-		internal
-		pure
-	{
+	function _requireNoCollWithdrawal(uint256 _collWithdrawal) internal pure {
 		require(
 			_collWithdrawal == 0,
 			"BorrowerOps: Collateral withdrawal not permitted Recovery Mode"
@@ -1088,12 +1062,8 @@ contract BorrowerOperations is
 		uint256 newColl = _coll;
 		uint256 newDebt = _debt;
 
-		newColl = _isCollIncrease
-			? _coll.add(_collChange)
-			: _coll.sub(_collChange);
-		newDebt = _isDebtIncrease
-			? _debt.add(_debtChange)
-			: _debt.sub(_debtChange);
+		newColl = _isCollIncrease ? _coll.add(_collChange) : _coll.sub(_collChange);
+		newDebt = _isDebtIncrease ? _debt.add(_debtChange) : _debt.sub(_debtChange);
 
 		return (newColl, newDebt);
 	}
@@ -1137,8 +1107,7 @@ contract BorrowerOperations is
 		bool isEth = _asset == address(0);
 
 		require(
-			(canBeZero || (isEth && msg.value != 0)) ||
-				(!isEth && msg.value == 0),
+			(canBeZero || (isEth && msg.value != 0)) || (!isEth && msg.value == 0),
 			"BorrowerOp: Invalid Input. Override msg.value only if using ETH asset, otherwise use _tokenAmount"
 		);
 

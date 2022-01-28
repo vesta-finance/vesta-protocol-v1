@@ -83,9 +83,7 @@ contract CommunityIssuance is
 		adminContract = _adminContract;
 
 		vstaToken = IERC20Upgradeable(_vstaTokenAddress);
-		stabilityPoolManager = IStabilityPoolManager(
-			_stabilityPoolManagerAddress
-		);
+		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManagerAddress);
 
 		emit VSTATokenAddressSet(_vstaTokenAddress);
 		emit StabilityPoolAddressSet(_stabilityPoolManagerAddress);
@@ -162,9 +160,7 @@ contract CommunityIssuance is
 		uint256 latestTotalVSTAIssued = VSTASupplyCaps[msg.sender]
 			.mul(_getCumulativeIssuanceFraction(msg.sender))
 			.div(DECIMAL_PRECISION);
-		uint256 issuance = latestTotalVSTAIssued.sub(
-			totalVSTAIssued[msg.sender]
-		);
+		uint256 issuance = latestTotalVSTAIssued.sub(totalVSTAIssued[msg.sender]);
 
 		totalVSTAIssued[msg.sender] = latestTotalVSTAIssued;
 		emit TotalVSTAIssuedUpdated(msg.sender, latestTotalVSTAIssued);
@@ -193,10 +189,7 @@ contract CommunityIssuance is
 			.div(SECONDS_IN_ONE_MINUTE);
 
 		// f^t
-		uint256 power = LiquityMath._decPow(
-			ISSUANCE_FACTOR,
-			timePassedInMinutes
-		);
+		uint256 power = LiquityMath._decPow(ISSUANCE_FACTOR, timePassedInMinutes);
 
 		//  (1 - f^t)
 		uint256 cumulativeIssuanceFraction = (
@@ -207,16 +200,11 @@ contract CommunityIssuance is
 		return cumulativeIssuanceFraction;
 	}
 
-	function sendVSTA(address _account, uint256 _VSTAamount)
-		external
-		override
-	{
+	function sendVSTA(address _account, uint256 _VSTAamount) external override {
 		_requireCallerIsStabilityPool();
 
 		uint256 balanceVSTA = vstaToken.balanceOf(address(this));
-		uint256 safeAmount = balanceVSTA >= _VSTAamount
-			? _VSTAamount
-			: balanceVSTA;
+		uint256 safeAmount = balanceVSTA >= _VSTAamount ? _VSTAamount : balanceVSTA;
 
 		if (safeAmount == 0) {
 			return;

@@ -40,16 +40,12 @@ interface IStabilityPool is IDeposit {
 	event StabilityPoolAssetBalanceUpdated(uint256 _newBalance);
 	event StabilityPoolVSTBalanceUpdated(uint256 _newBalance);
 
-	event BorrowerOperationsAddressChanged(
-		address _newBorrowerOperationsAddress
-	);
+	event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
 	event TroveManagerAddressChanged(address _newTroveManagerAddress);
 	event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
 	event VSTTokenAddressChanged(address _newVSTTokenAddress);
 	event SortedTrovesAddressChanged(address _newSortedTrovesAddress);
-	event CommunityIssuanceAddressChanged(
-		address _newCommunityIssuanceAddress
-	);
+	event CommunityIssuanceAddressChanged(address _newCommunityIssuanceAddress);
 
 	event P_Updated(uint256 _P);
 	event S_Updated(uint256 _S, uint128 _epoch, uint128 _scale);
@@ -64,10 +60,7 @@ interface IStabilityPool is IDeposit {
 		uint256 _G
 	);
 	event SystemSnapshotUpdated(uint256 _P, uint256 _G);
-	event UserDepositChanged(
-		address indexed _depositor,
-		uint256 _newDeposit
-	);
+	event UserDepositChanged(address indexed _depositor, uint256 _newDeposit);
 	event StakeChanged(uint256 _newSystemStake, address _depositor);
 
 	event AssetGainWithdrawn(

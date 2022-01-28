@@ -354,10 +354,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
 
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
-		uint256 VSTtoWithdraw = LiquityMath._min(
-			_amount,
-			compoundedVSTDeposit
-		);
+		uint256 VSTtoWithdraw = LiquityMath._min(_amount, compoundedVSTDeposit);
 		uint256 VSTLoss = initialDeposit.sub(compoundedVSTDeposit); // Needed only for event log
 
 		// First pay out any VSTA gains
@@ -427,13 +424,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		borrowerOperations.moveETHGainToTrove{
 			value: assetAddress == address(0) ? depositorAssetGain : 0
-		}(
-			assetAddress,
-			depositorAssetGain,
-			msg.sender,
-			_upperHint,
-			_lowerHint
-		);
+		}(assetAddress, depositorAssetGain, msg.sender, _upperHint, _lowerHint);
 	}
 
 	// --- VSTA issuance functions ---
@@ -460,9 +451,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		VSTAPerUnitStaked = _computeVSTAPerUnitStaked(_VSTAIssuance, totalVST);
 
 		uint256 marginalVSTAGain = VSTAPerUnitStaked.mul(P);
-		epochToScaleToG[currentEpoch][currentScale] = epochToScaleToG[
-			currentEpoch
-		][currentScale].add(marginalVSTAGain);
+		epochToScaleToG[currentEpoch][currentScale] = epochToScaleToG[currentEpoch][
+			currentScale
+		].add(marginalVSTAGain);
 
 		emit G_Updated(
 			epochToScaleToG[currentEpoch][currentScale],
@@ -491,9 +482,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		);
 
 		uint256 VSTAPerUnitStaked = VSTANumerator.div(_totalVSTDeposits);
-		lastVSTAError = VSTANumerator.sub(
-			VSTAPerUnitStaked.mul(_totalVSTDeposits)
-		);
+		lastVSTAError = VSTANumerator.sub(VSTAPerUnitStaked.mul(_totalVSTDeposits));
 
 		return VSTAPerUnitStaked;
 	}
@@ -505,10 +494,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	 * and transfers the Trove's ETH collateral from ActivePool to StabilityPool.
 	 * Only called by liquidation functions in the TroveManager.
 	 */
-	function offset(uint256 _debtToOffset, uint256 _collToAdd)
-		external
-		override
-	{
+	function offset(uint256 _debtToOffset, uint256 _collToAdd) external override {
 		_requireCallerIsTroveManager();
 		uint256 totalVST = totalVSTDeposits; // cached to save an SLOAD
 		if (totalVST == 0 || _debtToOffset == 0) {
@@ -522,10 +508,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 			uint256 VSTLossPerUnitStaked
 		) = _computeRewardsPerUnitStaked(_collToAdd, _debtToOffset, totalVST);
 
-		_updateRewardSumAndProduct(
-			AssetGainPerUnitStaked,
-			VSTLossPerUnitStaked
-		); // updates S and P
+		_updateRewardSumAndProduct(AssetGainPerUnitStaked, VSTLossPerUnitStaked); // updates S and P
 
 		_moveOffsetCollAndDebt(_collToAdd, _debtToOffset);
 	}
@@ -567,12 +550,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 			 * Add 1 to make error in quotient positive. We want "slightly too much" VST loss,
 			 * which ensures the error in any given compoundedVSTDeposit favors the Stability Pool.
 			 */
-			VSTLossPerUnitStaked = (VSTLossNumerator.div(_totalVSTDeposits)).add(
-					1
-				);
-			lastVSTLossError_Offset = (
-				VSTLossPerUnitStaked.mul(_totalVSTDeposits)
-			).sub(VSTLossNumerator);
+			VSTLossPerUnitStaked = (VSTLossNumerator.div(_totalVSTDeposits)).add(1);
+			lastVSTLossError_Offset = (VSTLossPerUnitStaked.mul(_totalVSTDeposits))
+				.sub(VSTLossNumerator);
 		}
 
 		AssetGainPerUnitStaked = AssetNumerator.div(_totalVSTDeposits);
@@ -645,10 +625,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		emit P_Updated(newP);
 	}
 
-	function _moveOffsetCollAndDebt(
-		uint256 _collToAdd,
-		uint256 _debtToOffset
-	) internal {
+	function _moveOffsetCollAndDebt(uint256 _collToAdd, uint256 _debtToOffset)
+		internal
+	{
 		IActivePool activePoolCached = vestaParams.activePool();
 
 		// Cancel the liquidated VST debt with the VST in the stability pool
@@ -688,10 +667,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		Snapshots memory snapshots = depositSnapshots[_depositor];
 
-		uint256 AssetGain = _getAssetGainFromSnapshots(
-			initialDeposit,
-			snapshots
-		);
+		uint256 AssetGain = _getAssetGainFromSnapshots(initialDeposit, snapshots);
 		return AssetGain;
 	}
 
@@ -709,8 +685,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 S_Snapshot = snapshots.S;
 		uint256 P_Snapshot = snapshots.P;
 
-		uint256 firstPortion = epochToScaleToSum[epochSnapshot][scaleSnapshot]
-			.sub(S_Snapshot);
+		uint256 firstPortion = epochToScaleToSum[epochSnapshot][scaleSnapshot].sub(
+			S_Snapshot
+		);
 		uint256 secondPortion = epochToScaleToSum[epochSnapshot][
 			scaleSnapshot.add(1)
 		].div(SCALE_FACTOR);
@@ -763,11 +740,11 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 G_Snapshot = snapshots.G;
 		uint256 P_Snapshot = snapshots.P;
 
-		uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot]
-			.sub(G_Snapshot);
-		uint256 secondPortion = epochToScaleToG[epochSnapshot][
-			scaleSnapshot.add(1)
-		].div(SCALE_FACTOR);
+		uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot].sub(
+			G_Snapshot
+		);
+		uint256 secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot.add(1)]
+			.div(SCALE_FACTOR);
 
 		uint256 VSTAGain = initialStake
 			.mul(firstPortion.add(secondPortion))
@@ -807,12 +784,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	 *
 	 * The system's compounded stake is equal to the sum of its depositors' compounded deposits.
 	 */
-	function getCompoundedTotalStake()
-		public
-		view
-		override
-		returns (uint256)
-	{
+	function getCompoundedTotalStake() public view override returns (uint256) {
 		uint256 cachedStake = totalStakes;
 		if (cachedStake == 0) {
 			return 0;
@@ -845,9 +817,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		if (scaleDiff == 0) {
 			compoundedStake = initialStake.mul(P).div(snapshot_P);
 		} else if (scaleDiff == 1) {
-			compoundedStake = initialStake.mul(P).div(snapshot_P).div(
-				SCALE_FACTOR
-			);
+			compoundedStake = initialStake.mul(P).div(snapshot_P).div(SCALE_FACTOR);
 		} else {
 			compoundedStake = 0;
 		}
@@ -871,9 +841,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	// --- Sender functions for VST deposit, ETH gains and VSTA gains ---
 
 	// Transfer the VST tokens from the user to the Stability Pool's address, and update its recorded VST
-	function _sendVSTtoStabilityPool(address _address, uint256 _amount)
-		internal
-	{
+	function _sendVSTtoStabilityPool(address _address, uint256 _amount) internal {
 		vstToken.sendToPool(_address, address(this), _amount);
 		uint256 newTotalVSTDeposits = totalVSTDeposits.add(_amount);
 		totalVSTDeposits = newTotalVSTDeposits;
@@ -911,10 +879,9 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 	// --- Stability Pool Deposit Functionality ---
 
-	function _updateDepositAndSnapshots(
-		address _depositor,
-		uint256 _newValue
-	) internal {
+	function _updateDepositAndSnapshots(address _depositor, uint256 _newValue)
+		internal
+	{
 		deposits[_depositor] = _newValue;
 
 		if (_newValue == 0) {
@@ -930,9 +897,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 currentS = epochToScaleToSum[currentEpochCached][
 			currentScaleCached
 		];
-		uint256 currentG = epochToScaleToG[currentEpochCached][
-			currentScaleCached
-		];
+		uint256 currentG = epochToScaleToG[currentEpochCached][currentScaleCached];
 
 		Snapshots storage depositSnap = depositSnapshots[_depositor];
 
@@ -955,9 +920,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 currentP = P;
 
 		// Get G for the current epoch and current scale
-		uint256 currentG = epochToScaleToG[currentEpochCached][
-			currentScaleCached
-		];
+		uint256 currentG = epochToScaleToG[currentEpochCached][currentScaleCached];
 
 		// Record new snapshots of the latest running product P and sum G for the system
 		snapshots.P = currentP;
@@ -997,11 +960,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	function _requireNoUnderCollateralizedTroves() internal {
 		uint256 price = vestaParams.priceFeed().fetchPrice(assetAddress);
 		address lowestTrove = sortedTroves.getLast(assetAddress);
-		uint256 ICR = troveManager.getCurrentICR(
-			assetAddress,
-			lowestTrove,
-			price
-		);
+		uint256 ICR = troveManager.getCurrentICR(assetAddress, lowestTrove, price);
 		require(
 			ICR >= vestaParams.MCR(assetAddress),
 			"StabilityPool: Cannot withdraw while there are troves with ICR < MCR"
@@ -1017,10 +976,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 	function _requireUserHasNoDeposit(address _address) internal view {
 		uint256 initialDeposit = deposits[_address];
-		require(
-			initialDeposit == 0,
-			"StabilityPool: User must have no deposit"
-		);
+		require(initialDeposit == 0, "StabilityPool: User must have no deposit");
 	}
 
 	function _requireNonZeroAmount(uint256 _amount) internal pure {
@@ -1036,18 +992,12 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 	function _requireUserHasETHGain(address _depositor) internal view {
 		uint256 AssetGain = getDepositorAssetGain(_depositor);
-		require(
-			AssetGain > 0,
-			"StabilityPool: caller must have non-zero ETH Gain"
-		);
+		require(AssetGain > 0, "StabilityPool: caller must have non-zero ETH Gain");
 	}
 
 	// --- Fallback function ---
 
-	function receivedERC20(address _asset, uint256 _amount)
-		external
-		override
-	{
+	function receivedERC20(address _asset, uint256 _amount) external override {
 		_requireCallerIsActivePool();
 
 		require(

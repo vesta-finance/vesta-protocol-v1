@@ -22,14 +22,7 @@ contract BorrowerOperationsScript is CheckContract {
 	) external payable {
 		borrowerOperations.openTrove{
 			value: getValueOrArg(_asset, _assetAmountSent)
-		}(
-			_asset,
-			_assetAmountSent,
-			_maxFee,
-			_VSTAmount,
-			_upperHint,
-			_lowerHint
-		);
+		}(_asset, _assetAmountSent, _maxFee, _VSTAmount, _upperHint, _lowerHint);
 	}
 
 	function addColl(
@@ -49,12 +42,7 @@ contract BorrowerOperationsScript is CheckContract {
 		address _upperHint,
 		address _lowerHint
 	) external {
-		borrowerOperations.withdrawColl(
-			_asset,
-			_amount,
-			_upperHint,
-			_lowerHint
-		);
+		borrowerOperations.withdrawColl(_asset, _amount, _upperHint, _lowerHint);
 	}
 
 	function withdrawVST(

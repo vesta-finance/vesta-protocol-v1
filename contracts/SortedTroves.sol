@@ -145,9 +145,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		address prevId = _prevId;
 		address nextId = _nextId;
 
-		if (
-			!_validInsertPosition(_asset, _troveManager, _NICR, prevId, nextId)
-		) {
+		if (!_validInsertPosition(_asset, _troveManager, _NICR, prevId, nextId)) {
 			// Sender's hint was not a valid insert position
 			// Use sender's hint to find a valid insert position
 			(prevId, nextId) = _findInsertPosition(
@@ -220,13 +218,13 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 			} else {
 				// The removed node is neither the head nor the tail
 				// Set next pointer of previous node to the next node
-				data[_asset].nodes[data[_asset].nodes[_id].prevId].nextId = data[
-					_asset
-				].nodes[_id].nextId;
+				data[_asset].nodes[data[_asset].nodes[_id].prevId].nextId = data[_asset]
+					.nodes[_id]
+					.nextId;
 				// Set prev pointer of next node to the previous node
-				data[_asset].nodes[data[_asset].nodes[_id].nextId].prevId = data[
-					_asset
-				].nodes[_id].prevId;
+				data[_asset].nodes[data[_asset].nodes[_id].nextId].prevId = data[_asset]
+					.nodes[_id]
+					.prevId;
 			}
 		} else {
 			// List contains a single node
@@ -300,48 +298,28 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	/*
 	 * @dev Returns the current size of the list
 	 */
-	function getSize(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getSize(address _asset) external view override returns (uint256) {
 		return data[_asset].size;
 	}
 
 	/*
 	 * @dev Returns the maximum size of the list
 	 */
-	function getMaxSize(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getMaxSize(address _asset) external view override returns (uint256) {
 		return data[_asset].maxSize;
 	}
 
 	/*
 	 * @dev Returns the first node in the list (node with the largest NICR)
 	 */
-	function getFirst(address _asset)
-		external
-		view
-		override
-		returns (address)
-	{
+	function getFirst(address _asset) external view override returns (address) {
 		return data[_asset].head;
 	}
 
 	/*
 	 * @dev Returns the last node in the list (node with the smallest NICR)
 	 */
-	function getLast(address _asset)
-		external
-		view
-		override
-		returns (address)
-	{
+	function getLast(address _asset) external view override returns (address) {
 		return data[_asset].tail;
 	}
 
@@ -383,8 +361,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		address _prevId,
 		address _nextId
 	) external view override returns (bool) {
-		return
-			_validInsertPosition(_asset, troveManager, _NICR, _prevId, _nextId);
+		return _validInsertPosition(_asset, troveManager, _NICR, _prevId, _nextId);
 	}
 
 	function _validInsertPosition(
@@ -498,8 +475,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		address _prevId,
 		address _nextId
 	) external view override returns (address, address) {
-		return
-			_findInsertPosition(_asset, troveManager, _NICR, _prevId, _nextId);
+		return _findInsertPosition(_asset, troveManager, _NICR, _prevId, _nextId);
 	}
 
 	function _findInsertPosition(

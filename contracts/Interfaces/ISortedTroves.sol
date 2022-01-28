@@ -7,9 +7,7 @@ interface ISortedTroves {
 	// --- Events ---
 
 	event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);
-	event BorrowerOperationsAddressChanged(
-		address _borrowerOperationsAddress
-	);
+	event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
 	event NodeAdded(address indexed _asset, address _id, uint256 _NICR);
 	event NodeRemoved(address indexed _asset, address _id);
 
@@ -38,10 +36,7 @@ interface ISortedTroves {
 		address _nextId
 	) external;
 
-	function contains(address _asset, address _id)
-		external
-		view
-		returns (bool);
+	function contains(address _asset, address _id) external view returns (bool);
 
 	function isFull(address _asset) external view returns (bool);
 
@@ -55,15 +50,9 @@ interface ISortedTroves {
 
 	function getLast(address _asset) external view returns (address);
 
-	function getNext(address _asset, address _id)
-		external
-		view
-		returns (address);
+	function getNext(address _asset, address _id) external view returns (address);
 
-	function getPrev(address _asset, address _id)
-		external
-		view
-		returns (address);
+	function getPrev(address _asset, address _id) external view returns (address);
 
 	function validInsertPosition(
 		address _asset,

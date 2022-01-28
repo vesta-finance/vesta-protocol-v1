@@ -7,9 +7,7 @@ import "./IDeposit.sol";
 interface ICollSurplusPool is IDeposit {
 	// --- Events ---
 
-	event BorrowerOperationsAddressChanged(
-		address _newBorrowerOperationsAddress
-	);
+	event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
 	event TroveManagerAddressChanged(address _newTroveManagerAddress);
 	event ActivePoolAddressChanged(address _newActivePoolAddress);
 

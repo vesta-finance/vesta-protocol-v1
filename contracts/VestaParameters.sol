@@ -15,13 +15,7 @@ contract VestaParameters is BaseVestaParameters {
 	function setMCR(address _asset, uint256 newMCR)
 		public
 		override
-		safeCheck(
-			"MCR",
-			_asset,
-			newMCR,
-			1010000000000000000,
-			100000000000000000000
-		)
+		safeCheck("MCR", _asset, newMCR, 1010000000000000000, 100000000000000000000)
 		onlyOwner
 	{
 		uint256 oldMCR = MCR[_asset];
@@ -33,13 +27,7 @@ contract VestaParameters is BaseVestaParameters {
 	function setCCR(address _asset, uint256 newCCR)
 		public
 		override
-		safeCheck(
-			"CCR",
-			_asset,
-			newCCR,
-			1200000000000000000,
-			100000000000000000000
-		)
+		safeCheck("CCR", _asset, newCCR, 1200000000000000000, 100000000000000000000)
 		onlyOwner
 	{
 		uint256 oldCCR = CCR[_asset];
@@ -51,13 +39,7 @@ contract VestaParameters is BaseVestaParameters {
 	function setVSTGasCompensation(address _asset, uint256 gasCompensation)
 		public
 		override
-		safeCheck(
-			"Gas Compensation",
-			_asset,
-			gasCompensation,
-			1 ether,
-			200 ether
-		)
+		safeCheck("Gas Compensation", _asset, gasCompensation, 1 ether, 200 ether)
 		onlyOwner
 	{
 		uint256 oldGasComp = VST_GAS_COMPENSATION[_asset];
@@ -97,8 +79,7 @@ contract VestaParameters is BaseVestaParameters {
 		onlyOwner
 	{
 		uint256 oldBorrowing = BORROWING_FEE_FLOOR[_asset];
-		uint256 newBorrowingFee = (DECIMAL_PRECISION / 1000) *
-			borrowingFeeFloor;
+		uint256 newBorrowingFee = (DECIMAL_PRECISION / 1000) * borrowingFeeFloor;
 
 		BORROWING_FEE_FLOOR[_asset] = newBorrowingFee;
 
@@ -112,17 +93,13 @@ contract VestaParameters is BaseVestaParameters {
 		onlyOwner
 	{
 		uint256 oldMaxBorrowingFee = MAX_BORROWING_FEE[_asset];
-		uint256 newMaxBorrowingFee = (DECIMAL_PRECISION / 1000) *
-			maxBorrowingFee;
+		uint256 newMaxBorrowingFee = (DECIMAL_PRECISION / 1000) * maxBorrowingFee;
 
 		MAX_BORROWING_FEE[_asset] = newMaxBorrowingFee;
 		emit MaxBorrowingFeeChanged(oldMaxBorrowingFee, newMaxBorrowingFee);
 	}
 
-	function setRedemptionFeeFloor(
-		address _asset,
-		uint256 redemptionFeeFloor
-	)
+	function setRedemptionFeeFloor(address _asset, uint256 redemptionFeeFloor)
 		public
 		override
 		safeCheck("Redemption Fee Floor", _asset, redemptionFeeFloor, 3, 100)

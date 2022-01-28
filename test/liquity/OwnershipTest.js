@@ -121,9 +121,6 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
       const dumbContract = await GasPool.new()
       const params = [dumbContract.address, dumbContract.address]
 
-      // Attempt call from alice
-      await th.assertRevert(sortedTroves.setParams(...params, { from: alice }))
-
       // Attempt to use zero address
       await testZeroAddress(sortedTroves, params, 'setParams', 1)
       // Attempt to use non contract
@@ -158,7 +155,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('VSTAStaking', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(vstaStaking, 5)
+      await testSetAddresses(vstaStaking, 6)
     })
   })
 })

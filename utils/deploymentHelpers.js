@@ -334,9 +334,9 @@ class DeploymentHelper {
       await coreContracts.adminContract.transferOwnership(treasurySig);
 
     await VSTAContracts.vstaToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256, { from: treasurySig });
-    await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '32000000000000000000000000', 0, { from: treasurySig });
+    await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '32000000000000000000000000', 0, { from: treasurySig });
     await VSTAContracts.vstaToken.unprotectedMint(treasurySig, '32000000000000000000000000')
-    await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, 0, '32000000000000000000000000', 0, { from: treasurySig });
+    await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '32000000000000000000000000', 0, { from: treasurySig });
   }
 }
 module.exports = DeploymentHelper

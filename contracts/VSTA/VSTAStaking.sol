@@ -66,6 +66,7 @@ contract VSTAStaking is
 		address _treasury
 	) external override initializer {
 		require(!isInitialized, "Already Initialized");
+		require(_treasury != address(0), "Invalid Treausry Address");
 		checkContract(_vstaTokenAddress);
 		checkContract(_vstTokenAddress);
 		checkContract(_troveManagerAddress);
@@ -96,12 +97,7 @@ contract VSTAStaking is
 	}
 
 	// If caller has a pre-existing stake, send any accumulated ETH and VST gains to them.
-	function stake(uint256 _VSTAamount)
-		external
-		override
-		nonReentrant
-		whenNotPaused
-	{
+	function stake(uint256 _VSTAamount) external override nonReentrant whenNotPaused {
 		require(_VSTAamount > 0);
 
 		uint256 currentStake = stakes[msg.sender];
@@ -221,20 +217,14 @@ contract VSTAStaking is
 		uint256 AssetFeePerVSTAStaked;
 
 		if (totalVSTAStaked > 0) {
-			AssetFeePerVSTAStaked = _AssetFee.mul(DECIMAL_PRECISION).div(
-				totalVSTAStaked
-			);
+			AssetFeePerVSTAStaked = _AssetFee.mul(DECIMAL_PRECISION).div(totalVSTAStaked);
 		}
 
 		F_ASSETS[_asset] = F_ASSETS[_asset].add(AssetFeePerVSTAStaked);
 		emit F_AssetUpdated(_asset, F_ASSETS[_asset]);
 	}
 
-	function increaseF_VST(uint256 _VSTFee)
-		external
-		override
-		callerIsBorrowerOperations
-	{
+	function increaseF_VST(uint256 _VSTFee) external override callerIsBorrowerOperations {
 		if (paused()) {
 			sendToTreasury(address(vstToken), _VSTFee);
 			return;
@@ -243,9 +233,7 @@ contract VSTAStaking is
 		uint256 VSTFeePerVSTAStaked;
 
 		if (totalVSTAStaked > 0) {
-			VSTFeePerVSTAStaked = _VSTFee.mul(DECIMAL_PRECISION).div(
-				totalVSTAStaked
-			);
+			VSTFeePerVSTAStaked = _VSTFee.mul(DECIMAL_PRECISION).div(totalVSTAStaked);
 		}
 
 		F_VST = F_VST.add(VSTFeePerVSTAStaked);
@@ -276,30 +264,19 @@ contract VSTAStaking is
 		returns (uint256)
 	{
 		uint256 F_ASSET_Snapshot = snapshots[_user].F_ASSET_Snapshot[_asset];
-		uint256 AssetGain = stakes[_user]
-			.mul(F_ASSETS[_asset].sub(F_ASSET_Snapshot))
-			.div(DECIMAL_PRECISION);
+		uint256 AssetGain = stakes[_user].mul(F_ASSETS[_asset].sub(F_ASSET_Snapshot)).div(
+			DECIMAL_PRECISION
+		);
 		return AssetGain;
 	}
 
-	function getPendingVSTGain(address _user)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getPendingVSTGain(address _user) external view override returns (uint256) {
 		return _getPendingVSTGain(_user);
 	}
 
-	function _getPendingVSTGain(address _user)
-		internal
-		view
-		returns (uint256)
-	{
+	function _getPendingVSTGain(address _user) internal view returns (uint256) {
 		uint256 F_VST_Snapshot = snapshots[_user].F_VST_Snapshot;
-		uint256 VSTGain = stakes[_user].mul(F_VST.sub(F_VST_Snapshot)).div(
-			DECIMAL_PRECISION
-		);
+		uint256 VSTGain = stakes[_user].mul(F_VST.sub(F_VST_Snapshot)).div(DECIMAL_PRECISION);
 		return VSTGain;
 	}
 
@@ -311,9 +288,7 @@ contract VSTAStaking is
 		emit StakerSnapshotsUpdated(_user, F_ASSETS[_asset], F_VST);
 	}
 
-	function _sendAssetGainToUser(address _asset, uint256 _assetGain)
-		internal
-	{
+	function _sendAssetGainToUser(address _asset, uint256 _assetGain) internal {
 		_sendAsset(msg.sender, _asset, _assetGain);
 		emit AssetSent(_asset, msg.sender, _assetGain);
 	}
@@ -325,10 +300,7 @@ contract VSTAStaking is
 	) internal {
 		if (_asset == ETH_REF_ADDRESS) {
 			(bool success, ) = _sendTo.call{ value: _amount }("");
-			require(
-				success,
-				"VSTAStaking: Failed to send accumulated AssetGain"
-			);
+			require(success, "VSTAStaking: Failed to send accumulated AssetGain");
 		} else {
 			IERC20Upgradeable(_asset).safeTransfer(_sendTo, _amount);
 		}
@@ -337,34 +309,22 @@ contract VSTAStaking is
 	// --- 'require' functions ---
 
 	modifier callerIsTroveManager() {
-		require(
-			msg.sender == troveManagerAddress,
-			"VSTAStaking: caller is not TroveM"
-		);
+		require(msg.sender == troveManagerAddress, "VSTAStaking: caller is not TroveM");
 		_;
 	}
 
 	modifier callerIsBorrowerOperations() {
-		require(
-			msg.sender == borrowerOperationsAddress,
-			"VSTAStaking: caller is not BorrowerOps"
-		);
+		require(msg.sender == borrowerOperationsAddress, "VSTAStaking: caller is not BorrowerOps");
 		_;
 	}
 
 	modifier callerIsActivePool() {
-		require(
-			msg.sender == activePoolAddress,
-			"VSTAStaking: caller is not ActivePool"
-		);
+		require(msg.sender == activePoolAddress, "VSTAStaking: caller is not ActivePool");
 		_;
 	}
 
 	function _requireUserHasStake(uint256 currentStake) internal pure {
-		require(
-			currentStake > 0,
-			"VSTAStaking: User must have a non-zero stake"
-		);
+		require(currentStake > 0, "VSTAStaking: User must have a non-zero stake");
 	}
 
 	receive() external payable callerIsActivePool {}

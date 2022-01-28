@@ -6,11 +6,7 @@ import "../Dependencies/LiquityMath.sol";
 /* Tester contract for math functions in Math.sol library. */
 
 contract LiquityMathTester {
-	function callMax(uint256 _a, uint256 _b)
-		external
-		pure
-		returns (uint256)
-	{
+	function callMax(uint256 _a, uint256 _b) external pure returns (uint256) {
 		return LiquityMath._max(_a, _b);
 	}
 

@@ -60,14 +60,13 @@ contract AdminContract is ProxyAdmin {
 	function addNewCollateral(
 		address _asset,
 		address _stabilityPoolImplementation,
-		address _chainlink,
-		uint256 _tellorId,
+		address _chainlinkOracle,
+		address _chainlinkIndex,
 		uint256 assignedToken,
 		uint256 redemptionLockInDay
 	) external onlyOwner {
 		require(
-			stabilityPoolManager.unsafeGetAssetStabilityPool(_asset) ==
-				address(0),
+			stabilityPoolManager.unsafeGetAssetStabilityPool(_asset) == address(0),
 			"This collateral already exists"
 		);
 		require(
@@ -75,11 +74,12 @@ contract AdminContract is ProxyAdmin {
 				STABILITY_POOL_BYTES,
 			"Invalid Stability pool"
 		);
-		vestaParameters.priceFeed().addOracle(_asset, _chainlink, _tellorId);
-		vestaParameters.setAsDefaultWithRemptionBlock(
+		vestaParameters.priceFeed().addOracle(
 			_asset,
-			redemptionLockInDay
+			_chainlinkOracle,
+			_chainlinkIndex
 		);
+		vestaParameters.setAsDefaultWithRemptionBlock(_asset, redemptionLockInDay);
 
 		address clonedStabilityPool = ClonesUpgradeable.clone(
 			_stabilityPoolImplementation

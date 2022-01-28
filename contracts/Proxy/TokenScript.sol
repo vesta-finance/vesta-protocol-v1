@@ -35,9 +35,7 @@ contract TokenScript is CheckContract {
 		token.transferFrom(sender, recipient, amount);
 	}
 
-	function increaseAllowance(address spender, uint256 addedValue)
-		external
-	{
+	function increaseAllowance(address spender, uint256 addedValue) external {
 		token.safeIncreaseAllowance(spender, addedValue);
 	}
 

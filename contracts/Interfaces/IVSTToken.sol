@@ -9,15 +9,11 @@ abstract contract IVSTToken is ERC20Permit {
 
 	event TroveManagerAddressChanged(address _troveManagerAddress);
 	event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
-	event BorrowerOperationsAddressChanged(
-		address _newBorrowerOperationsAddress
-	);
+	event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
 
 	event VSTTokenBalanceUpdated(address _user, uint256 _amount);
 
-	function emergencyStopMinting(address _asset, bool status)
-		external
-		virtual;
+	function emergencyStopMinting(address _asset, bool status) external virtual;
 
 	function mint(
 		address _asset,

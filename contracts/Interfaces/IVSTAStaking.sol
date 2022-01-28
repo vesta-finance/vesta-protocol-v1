@@ -62,8 +62,5 @@ interface IVSTAStaking {
 		view
 		returns (uint256);
 
-	function getPendingVSTGain(address _user)
-		external
-		view
-		returns (uint256);
+	function getPendingVSTGain(address _user) external view returns (uint256);
 }
