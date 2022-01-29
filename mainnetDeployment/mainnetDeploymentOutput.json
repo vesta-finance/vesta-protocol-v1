@@ -1,7 +1,8 @@
 {
   "lockedVsta": {
     "address": "0xb889151Da7c8aC6773DE803B0c38018680512cb0",
-    "txHash": "0x4248ceee49e680154a4f2c781a49c05d684aa7681c2e7393a9ae86fced8db5aa"
+    "txHash": "0x4248ceee49e680154a4f2c781a49c05d684aa7681c2e7393a9ae86fced8db5aa",
+    "verification": "https://arbiscan.io/address/0xb889151Da7c8aC6773DE803B0c38018680512cb0#code"
   },
   "VSTAToken": {
     "address": "0xa684cd057951541187f288294a1e1C2646aA2d24",

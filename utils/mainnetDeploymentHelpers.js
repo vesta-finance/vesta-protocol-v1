@@ -91,7 +91,7 @@ class MainnetDeploymentHelper {
     if (!this.configParams.ETHERSCAN_BASE_URL) {
       console.log('No Etherscan Url defined, skipping verification')
     } else {
-      await this.verifyContract('LockedVSTA', deploymentState, [treasurySigAddress])
+      await this.verifyContract('lockedVsta', deploymentState, [treasurySigAddress])
       await this.verifyContract('VSTAToken', deploymentState, [treasurySigAddress])
     }
 
