@@ -33,10 +33,7 @@ contract LockedVSTA is Ownable, CheckContract {
 	mapping(address => Rule) public entitiesVesting;
 
 	modifier entityRuleExists(address _entity) {
-		require(
-			entitiesVesting[_entity].createdDate != 0,
-			"Entity doesn't have a Vesting Rule"
-		);
+		require(entitiesVesting[_entity].createdDate != 0, "Entity doesn't have a Vesting Rule");
 		_;
 	}
 
@@ -48,16 +45,10 @@ contract LockedVSTA is Ownable, CheckContract {
 		vstaToken = IERC20(_vstaAddress);
 	}
 
-	function addEntityVesting(address _entity, uint256 _totalSupply)
-		public
-		onlyOwner
-	{
+	function addEntityVesting(address _entity, uint256 _totalSupply) public onlyOwner {
 		require(address(0) != _entity, "Invalid Address");
 
-		require(
-			entitiesVesting[_entity].createdDate == 0,
-			"Entity already has a Vesting Rule"
-		);
+		require(entitiesVesting[_entity].createdDate == 0, "Entity already has a Vesting Rule");
 
 		assignedVSTATokens += _totalSupply;
 
@@ -88,11 +79,7 @@ contract LockedVSTA is Ownable, CheckContract {
 		vestingRule.totalSupply = newTotalSupply;
 	}
 
-	function removeEntityVesting(address _entity)
-		public
-		onlyOwner
-		entityRuleExists(_entity)
-	{
+	function removeEntityVesting(address _entity) public onlyOwner entityRuleExists(_entity) {
 		sendVSTATokenToEntity(_entity);
 		Rule memory vestingRule = entitiesVesting[_entity];
 
@@ -126,11 +113,7 @@ contract LockedVSTA is Ownable, CheckContract {
 		vstaToken.safeTransfer(msg.sender, unassignedTokens);
 	}
 
-	function getClaimableVSTA(address _entity)
-		public
-		view
-		returns (uint256 claimable)
-	{
+	function getClaimableVSTA(address _entity) public view returns (uint256 claimable) {
 		Rule memory entityRule = entitiesVesting[_entity];
 		claimable = 0;
 

@@ -35,17 +35,14 @@ abstract contract BaseVestaParameters is OwnableUpgradeable, CheckContract {
 	uint256 public constant PERCENT_DIVISOR_DEFAULT = 200; // dividing by 200 yields 0.5%
 	mapping(address => uint256) public PERCENT_DIVISOR; // dividing by 200 yields 0.5%
 
-	uint256 public constant BORROWING_FEE_FLOOR_DEFAULT =
-		(DECIMAL_PRECISION / 1000) * 5; // 0.5%
+	uint256 public constant BORROWING_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
 	mapping(address => uint256) public BORROWING_FEE_FLOOR;
 
-	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT =
-		(DECIMAL_PRECISION / 1000) * 5; // 0.5%
+	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
 
 	mapping(address => uint256) public REDEMPTION_FEE_FLOOR;
 
-	uint256 public constant MAX_BORROWING_FEE_DEFAULT =
-		(DECIMAL_PRECISION / 100) * 5; // 5%
+	uint256 public constant MAX_BORROWING_FEE_DEFAULT = (DECIMAL_PRECISION / 100) * 5; // 5%
 	mapping(address => uint256) public MAX_BORROWING_FEE;
 
 	mapping(address => bool) internal hasCollateralConfigured;
@@ -64,14 +61,8 @@ abstract contract BaseVestaParameters is OwnableUpgradeable, CheckContract {
 	event GasCompensationChanged(uint256 oldGasComp, uint256 newGasComp);
 	event MinNetDebtChanged(uint256 oldMinNet, uint256 newMinNet);
 	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
-	event BorrowingFeeFloorChanged(
-		uint256 oldBorrowingFloorFee,
-		uint256 newBorrowingFloorFee
-	);
-	event MaxBorrowingFeeChanged(
-		uint256 oldMaxBorrowingFee,
-		uint256 newMaxBorrowingFee
-	);
+	event BorrowingFeeFloorChanged(uint256 oldBorrowingFloorFee, uint256 newBorrowingFloorFee);
+	event MaxBorrowingFeeChanged(uint256 oldMaxBorrowingFee, uint256 newMaxBorrowingFee);
 	event RedemptionFeeFloorChanged(
 		uint256 oldRedemptionFeeFloor,
 		uint256 newRedemptionFeeFloor
@@ -80,10 +71,7 @@ abstract contract BaseVestaParameters is OwnableUpgradeable, CheckContract {
 	event PriceFeedChanged(address indexed addr);
 
 	modifier isController() {
-		require(
-			msg.sender == owner() || msg.sender == adminContract,
-			"Invalid Permissions"
-		);
+		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permissions");
 		_;
 	}
 
@@ -180,25 +168,15 @@ abstract contract BaseVestaParameters is OwnableUpgradeable, CheckContract {
 
 	function setCCR(address _asset, uint256 newCCR) public virtual;
 
-	function setVSTGasCompensation(address _asset, uint256 gasCompensation)
-		public
-		virtual;
+	function setVSTGasCompensation(address _asset, uint256 gasCompensation) public virtual;
 
 	function setMinNetDebt(address _asset, uint256 minNetDebt) public virtual;
 
-	function setPercentDivisor(address _asset, uint256 precentDivisor)
-		public
-		virtual;
+	function setPercentDivisor(address _asset, uint256 precentDivisor) public virtual;
 
-	function setBorrowingFeeFloor(address _asset, uint256 borrowingFeeFloor)
-		public
-		virtual;
+	function setBorrowingFeeFloor(address _asset, uint256 borrowingFeeFloor) public virtual;
 
-	function setMaxBorrowingFee(address _asset, uint256 maxBorrowingFee)
-		public
-		virtual;
+	function setMaxBorrowingFee(address _asset, uint256 maxBorrowingFee) public virtual;
 
-	function setRedemptionFeeFloor(address _asset, uint256 redemptionFeeFloor)
-		public
-		virtual;
+	function setRedemptionFeeFloor(address _asset, uint256 redemptionFeeFloor) public virtual;
 }

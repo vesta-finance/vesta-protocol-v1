@@ -7,10 +7,7 @@ interface ICommunityIssuance {
 
 	event VSTATokenAddressSet(address _VSTATokenAddress);
 	event StabilityPoolAddressSet(address _stabilityPoolAddress);
-	event TotalVSTAIssuedUpdated(
-		address indexed stabilityPool,
-		uint256 _totalVSTAIssued
-	);
+	event TotalVSTAIssuedUpdated(address indexed stabilityPool, uint256 _totalVSTAIssued);
 
 	// --- Functions ---
 
@@ -24,8 +21,7 @@ interface ICommunityIssuance {
 
 	function sendVSTA(address _account, uint256 _VSTAamount) external;
 
-	function addFundToStabilityPool(address _pool, uint256 _assignedSupply)
-		external;
+	function addFundToStabilityPool(address _pool, uint256 _assignedSupply) external;
 
 	function addFundToStabilityPoolFrom(
 		address _pool,

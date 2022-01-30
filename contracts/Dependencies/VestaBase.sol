@@ -29,19 +29,11 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 	// --- Gas compensation functions ---
 
 	// Returns the composite debt (drawn debt + gas compensation) of a trove, for the purpose of ICR calculation
-	function _getCompositeDebt(address _asset, uint256 _debt)
-		internal
-		view
-		returns (uint256)
-	{
+	function _getCompositeDebt(address _asset, uint256 _debt) internal view returns (uint256) {
 		return _debt.add(vestaParams.VST_GAS_COMPENSATION(_asset));
 	}
 
-	function _getNetDebt(address _asset, uint256 _debt)
-		internal
-		view
-		returns (uint256)
-	{
+	function _getNetDebt(address _asset, uint256 _debt) internal view returns (uint256) {
 		return _debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset));
 	}
 
@@ -54,33 +46,21 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 		return _entireColl / vestaParams.PERCENT_DIVISOR(_asset);
 	}
 
-	function getEntireSystemColl(address _asset)
-		public
-		view
-		returns (uint256 entireSystemColl)
-	{
+	function getEntireSystemColl(address _asset) public view returns (uint256 entireSystemColl) {
 		uint256 activeColl = vestaParams.activePool().getAssetBalance(_asset);
 		uint256 liquidatedColl = vestaParams.defaultPool().getAssetBalance(_asset);
 
 		return activeColl.add(liquidatedColl);
 	}
 
-	function getEntireSystemDebt(address _asset)
-		public
-		view
-		returns (uint256 entireSystemDebt)
-	{
+	function getEntireSystemDebt(address _asset) public view returns (uint256 entireSystemDebt) {
 		uint256 activeDebt = vestaParams.activePool().getVSTDebt(_asset);
 		uint256 closedDebt = vestaParams.defaultPool().getVSTDebt(_asset);
 
 		return activeDebt.add(closedDebt);
 	}
 
-	function _getTCR(address _asset, uint256 _price)
-		internal
-		view
-		returns (uint256 TCR)
-	{
+	function _getTCR(address _asset, uint256 _price) internal view returns (uint256 TCR) {
 		uint256 entireSystemColl = getEntireSystemColl(_asset);
 		uint256 entireSystemDebt = getEntireSystemDebt(_asset);
 
@@ -89,11 +69,7 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 		return TCR;
 	}
 
-	function _checkRecoveryMode(address _asset, uint256 _price)
-		internal
-		view
-		returns (bool)
-	{
+	function _checkRecoveryMode(address _asset, uint256 _price) internal view returns (bool) {
 		uint256 TCR = _getTCR(_asset, _price);
 
 		return TCR < vestaParams.CCR(_asset);
@@ -104,12 +80,7 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 		uint256 _amount,
 		uint256 _maxFeePercentage
 	) internal view {
-		uint256 feePercentage = _fee.mul(vestaParams.DECIMAL_PRECISION()).div(
-			_amount
-		);
-		require(
-			feePercentage <= _maxFeePercentage,
-			"Fee exceeded provided maximum"
-		);
+		uint256 feePercentage = _fee.mul(vestaParams.DECIMAL_PRECISION()).div(_amount);
+		require(feePercentage <= _maxFeePercentage, "Fee exceeded provided maximum");
 	}
 }

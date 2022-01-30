@@ -91,25 +91,13 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 		require(block.timestamp <= deadline, "Permit: expired deadline");
 
 		bytes32 hashStruct = keccak256(
-			abi.encode(
-				PERMIT_TYPEHASH,
-				owner,
-				spender,
-				amount,
-				_nonces[owner].current(),
-				deadline
-			)
+			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, _nonces[owner].current(), deadline)
 		);
 
-		bytes32 _hash = keccak256(
-			abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct)
-		);
+		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
 
 		address signer = ecrecover(_hash, v, r, s);
-		require(
-			signer != address(0) && signer == owner,
-			"ERC20Permit: Invalid signature"
-		);
+		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
 
 		_nonces[owner].increment();
 		_approve(owner, spender, amount);

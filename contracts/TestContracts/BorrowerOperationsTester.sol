@@ -46,11 +46,7 @@ contract BorrowerOperationsTester is BorrowerOperations {
 			);
 	}
 
-	function getUSDValue(uint256 _coll, uint256 _price)
-		external
-		pure
-		returns (uint256)
-	{
+	function getUSDValue(uint256 _coll, uint256 _price) external pure returns (uint256) {
 		return _getUSDValue(_coll, _price);
 	}
 

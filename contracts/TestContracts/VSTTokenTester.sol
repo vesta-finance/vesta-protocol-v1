@@ -8,13 +8,7 @@ contract VSTTokenTester is VSTToken {
 		address _troveManagerAddress,
 		address _stabilityPoolAddress,
 		address _borrowerOperationsAddress
-	)
-		VSTToken(
-			_troveManagerAddress,
-			_stabilityPoolAddress,
-			_borrowerOperationsAddress
-		)
-	{
+	) VSTToken(_troveManagerAddress, _stabilityPoolAddress, _borrowerOperationsAddress) {
 		_burn(msg.sender, balanceOf(msg.sender));
 	}
 
@@ -76,9 +70,7 @@ contract VSTTokenTester is VSTToken {
 				abi.encodePacked(
 					uint16(0x1901),
 					DOMAIN_SEPARATOR,
-					keccak256(
-						abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce, deadline)
-					)
+					keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce, deadline))
 				)
 			);
 	}

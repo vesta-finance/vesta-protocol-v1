@@ -22,9 +22,7 @@ contract StabilityPoolScript is CheckContract {
 		stabilityPool.withdrawFromSP(_amount);
 	}
 
-	function withdrawAssetGainToTrove(address _upperHint, address _lowerHint)
-		external
-	{
+	function withdrawAssetGainToTrove(address _upperHint, address _lowerHint) external {
 		stabilityPool.withdrawAssetGainToTrove(_upperHint, _lowerHint);
 	}
 }

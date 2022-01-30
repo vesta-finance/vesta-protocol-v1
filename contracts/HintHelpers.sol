@@ -101,10 +101,7 @@ contract HintHelpers is VestaBase, CheckContract {
 			troveManager.getCurrentICR(vars._asset, currentTroveuser, _price) <
 			vestaParams.MCR(vars._asset)
 		) {
-			currentTroveuser = sortedTrovesCached.getPrev(
-				vars._asset,
-				currentTroveuser
-			);
+			currentTroveuser = sortedTrovesCached.getPrev(vars._asset, currentTroveuser);
 		}
 
 		firstRedemptionHint = currentTroveuser;
@@ -113,15 +110,11 @@ contract HintHelpers is VestaBase, CheckContract {
 			_maxIterations = type(uint256).max;
 		}
 
-		while (
-			currentTroveuser != address(0) && remainingVST > 0 && _maxIterations-- > 0
-		) {
+		while (currentTroveuser != address(0) && remainingVST > 0 && _maxIterations-- > 0) {
 			uint256 netVSTDebt = _getNetDebt(
 				vars._asset,
 				troveManager.getTroveDebt(vars._asset, currentTroveuser)
-			).add(
-					troveManager.getPendingVSTDebtReward(vars._asset, currentTroveuser)
-				);
+			).add(troveManager.getPendingVSTDebtReward(vars._asset, currentTroveuser));
 
 			if (netVSTDebt > remainingVST) {
 				if (netVSTDebt > vestaParams.MIN_NET_DEBT(vars._asset)) {
@@ -130,22 +123,15 @@ contract HintHelpers is VestaBase, CheckContract {
 						netVSTDebt.sub(vestaParams.MIN_NET_DEBT(vars._asset))
 					);
 
-					uint256 ETH = troveManager
-						.getTroveColl(vars._asset, currentTroveuser)
-						.add(
-							troveManager.getPendingAssetReward(vars._asset, currentTroveuser)
-						);
-
-					uint256 newColl = ETH.sub(
-						maxRedeemableVST.mul(DECIMAL_PRECISION).div(_price)
+					uint256 ETH = troveManager.getTroveColl(vars._asset, currentTroveuser).add(
+						troveManager.getPendingAssetReward(vars._asset, currentTroveuser)
 					);
+
+					uint256 newColl = ETH.sub(maxRedeemableVST.mul(DECIMAL_PRECISION).div(_price));
 					uint256 newDebt = netVSTDebt.sub(maxRedeemableVST);
 
 					uint256 compositeDebt = _getCompositeDebt(vars._asset, newDebt);
-					partialRedemptionHintNICR = LiquityMath._computeNominalCR(
-						newColl,
-						compositeDebt
-					);
+					partialRedemptionHintNICR = LiquityMath._computeNominalCR(newColl, compositeDebt);
 
 					remainingVST = remainingVST.sub(maxRedeemableVST);
 				}
@@ -154,10 +140,7 @@ contract HintHelpers is VestaBase, CheckContract {
 				remainingVST = remainingVST.sub(netVSTDebt);
 			}
 
-			currentTroveuser = sortedTrovesCached.getPrev(
-				vars._asset,
-				currentTroveuser
-			);
+			currentTroveuser = sortedTrovesCached.getPrev(vars._asset, currentTroveuser);
 		}
 
 		truncatedVSTamount = _VSTamount.sub(remainingVST);
@@ -205,17 +188,11 @@ contract HintHelpers is VestaBase, CheckContract {
 			latestRandomSeed = uint256(keccak256(abi.encodePacked(latestRandomSeed)));
 
 			uint256 arrayIndex = latestRandomSeed % arrayLength;
-			address currentAddress = troveManager.getTroveFromTroveOwnersArray(
-				_asset,
-				arrayIndex
-			);
+			address currentAddress = troveManager.getTroveFromTroveOwnersArray(_asset, arrayIndex);
 			uint256 currentNICR = troveManager.getNominalICR(_asset, currentAddress);
 
 			// check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
-			uint256 currentDiff = LiquityMath._getAbsoluteDifference(
-				currentNICR,
-				_CR
-			);
+			uint256 currentDiff = LiquityMath._getAbsoluteDifference(currentNICR, _CR);
 
 			if (currentDiff < diff) {
 				diff = currentDiff;
@@ -225,11 +202,7 @@ contract HintHelpers is VestaBase, CheckContract {
 		}
 	}
 
-	function computeNominalCR(uint256 _coll, uint256 _debt)
-		external
-		pure
-		returns (uint256)
-	{
+	function computeNominalCR(uint256 _coll, uint256 _debt) external pure returns (uint256) {
 		return LiquityMath._computeNominalCR(_coll, _debt);
 	}
 

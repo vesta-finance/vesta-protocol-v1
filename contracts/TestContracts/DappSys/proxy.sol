@@ -166,12 +166,7 @@ contract DSProxy is DSAuth, DSNote {
 // This factory deploys new proxy instances through build()
 // Deployed proxy addresses are logged
 contract DSProxyFactory {
-	event Created(
-		address indexed sender,
-		address indexed owner,
-		address proxy,
-		address cache
-	);
+	event Created(address indexed sender, address indexed owner, address proxy, address cache);
 	mapping(address => bool) public isProxy;
 	DSProxyCache public cache = new DSProxyCache();
 

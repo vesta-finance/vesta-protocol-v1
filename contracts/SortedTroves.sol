@@ -76,10 +76,11 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 
 	// --- Dependency setters ---
 
-	function setParams(
-		address _troveManagerAddress,
-		address _borrowerOperationsAddress
-	) external override initializer {
+	function setParams(address _troveManagerAddress, address _borrowerOperationsAddress)
+		external
+		override
+		initializer
+	{
 		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_borrowerOperationsAddress);
@@ -133,10 +134,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		// List must not be full
 		require(!isFull(_asset), "SortedTroves: List is full");
 		// List must not already contain node
-		require(
-			!contains(_asset, _id),
-			"SortedTroves: List already contains the node"
-		);
+		require(!contains(_asset, _id), "SortedTroves: List already contains the node");
 		// Node id must not be null
 		require(_id != address(0), "SortedTroves: Id cannot be zero");
 		// NICR must be non-zero
@@ -148,13 +146,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		if (!_validInsertPosition(_asset, _troveManager, _NICR, prevId, nextId)) {
 			// Sender's hint was not a valid insert position
 			// Use sender's hint to find a valid insert position
-			(prevId, nextId) = _findInsertPosition(
-				_asset,
-				_troveManager,
-				_NICR,
-				prevId,
-				nextId
-			);
+			(prevId, nextId) = _findInsertPosition(_asset, _troveManager, _NICR, prevId, nextId);
 		}
 
 		data[_asset].nodes[_id].exists = true;
@@ -196,10 +188,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	 */
 	function _remove(address _asset, address _id) internal {
 		// List must contain the node
-		require(
-			contains(_asset, _id),
-			"SortedTroves: List does not contain the id"
-		);
+		require(contains(_asset, _id), "SortedTroves: List does not contain the id");
 
 		if (data[_asset].size > 1) {
 			// List contains more than a single node
@@ -256,10 +245,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 
 		_requireCallerIsBOorTroveM(troveManagerCached);
 		// List must contain the node
-		require(
-			contains(_asset, _id),
-			"SortedTroves: List does not contain the id"
-		);
+		require(contains(_asset, _id), "SortedTroves: List does not contain the id");
 		// NICR must be non-zero
 		require(_newNICR > 0, "SortedTroves: NICR must be positive");
 
@@ -272,12 +258,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	/*
 	 * @dev Checks if the list contains a node
 	 */
-	function contains(address _asset, address _id)
-		public
-		view
-		override
-		returns (bool)
-	{
+	function contains(address _asset, address _id) public view override returns (bool) {
 		return data[_asset].nodes[_id].exists;
 	}
 
@@ -327,12 +308,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	 * @dev Returns the next node (with a smaller NICR) in the list for a given node
 	 * @param _id Node's id
 	 */
-	function getNext(address _asset, address _id)
-		external
-		view
-		override
-		returns (address)
-	{
+	function getNext(address _asset, address _id) external view override returns (address) {
 		return data[_asset].nodes[_id].nextId;
 	}
 
@@ -340,12 +316,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	 * @dev Returns the previous node (with a larger NICR) in the list for a given node
 	 * @param _id Node's id
 	 */
-	function getPrev(address _asset, address _id)
-		external
-		view
-		override
-		returns (address)
-	{
+	function getPrev(address _asset, address _id) external view override returns (address) {
 		return data[_asset].nodes[_id].prevId;
 	}
 
@@ -377,13 +348,11 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		} else if (_prevId == address(0)) {
 			// `(null, _nextId)` is a valid insert position if `_nextId` is the head of the list
 			return
-				data[_asset].head == _nextId &&
-				_NICR >= _troveManager.getNominalICR(_asset, _nextId);
+				data[_asset].head == _nextId && _NICR >= _troveManager.getNominalICR(_asset, _nextId);
 		} else if (_nextId == address(0)) {
 			// `(_prevId, null)` is a valid insert position if `_prevId` is the tail of the list
 			return
-				data[_asset].tail == _prevId &&
-				_NICR <= _troveManager.getNominalICR(_asset, _prevId);
+				data[_asset].tail == _prevId && _NICR <= _troveManager.getNominalICR(_asset, _prevId);
 		} else {
 			// `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
 			return
@@ -407,8 +376,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	) internal view returns (address, address) {
 		// If `_startId` is the head, check if the insert position is before the head
 		if (
-			data[_asset].head == _startId &&
-			_NICR >= _troveManager.getNominalICR(_asset, _startId)
+			data[_asset].head == _startId && _NICR >= _troveManager.getNominalICR(_asset, _startId)
 		) {
 			return (address(0), _startId);
 		}
@@ -442,8 +410,7 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 	) internal view returns (address, address) {
 		// If `_startId` is the tail, check if the insert position is after the tail
 		if (
-			data[_asset].tail == _startId &&
-			_NICR <= _troveManager.getNominalICR(_asset, _startId)
+			data[_asset].tail == _startId && _NICR <= _troveManager.getNominalICR(_asset, _startId)
 		) {
 			return (_startId, address(0));
 		}
@@ -489,20 +456,14 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		address nextId = _nextId;
 
 		if (prevId != address(0)) {
-			if (
-				!contains(_asset, prevId) ||
-				_NICR > _troveManager.getNominalICR(_asset, prevId)
-			) {
+			if (!contains(_asset, prevId) || _NICR > _troveManager.getNominalICR(_asset, prevId)) {
 				// `prevId` does not exist anymore or now has a smaller NICR than the given NICR
 				prevId = address(0);
 			}
 		}
 
 		if (nextId != address(0)) {
-			if (
-				!contains(_asset, nextId) ||
-				_NICR < _troveManager.getNominalICR(_asset, nextId)
-			) {
+			if (!contains(_asset, nextId) || _NICR < _troveManager.getNominalICR(_asset, nextId)) {
 				// `nextId` does not exist anymore or now has a larger NICR than the given NICR
 				nextId = address(0);
 			}
@@ -532,13 +493,9 @@ contract SortedTroves is OwnableUpgradeable, CheckContract, ISortedTroves {
 		);
 	}
 
-	function _requireCallerIsBOorTroveM(ITroveManager _troveManager)
-		internal
-		view
-	{
+	function _requireCallerIsBOorTroveM(ITroveManager _troveManager) internal view {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == address(_troveManager),
+			msg.sender == borrowerOperationsAddress || msg.sender == address(_troveManager),
 			"SortedTroves: Caller is neither BO nor TroveM"
 		);
 	}

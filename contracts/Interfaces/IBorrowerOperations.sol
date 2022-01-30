@@ -14,11 +14,7 @@ interface IBorrowerOperations {
 	event VSTTokenAddressChanged(address _vstTokenAddress);
 	event VSTAStakingAddressChanged(address _VSTAStakingAddress);
 
-	event TroveCreated(
-		address indexed _asset,
-		address indexed _borrower,
-		uint256 arrayIndex
-	);
+	event TroveCreated(address indexed _asset, address indexed _borrower, uint256 arrayIndex);
 	event TroveUpdated(
 		address indexed _asset,
 		address indexed _borrower,
@@ -107,8 +103,5 @@ interface IBorrowerOperations {
 
 	function claimCollateral(address _asset) external;
 
-	function getCompositeDebt(address _asset, uint256 _debt)
-		external
-		view
-		returns (uint256);
+	function getCompositeDebt(address _asset, uint256 _debt) external view returns (uint256);
 }

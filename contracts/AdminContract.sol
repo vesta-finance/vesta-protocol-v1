@@ -70,20 +70,13 @@ contract AdminContract is ProxyAdmin {
 			"This collateral already exists"
 		);
 		require(
-			IStabilityPool(_stabilityPoolImplementation).getNameBytes() ==
-				STABILITY_POOL_BYTES,
+			IStabilityPool(_stabilityPoolImplementation).getNameBytes() == STABILITY_POOL_BYTES,
 			"Invalid Stability pool"
 		);
-		vestaParameters.priceFeed().addOracle(
-			_asset,
-			_chainlinkOracle,
-			_chainlinkIndex
-		);
+		vestaParameters.priceFeed().addOracle(_asset, _chainlinkOracle, _chainlinkIndex);
 		vestaParameters.setAsDefaultWithRemptionBlock(_asset, redemptionLockInDay);
 
-		address clonedStabilityPool = ClonesUpgradeable.clone(
-			_stabilityPoolImplementation
-		);
+		address clonedStabilityPool = ClonesUpgradeable.clone(_stabilityPoolImplementation);
 		require(clonedStabilityPool != address(0), "Failed to clone contract");
 
 		TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
@@ -103,10 +96,6 @@ contract AdminContract is ProxyAdmin {
 
 		address proxyAddress = address(proxy);
 		stabilityPoolManager.addStabilityPool(_asset, proxyAddress);
-		communityIssuance.addFundToStabilityPoolFrom(
-			proxyAddress,
-			assignedToken,
-			msg.sender
-		);
+		communityIssuance.addFundToStabilityPoolFrom(proxyAddress, assignedToken, msg.sender);
 	}
 }

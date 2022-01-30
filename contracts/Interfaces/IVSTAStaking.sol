@@ -25,16 +25,8 @@ interface IVSTAStaking {
 	event F_AssetUpdated(address indexed _asset, uint256 _F_ASSET);
 	event F_VSTUpdated(uint256 _F_VST);
 	event TotalVSTAStakedUpdated(uint256 _totalVSTAStaked);
-	event AssetSent(
-		address indexed _asset,
-		address indexed _account,
-		uint256 _amount
-	);
-	event StakerSnapshotsUpdated(
-		address _staker,
-		uint256 _F_Asset,
-		uint256 _F_VST
-	);
+	event AssetSent(address indexed _asset, address indexed _account, uint256 _amount);
+	event StakerSnapshotsUpdated(address _staker, uint256 _F_Asset, uint256 _F_VST);
 
 	function vstaToken() external view returns (IERC20Upgradeable);
 
@@ -57,10 +49,7 @@ interface IVSTAStaking {
 
 	function increaseF_VST(uint256 _VSTAFee) external;
 
-	function getPendingAssetGain(address _asset, address _user)
-		external
-		view
-		returns (uint256);
+	function getPendingAssetGain(address _asset, address _user) external view returns (uint256);
 
 	function getPendingVSTGain(address _user) external view returns (uint256);
 }

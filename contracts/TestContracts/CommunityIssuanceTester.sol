@@ -18,18 +18,13 @@ contract CommunityIssuanceTester is CommunityIssuance {
 		return _getCumulativeIssuanceFraction(stabilityPool);
 	}
 
-	function unprotectedIssueVSTA(address stabilityPool)
-		external
-		returns (uint256)
-	{
+	function unprotectedIssueVSTA(address stabilityPool) external returns (uint256) {
 		// No checks on caller address
 
 		uint256 latestTotalVSTAIssued = VSTASupplyCaps[stabilityPool]
 			.mul(_getCumulativeIssuanceFraction(stabilityPool))
 			.div(DECIMAL_PRECISION);
-		uint256 issuance = latestTotalVSTAIssued.sub(
-			totalVSTAIssued[stabilityPool]
-		);
+		uint256 issuance = latestTotalVSTAIssued.sub(totalVSTAIssued[stabilityPool]);
 
 		totalVSTAIssued[stabilityPool] = latestTotalVSTAIssued;
 		return issuance;

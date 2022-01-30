@@ -53,21 +53,12 @@ interface IStabilityPool is IDeposit {
 	event EpochUpdated(uint128 _currentEpoch);
 	event ScaleUpdated(uint128 _currentScale);
 
-	event DepositSnapshotUpdated(
-		address indexed _depositor,
-		uint256 _P,
-		uint256 _S,
-		uint256 _G
-	);
+	event DepositSnapshotUpdated(address indexed _depositor, uint256 _P, uint256 _S, uint256 _G);
 	event SystemSnapshotUpdated(uint256 _P, uint256 _G);
 	event UserDepositChanged(address indexed _depositor, uint256 _newDeposit);
 	event StakeChanged(uint256 _newSystemStake, address _depositor);
 
-	event AssetGainWithdrawn(
-		address indexed _depositor,
-		uint256 _Asset,
-		uint256 _VSTLoss
-	);
+	event AssetGainWithdrawn(address indexed _depositor, uint256 _Asset, uint256 _VSTLoss);
 	event VSTAPaidToDepositor(address indexed _depositor, uint256 _VSTA);
 	event AssetSent(address _to, uint256 _amount);
 
@@ -129,8 +120,7 @@ interface IStabilityPool is IDeposit {
 	 * - Leaves their compounded deposit in the Stability Pool
 	 * - Updates snapshots for deposit and tagged front end stake
 	 */
-	function withdrawAssetGainToTrove(address _upperHint, address _lowerHint)
-		external;
+	function withdrawAssetGainToTrove(address _upperHint, address _lowerHint) external;
 
 	/*
 	 * Initial checks:
@@ -156,10 +146,7 @@ interface IStabilityPool is IDeposit {
 	/*
 	 * Calculates the ETH gain earned by the deposit since its last snapshots were taken.
 	 */
-	function getDepositorAssetGain(address _depositor)
-		external
-		view
-		returns (uint256);
+	function getDepositorAssetGain(address _depositor) external view returns (uint256);
 
 	/*
 	 * Calculate the VSTA gain earned by a deposit since its last snapshots were taken.
@@ -167,18 +154,12 @@ interface IStabilityPool is IDeposit {
 	 * Otherwise, their cut of the deposit's earnings is equal to the kickbackRate, set by the front end through
 	 * which they made their deposit.
 	 */
-	function getDepositorVSTAGain(address _depositor)
-		external
-		view
-		returns (uint256);
+	function getDepositorVSTAGain(address _depositor) external view returns (uint256);
 
 	/*
 	 * Return the user's compounded deposit.
 	 */
-	function getCompoundedVSTDeposit(address _depositor)
-		external
-		view
-		returns (uint256);
+	function getCompoundedVSTDeposit(address _depositor) external view returns (uint256);
 
 	/*
 	 * Return the front end's compounded stake.

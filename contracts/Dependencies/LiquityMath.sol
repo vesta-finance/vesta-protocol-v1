@@ -34,11 +34,7 @@ library LiquityMath {
 	 *
 	 * Used only inside the exponentiation, _decPow().
 	 */
-	function decMul(uint256 x, uint256 y)
-		internal
-		pure
-		returns (uint256 decProd)
-	{
+	function decMul(uint256 x, uint256 y) internal pure returns (uint256 decProd) {
 		uint256 prod_xy = x.mul(y);
 
 		decProd = prod_xy.add(DECIMAL_PRECISION / 2).div(DECIMAL_PRECISION);
@@ -62,11 +58,7 @@ library LiquityMath {
 	 * In function 1), the decayed base rate will be 0 for 1000 years or > 1000 years
 	 * In function 2), the difference in tokens issued at 1000 years and any time > 1000 years, will be negligible
 	 */
-	function _decPow(uint256 _base, uint256 _minutes)
-		internal
-		pure
-		returns (uint256)
-	{
+	function _decPow(uint256 _base, uint256 _minutes) internal pure returns (uint256) {
 		if (_minutes > 525600000) {
 			_minutes = 525600000;
 		} // cap to avoid overflow
@@ -95,19 +87,11 @@ library LiquityMath {
 		return decMul(x, y);
 	}
 
-	function _getAbsoluteDifference(uint256 _a, uint256 _b)
-		internal
-		pure
-		returns (uint256)
-	{
+	function _getAbsoluteDifference(uint256 _a, uint256 _b) internal pure returns (uint256) {
 		return (_a >= _b) ? _a.sub(_b) : _b.sub(_a);
 	}
 
-	function _computeNominalCR(uint256 _coll, uint256 _debt)
-		internal
-		pure
-		returns (uint256)
-	{
+	function _computeNominalCR(uint256 _coll, uint256 _debt) internal pure returns (uint256) {
 		if (_debt > 0) {
 			return _coll.mul(NICR_PRECISION).div(_debt);
 		}

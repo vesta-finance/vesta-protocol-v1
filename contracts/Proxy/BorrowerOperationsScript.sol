@@ -20,9 +20,14 @@ contract BorrowerOperationsScript is CheckContract {
 		address _upperHint,
 		address _lowerHint
 	) external payable {
-		borrowerOperations.openTrove{
-			value: getValueOrArg(_asset, _assetAmountSent)
-		}(_asset, _assetAmountSent, _maxFee, _VSTAmount, _upperHint, _lowerHint);
+		borrowerOperations.openTrove{ value: getValueOrArg(_asset, _assetAmountSent) }(
+			_asset,
+			_assetAmountSent,
+			_maxFee,
+			_VSTAmount,
+			_upperHint,
+			_lowerHint
+		);
 	}
 
 	function addColl(
@@ -31,9 +36,12 @@ contract BorrowerOperationsScript is CheckContract {
 		address _upperHint,
 		address _lowerHint
 	) external payable {
-		borrowerOperations.addColl{
-			value: getValueOrArg(_asset, _assetAmountSent)
-		}(_asset, _assetAmountSent, _upperHint, _lowerHint);
+		borrowerOperations.addColl{ value: getValueOrArg(_asset, _assetAmountSent) }(
+			_asset,
+			_assetAmountSent,
+			_upperHint,
+			_lowerHint
+		);
 	}
 
 	function withdrawColl(
@@ -52,13 +60,7 @@ contract BorrowerOperationsScript is CheckContract {
 		address _upperHint,
 		address _lowerHint
 	) external {
-		borrowerOperations.withdrawVST(
-			_asset,
-			_maxFee,
-			_amount,
-			_upperHint,
-			_lowerHint
-		);
+		borrowerOperations.withdrawVST(_asset, _maxFee, _amount, _upperHint, _lowerHint);
 	}
 
 	function repayVST(
@@ -84,9 +86,7 @@ contract BorrowerOperationsScript is CheckContract {
 		address _upperHint,
 		address _lowerHint
 	) external payable {
-		borrowerOperations.adjustTrove{
-			value: getValueOrArg(_asset, _assetAmountSent)
-		}(
+		borrowerOperations.adjustTrove{ value: getValueOrArg(_asset, _assetAmountSent) }(
 			_asset,
 			_assetAmountSent,
 			_maxFee,
@@ -102,10 +102,7 @@ contract BorrowerOperationsScript is CheckContract {
 		borrowerOperations.claimCollateral(_asset);
 	}
 
-	function getValueOrArg(address _asset, uint256 _assetAmountSent)
-		private
-		returns (uint256)
-	{
+	function getValueOrArg(address _asset, uint256 _assetAmountSent) private returns (uint256) {
 		return _asset == address(0) ? msg.value : _assetAmountSent;
 	}
 }

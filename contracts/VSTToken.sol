@@ -61,11 +61,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 	// --- Functions for intra-Liquity calls ---
 
 	//
-	function emergencyStopMinting(address _asset, bool status)
-		external
-		override
-		onlyOwner
-	{
+	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {
 		emergencyStopMintingCollateral[_asset] = status;
 		emit EmergencyStopMintingCollateral(_asset, status);
 	}
@@ -76,10 +72,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 		uint256 _amount
 	) external override {
 		_requireCallerIsBorrowerOperations();
-		require(
-			!emergencyStopMintingCollateral[_asset],
-			"Mint is blocked on this collateral"
-		);
+		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
 		_mint(_account, _amount);
 	}
@@ -109,11 +102,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 
 	// --- External functions ---
 
-	function transfer(address recipient, uint256 amount)
-		public
-		override
-		returns (bool)
-	{
+	function transfer(address recipient, uint256 amount) public override returns (bool) {
 		_requireValidRecipient(recipient);
 		return super.transfer(recipient, amount);
 	}
@@ -167,8 +156,7 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 
 	function _requireCallerIsTroveMorSP() internal view {
 		require(
-			msg.sender == troveManagerAddress ||
-				stabilityPoolManager.isStabilityPool(msg.sender),
+			msg.sender == troveManagerAddress || stabilityPoolManager.isStabilityPool(msg.sender),
 			"VST: Caller is neither TroveManager nor StabilityPool"
 		);
 	}

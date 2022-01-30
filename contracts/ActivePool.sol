@@ -86,12 +86,7 @@ contract ActivePool is
 	 *
 	 *Not necessarily equal to the the contract's raw ETH balance - ether can be forcibly sent to contracts.
 	 */
-	function getAssetBalance(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getAssetBalance(address _asset) external view override returns (uint256) {
 		return assetsBalance[_asset];
 	}
 
@@ -107,10 +102,7 @@ contract ActivePool is
 		uint256 _amount
 	) external override nonReentrant callerIsBOorTroveMorSP {
 		if (stabilityPoolManager.isStabilityPool(msg.sender)) {
-			assert(
-				address(stabilityPoolManager.getAssetStabilityPool(_asset)) ==
-					msg.sender
-			);
+			assert(address(stabilityPoolManager.getAssetStabilityPool(_asset)) == msg.sender);
 		}
 
 		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
@@ -130,11 +122,7 @@ contract ActivePool is
 		emit AssetSent(_account, _asset, _amount);
 	}
 
-	function isERC20DepositContract(address _account)
-		private
-		view
-		returns (bool)
-	{
+	function isERC20DepositContract(address _account) private view returns (bool) {
 		return (_account == address(defaultPool) ||
 			_account == address(collSurplusPool) ||
 			stabilityPoolManager.isStabilityPool(_account));
@@ -162,8 +150,7 @@ contract ActivePool is
 
 	modifier callerIsBorrowerOperationOrDefaultPool() {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == address(defaultPool),
+			msg.sender == borrowerOperationsAddress || msg.sender == address(defaultPool),
 			"ActivePool: Caller is neither BO nor Default Pool"
 		);
 
@@ -182,8 +169,7 @@ contract ActivePool is
 
 	modifier callerIsBOorTroveM() {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == troveManagerAddress,
+			msg.sender == borrowerOperationsAddress || msg.sender == troveManagerAddress,
 			"ActivePool: Caller is neither BorrowerOperations nor TroveManager"
 		);
 
@@ -202,12 +188,7 @@ contract ActivePool is
 	// --- Fallback function ---
 
 	receive() external payable callerIsBorrowerOperationOrDefaultPool {
-		assetsBalance[ETH_REF_ADDRESS] = assetsBalance[ETH_REF_ADDRESS].add(
-			msg.value
-		);
-		emit ActivePoolAssetBalanceUpdated(
-			ETH_REF_ADDRESS,
-			assetsBalance[ETH_REF_ADDRESS]
-		);
+		assetsBalance[ETH_REF_ADDRESS] = assetsBalance[ETH_REF_ADDRESS].add(msg.value);
+		emit ActivePoolAssetBalanceUpdated(ETH_REF_ADDRESS, assetsBalance[ETH_REF_ADDRESS]);
 	}
 }

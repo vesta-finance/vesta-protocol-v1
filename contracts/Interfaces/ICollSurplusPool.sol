@@ -24,10 +24,7 @@ interface ICollSurplusPool is IDeposit {
 
 	function getAssetBalance(address _asset) external view returns (uint256);
 
-	function getCollateral(address _asset, address _account)
-		external
-		view
-		returns (uint256);
+	function getCollateral(address _asset, address _account) external view returns (uint256);
 
 	function accountSurplus(
 		address _asset,

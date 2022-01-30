@@ -33,10 +33,10 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 
 	// --- Dependency setters ---
 
-	function setAddresses(
-		address _troveManagerAddress,
-		address _activePoolAddress
-	) external initializer {
+	function setAddresses(address _troveManagerAddress, address _activePoolAddress)
+		external
+		initializer
+	{
 		require(!isInitialized, "Already initialized");
 		checkContract(_troveManagerAddress);
 		checkContract(_activePoolAddress);
@@ -60,12 +60,7 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 	 *
 	 * Not necessarily equal to the the contract's raw ETH balance - ether can be forcibly sent to contracts.
 	 */
-	function getAssetBalance(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getAssetBalance(address _asset) external view override returns (uint256) {
 		return assetsBalance[_asset];
 	}
 
@@ -116,18 +111,12 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 	// --- 'require' functions ---
 
 	modifier callerIsActivePool() {
-		require(
-			msg.sender == activePoolAddress,
-			"DefaultPool: Caller is not the ActivePool"
-		);
+		require(msg.sender == activePoolAddress, "DefaultPool: Caller is not the ActivePool");
 		_;
 	}
 
 	modifier callerIsTroveManager() {
-		require(
-			msg.sender == troveManagerAddress,
-			"DefaultPool: Caller is not the TroveManager"
-		);
+		require(msg.sender == troveManagerAddress, "DefaultPool: Caller is not the TroveManager");
 		_;
 	}
 
@@ -145,12 +134,7 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 	// --- Fallback function ---
 
 	receive() external payable callerIsActivePool {
-		assetsBalance[ETH_REF_ADDRESS] = assetsBalance[ETH_REF_ADDRESS].add(
-			msg.value
-		);
-		emit DefaultPoolAssetBalanceUpdated(
-			ETH_REF_ADDRESS,
-			assetsBalance[ETH_REF_ADDRESS]
-		);
+		assetsBalance[ETH_REF_ADDRESS] = assetsBalance[ETH_REF_ADDRESS].add(msg.value);
+		emit DefaultPoolAssetBalanceUpdated(ETH_REF_ADDRESS, assetsBalance[ETH_REF_ADDRESS]);
 	}
 }

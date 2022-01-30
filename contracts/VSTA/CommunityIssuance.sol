@@ -12,12 +12,7 @@ import "../Dependencies/BaseMath.sol";
 import "../Dependencies/LiquityMath.sol";
 import "../Dependencies/CheckContract.sol";
 
-contract CommunityIssuance is
-	ICommunityIssuance,
-	OwnableUpgradeable,
-	CheckContract,
-	BaseMath
-{
+contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContract, BaseMath {
 	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -52,18 +47,12 @@ contract CommunityIssuance is
 	bool public isInitialized;
 
 	modifier activeStabilityPoolOnly(address _pool) {
-		require(
-			deploymentTime[_pool] != 0,
-			"CommunityIssuance: Pool needs to be added first."
-		);
+		require(deploymentTime[_pool] != 0, "CommunityIssuance: Pool needs to be added first.");
 		_;
 	}
 
 	modifier isController() {
-		require(
-			msg.sender == owner() || msg.sender == adminContract,
-			"Invalid Permission"
-		);
+		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
 		_;
 	}
 
@@ -178,23 +167,17 @@ contract CommunityIssuance is
 		view
 		returns (uint256)
 	{
-		require(
-			deploymentTime[stabilityPool] != 0,
-			"Stability pool hasn't been assigned"
-		);
+		require(deploymentTime[stabilityPool] != 0, "Stability pool hasn't been assigned");
 		// Get the time passed since deployment
-		uint256 timePassedInMinutes = block
-			.timestamp
-			.sub(deploymentTime[stabilityPool])
-			.div(SECONDS_IN_ONE_MINUTE);
+		uint256 timePassedInMinutes = block.timestamp.sub(deploymentTime[stabilityPool]).div(
+			SECONDS_IN_ONE_MINUTE
+		);
 
 		// f^t
 		uint256 power = LiquityMath._decPow(ISSUANCE_FACTOR, timePassedInMinutes);
 
 		//  (1 - f^t)
-		uint256 cumulativeIssuanceFraction = (
-			uint256(DECIMAL_PRECISION).sub(power)
-		);
+		uint256 cumulativeIssuanceFraction = (uint256(DECIMAL_PRECISION).sub(power));
 		assert(cumulativeIssuanceFraction <= DECIMAL_PRECISION); // must be in range [0,1]
 
 		return cumulativeIssuanceFraction;

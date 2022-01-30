@@ -106,14 +106,10 @@ contract VestaParameters is BaseVestaParameters {
 		onlyOwner
 	{
 		uint256 oldRedemptionFeeFloor = REDEMPTION_FEE_FLOOR[_asset];
-		uint256 newRedemptionFeeFloor = (DECIMAL_PRECISION / 1000) *
-			redemptionFeeFloor;
+		uint256 newRedemptionFeeFloor = (DECIMAL_PRECISION / 1000) * redemptionFeeFloor;
 
 		REDEMPTION_FEE_FLOOR[_asset] = newRedemptionFeeFloor;
-		emit RedemptionFeeFloorChanged(
-			oldRedemptionFeeFloor,
-			newRedemptionFeeFloor
-		);
+		emit RedemptionFeeFloorChanged(oldRedemptionFeeFloor, newRedemptionFeeFloor);
 	}
 
 	modifier safeCheck(

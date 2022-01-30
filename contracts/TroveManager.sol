@@ -148,12 +148,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 	// --- Getters ---
 
-	function getTroveOwnersCount(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getTroveOwnersCount(address _asset) external view override returns (uint256) {
 		return TroveOwners[_asset].length;
 	}
 
@@ -211,9 +206,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			_asset,
 			singleLiquidation.entireTroveColl
 		);
-		singleLiquidation.VSTGasCompensation = vestaParams.VST_GAS_COMPENSATION(
-			_asset
-		);
+		singleLiquidation.VSTGasCompensation = vestaParams.VST_GAS_COMPENSATION(_asset);
 		uint256 collToLiquidate = singleLiquidation.entireTroveColl.sub(
 			singleLiquidation.collGasCompensation
 		);
@@ -237,14 +230,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			singleLiquidation.entireTroveColl,
 			TroveManagerOperation.liquidateInNormalMode
 		);
-		emit TroveUpdated(
-			_asset,
-			_borrower,
-			0,
-			0,
-			0,
-			TroveManagerOperation.liquidateInNormalMode
-		);
+		emit TroveUpdated(_asset, _borrower, 0, 0, 0, TroveManagerOperation.liquidateInNormalMode);
 		return singleLiquidation;
 	}
 
@@ -274,9 +260,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			_asset,
 			singleLiquidation.entireTroveColl
 		);
-		singleLiquidation.VSTGasCompensation = vestaParams.VST_GAS_COMPENSATION(
-			_asset
-		);
+		singleLiquidation.VSTGasCompensation = vestaParams.VST_GAS_COMPENSATION(_asset);
 		vars.collToLiquidate = singleLiquidation.entireTroveColl.sub(
 			singleLiquidation.collGasCompensation
 		);
@@ -315,9 +299,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			);
 
 			// If 100% < ICR < MCR, offset as much as possible, and redistribute the remainder
-		} else if (
-			(_ICR > vestaParams._100pct()) && (_ICR < vestaParams.MCR(_asset))
-		) {
+		} else if ((_ICR > vestaParams._100pct()) && (_ICR < vestaParams.MCR(_asset))) {
 			_movePendingTroveRewardsToActivePool(
 				_asset,
 				_activePool,
@@ -384,11 +366,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 			_closeTrove(_asset, _borrower, Status.closedByLiquidation);
 			if (singleLiquidation.collSurplus > 0) {
-				collSurplusPool.accountSurplus(
-					_asset,
-					_borrower,
-					singleLiquidation.collSurplus
-				);
+				collSurplusPool.accountSurplus(_asset, _borrower, singleLiquidation.collSurplus);
 			}
 
 			emit TroveLiquidated(
@@ -466,17 +444,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	) internal view returns (LiquidationValues memory singleLiquidation) {
 		singleLiquidation.entireTroveDebt = _entireTroveDebt;
 		singleLiquidation.entireTroveColl = _entireTroveColl;
-		uint256 cappedCollPortion = _entireTroveDebt
-			.mul(vestaParams.MCR(_asset))
-			.div(_price);
+		uint256 cappedCollPortion = _entireTroveDebt.mul(vestaParams.MCR(_asset)).div(_price);
 
-		singleLiquidation.collGasCompensation = _getCollGasCompensation(
-			_asset,
-			cappedCollPortion
-		);
-		singleLiquidation.VSTGasCompensation = vestaParams.VST_GAS_COMPENSATION(
-			_asset
-		);
+		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, cappedCollPortion);
+		singleLiquidation.VSTGasCompensation = vestaParams.VST_GAS_COMPENSATION(_asset);
 
 		singleLiquidation.debtToOffset = _entireTroveDebt;
 		singleLiquidation.collToSendToSP = cappedCollPortion.sub(
@@ -501,8 +472,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			ICollSurplusPool(address(0)),
 			address(0)
 		);
-		IStabilityPool stabilityPoolCached = stabilityPoolManager
-			.getAssetStabilityPool(_asset);
+		IStabilityPool stabilityPoolCached = stabilityPoolManager.getAssetStabilityPool(_asset);
 
 		LocalVariables_OuterLiquidationFunction memory vars;
 
@@ -533,16 +503,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			);
 		}
 
-		require(
-			totals.totalDebtInSequence > 0,
-			"TroveManager: nothing to liquidate"
-		);
+		require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
 		// Move liquidated ETH and VST to the appropriate pools
-		stabilityPoolCached.offset(
-			totals.totalDebtToOffset,
-			totals.totalCollToSendToSP
-		);
+		stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
 		_redistributeDebtAndColl(
 			_asset,
 			contractsCache.activePool,
@@ -566,10 +530,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 
 		vars.liquidatedDebt = totals.totalDebtInSequence;
-		vars.liquidatedColl = totals
-			.totalCollInSequence
-			.sub(totals.totalCollGasCompensation)
-			.sub(totals.totalCollSurplus);
+		vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation).sub(
+			totals.totalCollSurplus
+		);
 		emit Liquidation(
 			_asset,
 			vars.liquidatedDebt,
@@ -599,12 +562,11 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _VSTInStabPool,
 		uint256 _n
 	) internal returns (LiquidationTotals memory totals) {
-		LocalVariables_AssetBorrowerPrice
-			memory assetVars = LocalVariables_AssetBorrowerPrice(
-				_asset,
-				address(0),
-				_price
-			);
+		LocalVariables_AssetBorrowerPrice memory assetVars = LocalVariables_AssetBorrowerPrice(
+			_asset,
+			address(0),
+			_price
+		);
 
 		LocalVariables_LiquidationSequence memory vars;
 		LiquidationValues memory singleLiquidation;
@@ -618,19 +580,13 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		address firstUser = _contractsCache.sortedTroves.getFirst(assetVars._asset);
 		for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
 			// we need to cache it, because current user is likely going to be deleted
-			address nextUser = _contractsCache.sortedTroves.getPrev(
-				assetVars._asset,
-				vars.user
-			);
+			address nextUser = _contractsCache.sortedTroves.getPrev(assetVars._asset, vars.user);
 
 			vars.ICR = getCurrentICR(assetVars._asset, vars.user, assetVars._price);
 
 			if (!vars.backToNormalMode) {
 				// Break the loop if ICR is greater than MCR and Stability Pool is empty
-				if (
-					vars.ICR >= vestaParams.MCR(_asset) &&
-					vars.remainingVSTInStabPool == 0
-				) {
+				if (vars.ICR >= vestaParams.MCR(_asset) && vars.remainingVSTInStabPool == 0) {
 					break;
 				}
 
@@ -655,9 +611,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 				vars.remainingVSTInStabPool = vars.remainingVSTInStabPool.sub(
 					singleLiquidation.debtToOffset
 				);
-				vars.entireSystemDebt = vars.entireSystemDebt.sub(
-					singleLiquidation.debtToOffset
-				);
+				vars.entireSystemDebt = vars.entireSystemDebt.sub(singleLiquidation.debtToOffset);
 				vars.entireSystemColl = vars
 					.entireSystemColl
 					.sub(singleLiquidation.collToSendToSP)
@@ -734,19 +688,12 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	/*
 	 * Attempt to liquidate a custom list of troves provided by the caller.
 	 */
-	function batchLiquidateTroves(address _asset, address[] memory _troveArray)
-		public
-		override
-	{
-		require(
-			_troveArray.length != 0,
-			"TroveManager: Calldata address array must not be empty"
-		);
+	function batchLiquidateTroves(address _asset, address[] memory _troveArray) public override {
+		require(_troveArray.length != 0, "TroveManager: Calldata address array must not be empty");
 
 		IActivePool activePoolCached = vestaParams.activePool();
 		IDefaultPool defaultPoolCached = vestaParams.defaultPool();
-		IStabilityPool stabilityPoolCached = stabilityPoolManager
-			.getAssetStabilityPool(_asset);
+		IStabilityPool stabilityPoolCached = stabilityPoolManager.getAssetStabilityPool(_asset);
 
 		LocalVariables_OuterLiquidationFunction memory vars;
 		LiquidationTotals memory totals;
@@ -778,16 +725,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			);
 		}
 
-		require(
-			totals.totalDebtInSequence > 0,
-			"TroveManager: nothing to liquidate"
-		);
+		require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
 		// Move liquidated ETH and VST to the appropriate pools
-		stabilityPoolCached.offset(
-			totals.totalDebtToOffset,
-			totals.totalCollToSendToSP
-		);
+		stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
 		_redistributeDebtAndColl(
 			_asset,
 			activePoolCached,
@@ -796,11 +737,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			totals.totalCollToRedistribute
 		);
 		if (totals.totalCollSurplus > 0) {
-			activePoolCached.sendAsset(
-				_asset,
-				address(collSurplusPool),
-				totals.totalCollSurplus
-			);
+			activePoolCached.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
 		// Update system snapshots
@@ -811,10 +748,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 
 		vars.liquidatedDebt = totals.totalDebtInSequence;
-		vars.liquidatedColl = totals
-			.totalCollInSequence
-			.sub(totals.totalCollGasCompensation)
-			.sub(totals.totalCollSurplus);
+		vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation).sub(
+			totals.totalCollSurplus
+		);
 		emit Liquidation(
 			_asset,
 			vars.liquidatedDebt,
@@ -864,10 +800,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 			if (!vars.backToNormalMode) {
 				// Skip this trove if ICR is greater than MCR and Stability Pool is empty
-				if (
-					vars.ICR >= vestaParams.MCR(_asset) &&
-					vars.remainingVSTInStabPool == 0
-				) {
+				if (vars.ICR >= vestaParams.MCR(_asset) && vars.remainingVSTInStabPool == 0) {
 					continue;
 				}
 
@@ -892,9 +825,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 				vars.remainingVSTInStabPool = vars.remainingVSTInStabPool.sub(
 					singleLiquidation.debtToOffset
 				);
-				vars.entireSystemDebt = vars.entireSystemDebt.sub(
-					singleLiquidation.debtToOffset
-				);
+				vars.entireSystemDebt = vars.entireSystemDebt.sub(singleLiquidation.debtToOffset);
 				vars.entireSystemColl = vars
 					.entireSystemColl
 					.sub(singleLiquidation.collToSendToSP)
@@ -994,9 +925,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute.add(
 			singleLiquidation.collToRedistribute
 		);
-		newTotals.totalCollSurplus = oldTotals.totalCollSurplus.add(
-			singleLiquidation.collSurplus
-		);
+		newTotals.totalCollSurplus = oldTotals.totalCollSurplus.add(singleLiquidation.collSurplus);
 
 		return newTotals;
 	}
@@ -1043,34 +972,24 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		address _lowerPartialRedemptionHint,
 		uint256 _partialRedemptionHintNICR
 	) internal returns (SingleRedemptionValues memory singleRedemption) {
-		LocalVariables_AssetBorrowerPrice
-			memory vars = LocalVariables_AssetBorrowerPrice(
-				_asset,
-				_borrower,
-				_price
-			);
+		LocalVariables_AssetBorrowerPrice memory vars = LocalVariables_AssetBorrowerPrice(
+			_asset,
+			_borrower,
+			_price
+		);
 
 		// Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
 		singleRedemption.VSTLot = LiquityMath._min(
 			_maxVSTamount,
-			Troves[vars._borrower][vars._asset].debt.sub(
-				vestaParams.VST_GAS_COMPENSATION(_asset)
-			)
+			Troves[vars._borrower][vars._asset].debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
 		);
 
 		// Get the ETHLot of equivalent value in USD
-		singleRedemption.ETHLot = singleRedemption
-			.VSTLot
-			.mul(DECIMAL_PRECISION)
-			.div(_price);
+		singleRedemption.ETHLot = singleRedemption.VSTLot.mul(DECIMAL_PRECISION).div(_price);
 
 		// Decrease the debt and collateral of the current Trove according to the VST lot and corresponding ETH to send
-		uint256 newDebt = (Troves[vars._borrower][vars._asset].debt).sub(
-			singleRedemption.VSTLot
-		);
-		uint256 newColl = (Troves[vars._borrower][vars._asset].coll).sub(
-			singleRedemption.ETHLot
-		);
+		uint256 newDebt = (Troves[vars._borrower][vars._asset].debt).sub(singleRedemption.VSTLot);
+		uint256 newColl = (Troves[vars._borrower][vars._asset].coll).sub(singleRedemption.ETHLot);
 
 		if (newDebt == vestaParams.VST_GAS_COMPENSATION(_asset)) {
 			// No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
@@ -1102,8 +1021,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			 */
 			if (
 				newNICR != _partialRedemptionHintNICR ||
-				_getNetDebt(vars._asset, newDebt) <
-				vestaParams.MIN_NET_DEBT(vars._asset)
+				_getNetDebt(vars._asset, newDebt) < vestaParams.MIN_NET_DEBT(vars._asset)
 			) {
 				singleRedemption.cancelledPartial = true;
 				return singleRedemption;
@@ -1170,8 +1088,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		if (
 			_firstRedemptionHint == address(0) ||
 			!_sortedTroves.contains(_asset, _firstRedemptionHint) ||
-			getCurrentICR(_asset, _firstRedemptionHint, _price) <
-			vestaParams.MCR(_asset)
+			getCurrentICR(_asset, _firstRedemptionHint, _price) < vestaParams.MCR(_asset)
 		) {
 			return false;
 		}
@@ -1233,11 +1150,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		totals.price = vestaParams.priceFeed().fetchPrice(_asset);
 		_requireTCRoverMCR(_asset, totals.price);
 		_requireAmountGreaterThanZero(_VSTamount);
-		_requireVSTBalanceCoversRedemption(
-			contractsCache.vstToken,
-			msg.sender,
-			_VSTamount
-		);
+		_requireVSTBalanceCoversRedemption(contractsCache.vstToken, msg.sender, _VSTamount);
 
 		totals.totalVSTSupplyAtStart = getEntireSystemDebt(_asset);
 		totals.remainingVST = _VSTamount;
@@ -1257,13 +1170,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			// Find the first trove with ICR >= MCR
 			while (
 				currentBorrower != address(0) &&
-				getCurrentICR(_asset, currentBorrower, totals.price) <
-				vestaParams.MCR(_asset)
+				getCurrentICR(_asset, currentBorrower, totals.price) < vestaParams.MCR(_asset)
 			) {
-				currentBorrower = contractsCache.sortedTroves.getPrev(
-					_asset,
-					currentBorrower
-				);
+				currentBorrower = contractsCache.sortedTroves.getPrev(_asset, currentBorrower);
 			}
 		}
 
@@ -1271,17 +1180,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		if (_maxIterations == 0) {
 			_maxIterations = type(uint256).max;
 		}
-		while (
-			currentBorrower != address(0) &&
-			totals.remainingVST > 0 &&
-			_maxIterations > 0
-		) {
+		while (currentBorrower != address(0) && totals.remainingVST > 0 && _maxIterations > 0) {
 			_maxIterations--;
 			// Save the address of the Trove preceding the current one, before potentially modifying the list
-			address nextUserToCheck = contractsCache.sortedTroves.getPrev(
-				_asset,
-				currentBorrower
-			);
+			address nextUserToCheck = contractsCache.sortedTroves.getPrev(_asset, currentBorrower);
 
 			_applyPendingRewards(
 				_asset,
@@ -1290,34 +1192,26 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 				currentBorrower
 			);
 
-			SingleRedemptionValues
-				memory singleRedemption = _redeemCollateralFromTrove(
-					_asset,
-					contractsCache,
-					currentBorrower,
-					totals.remainingVST,
-					totals.price,
-					_upperPartialRedemptionHint,
-					_lowerPartialRedemptionHint,
-					_partialRedemptionHintNICR
-				);
+			SingleRedemptionValues memory singleRedemption = _redeemCollateralFromTrove(
+				_asset,
+				contractsCache,
+				currentBorrower,
+				totals.remainingVST,
+				totals.price,
+				_upperPartialRedemptionHint,
+				_lowerPartialRedemptionHint,
+				_partialRedemptionHintNICR
+			);
 
 			if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
 
-			totals.totalVSTToRedeem = totals.totalVSTToRedeem.add(
-				singleRedemption.VSTLot
-			);
-			totals.totalAssetDrawn = totals.totalAssetDrawn.add(
-				singleRedemption.ETHLot
-			);
+			totals.totalVSTToRedeem = totals.totalVSTToRedeem.add(singleRedemption.VSTLot);
+			totals.totalAssetDrawn = totals.totalAssetDrawn.add(singleRedemption.ETHLot);
 
 			totals.remainingVST = totals.remainingVST.sub(singleRedemption.VSTLot);
 			currentBorrower = nextUserToCheck;
 		}
-		require(
-			totals.totalAssetDrawn > 0,
-			"TroveManager: Unable to redeem any amount"
-		);
+		require(totals.totalAssetDrawn > 0, "TroveManager: Unable to redeem any amount");
 
 		// Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
 		// Use the saved total VST supply value, from before it was reduced by the redemption.
@@ -1331,11 +1225,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		// Calculate the ETH fee
 		totals.ETHFee = _getRedemptionFee(_asset, totals.totalAssetDrawn);
 
-		_requireUserAcceptsFee(
-			totals.ETHFee,
-			totals.totalAssetDrawn,
-			_maxFeePercentage
-		);
+		_requireUserAcceptsFee(totals.ETHFee, totals.totalAssetDrawn, _maxFeePercentage);
 
 		// Send the ETH fee to the VSTA staking contract
 		contractsCache.activePool.sendAsset(
@@ -1359,11 +1249,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		contractsCache.vstToken.burn(msg.sender, totals.totalVSTToRedeem);
 		// Update Active Pool VST, and send ETH to account
 		contractsCache.activePool.decreaseVSTDebt(_asset, totals.totalVSTToRedeem);
-		contractsCache.activePool.sendAsset(
-			_asset,
-			msg.sender,
-			totals.ETHToSendToRedeemer
-		);
+		contractsCache.activePool.sendAsset(_asset, msg.sender, totals.ETHToSendToRedeemer);
 	}
 
 	// --- Helper functions ---
@@ -1407,12 +1293,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 pendingAssetReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingVSTDebtReward = getPendingVSTDebtReward(_asset, _borrower);
 
-		uint256 currentAsset = Troves[_borrower][_asset].coll.add(
-			pendingAssetReward
-		);
-		uint256 currentVSTDebt = Troves[_borrower][_asset].debt.add(
-			pendingVSTDebtReward
-		);
+		uint256 currentAsset = Troves[_borrower][_asset].coll.add(pendingAssetReward);
+		uint256 currentVSTDebt = Troves[_borrower][_asset].debt.add(pendingVSTDebtReward);
 
 		return (currentAsset, currentVSTDebt);
 	}
@@ -1449,12 +1331,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 pendingVSTDebtReward = getPendingVSTDebtReward(_asset, _borrower);
 
 		// Apply pending rewards to trove's state
-		Troves[_borrower][_asset].coll = Troves[_borrower][_asset].coll.add(
-			pendingAssetReward
-		);
-		Troves[_borrower][_asset].debt = Troves[_borrower][_asset].debt.add(
-			pendingVSTDebtReward
-		);
+		Troves[_borrower][_asset].coll = Troves[_borrower][_asset].coll.add(pendingAssetReward);
+		Troves[_borrower][_asset].debt = Troves[_borrower][_asset].debt.add(pendingVSTDebtReward);
 
 		_updateTroveRewardSnapshots(_asset, _borrower);
 
@@ -1486,9 +1364,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return _updateTroveRewardSnapshots(_asset, _borrower);
 	}
 
-	function _updateTroveRewardSnapshots(address _asset, address _borrower)
-		internal
-	{
+	function _updateTroveRewardSnapshots(address _asset, address _borrower) internal {
 		rewardSnapshots[_borrower][_asset].asset = L_ASSETS[_asset];
 		rewardSnapshots[_borrower][_asset].VSTDebt = L_VSTDebts[_asset];
 		emit TroveSnapshotsUpdated(_asset, L_ASSETS[_asset], L_VSTDebts[_asset]);
@@ -1510,9 +1386,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		uint256 stake = Troves[_borrower][_asset].stake;
 
-		uint256 pendingAssetReward = stake.mul(rewardPerUnitStaked).div(
-			DECIMAL_PRECISION
-		);
+		uint256 pendingAssetReward = stake.mul(rewardPerUnitStaked).div(DECIMAL_PRECISION);
 
 		return pendingAssetReward;
 	}
@@ -1533,9 +1407,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		uint256 stake = Troves[_borrower][_asset].stake;
 
-		uint256 pendingVSTDebtReward = stake.mul(rewardPerUnitStaked).div(
-			DECIMAL_PRECISION
-		);
+		uint256 pendingVSTDebtReward = stake.mul(rewardPerUnitStaked).div(DECIMAL_PRECISION);
 
 		return pendingVSTDebtReward;
 	}
@@ -1613,11 +1485,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	}
 
 	// Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
-	function _computeNewStake(address _asset, uint256 _coll)
-		internal
-		view
-		returns (uint256)
-	{
+	function _computeNewStake(address _asset, uint256 _coll) internal view returns (uint256) {
 		uint256 stake;
 		if (totalCollateralSnapshot[_asset] == 0) {
 			stake = _coll;
@@ -1629,9 +1497,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			 * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
 			 */
 			assert(totalStakesSnapshot[_asset] > 0);
-			stake = _coll.mul(totalStakesSnapshot[_asset]).div(
-				totalCollateralSnapshot[_asset]
-			);
+			stake = _coll.mul(totalStakesSnapshot[_asset]).div(totalCollateralSnapshot[_asset]);
 		}
 		return stake;
 	}
@@ -1667,9 +1533,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		// Get the per-unit-staked terms
 		uint256 ETHRewardPerUnitStaked = ETHNumerator.div(totalStakes[_asset]);
-		uint256 VSTDebtRewardPerUnitStaked = VSTDebtNumerator.div(
-			totalStakes[_asset]
-		);
+		uint256 VSTDebtRewardPerUnitStaked = VSTDebtNumerator.div(totalStakes[_asset]);
 
 		lastETHError_Redistribution[_asset] = ETHNumerator.sub(
 			ETHRewardPerUnitStaked.mul(totalStakes[_asset])
@@ -1727,9 +1591,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		uint256 activeColl = _activePool.getAssetBalance(_asset);
 		uint256 liquidatedColl = vestaParams.defaultPool().getAssetBalance(_asset);
-		totalCollateralSnapshot[_asset] = activeColl.sub(_collRemainder).add(
-			liquidatedColl
-		);
+		totalCollateralSnapshot[_asset] = activeColl.sub(_collRemainder).add(liquidatedColl);
 
 		emit SystemSnapshotsUpdated(
 			_asset,
@@ -1782,12 +1644,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		TroveOwners[_asset].pop();
 	}
 
-	function getTCR(address _asset, uint256 _price)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getTCR(address _asset, uint256 _price) external view override returns (uint256) {
 		return _getTCR(_asset, _price);
 	}
 
@@ -1806,11 +1663,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _entireSystemDebt,
 		uint256 _price
 	) internal view returns (bool) {
-		uint256 TCR = LiquityMath._computeCR(
-			_entireSystemColl,
-			_entireSystemDebt,
-			_price
-		);
+		uint256 TCR = LiquityMath._computeCR(_entireSystemColl, _entireSystemDebt, _price);
 
 		return TCR < vestaParams.CCR(_asset);
 	}
@@ -1837,21 +1690,11 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return newBaseRate;
 	}
 
-	function getRedemptionRate(address _asset)
-		public
-		view
-		override
-		returns (uint256)
-	{
+	function getRedemptionRate(address _asset) public view override returns (uint256) {
 		return _calcRedemptionRate(_asset, baseRate[_asset]);
 	}
 
-	function getRedemptionRateWithDecay(address _asset)
-		public
-		view
-		override
-		returns (uint256)
-	{
+	function getRedemptionRateWithDecay(address _asset) public view override returns (uint256) {
 		return _calcRedemptionRate(_asset, _calcDecayedBaseRate(_asset));
 	}
 
@@ -1889,9 +1732,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		pure
 		returns (uint256)
 	{
-		uint256 redemptionFee = _redemptionRate.mul(_assetDraw).div(
-			DECIMAL_PRECISION
-		);
+		uint256 redemptionFee = _redemptionRate.mul(_assetDraw).div(DECIMAL_PRECISION);
 		require(
 			redemptionFee < _assetDraw,
 			"TroveManager: Fee would eat up all returned collateral"
@@ -1899,21 +1740,11 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return redemptionFee;
 	}
 
-	function getBorrowingRate(address _asset)
-		public
-		view
-		override
-		returns (uint256)
-	{
+	function getBorrowingRate(address _asset) public view override returns (uint256) {
 		return _calcBorrowingRate(_asset, baseRate[_asset]);
 	}
 
-	function getBorrowingRateWithDecay(address _asset)
-		public
-		view
-		override
-		returns (uint256)
-	{
+	function getBorrowingRateWithDecay(address _asset) public view override returns (uint256) {
 		return _calcBorrowingRate(_asset, _calcDecayedBaseRate(_asset));
 	}
 
@@ -1979,29 +1810,15 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		}
 	}
 
-	function _calcDecayedBaseRate(address _asset)
-		internal
-		view
-		returns (uint256)
-	{
+	function _calcDecayedBaseRate(address _asset) internal view returns (uint256) {
 		uint256 minutesPassed = _minutesPassedSinceLastFeeOp(_asset);
-		uint256 decayFactor = LiquityMath._decPow(
-			MINUTE_DECAY_FACTOR,
-			minutesPassed
-		);
+		uint256 decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
 		return baseRate[_asset].mul(decayFactor).div(DECIMAL_PRECISION);
 	}
 
-	function _minutesPassedSinceLastFeeOp(address _asset)
-		internal
-		view
-		returns (uint256)
-	{
-		return
-			(block.timestamp.sub(lastFeeOperationTime[_asset])).div(
-				SECONDS_IN_ONE_MINUTE
-			);
+	function _minutesPassedSinceLastFeeOp(address _asset) internal view returns (uint256) {
+		return (block.timestamp.sub(lastFeeOperationTime[_asset])).div(SECONDS_IN_ONE_MINUTE);
 	}
 
 	function _requireVSTBalanceCoversRedemption(
@@ -2015,10 +1832,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 	}
 
-	function _requireMoreThanOneTroveInSystem(
-		address _asset,
-		uint256 TroveOwnersArrayLength
-	) internal view {
+	function _requireMoreThanOneTroveInSystem(address _asset, uint256 TroveOwnersArrayLength)
+		internal
+		view
+	{
 		require(
 			TroveOwnersArrayLength > 1 && sortedTroves.getSize(_asset) > 1,
 			"TroveManager: Only one trove in the system"
@@ -2036,10 +1853,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 	}
 
-	function _requireValidMaxFeePercentage(
-		address _asset,
-		uint256 _maxFeePercentage
-	) internal view {
+	function _requireValidMaxFeePercentage(address _asset, uint256 _maxFeePercentage)
+		internal
+		view
+	{
 		require(
 			_maxFeePercentage >= vestaParams.REDEMPTION_FEE_FLOOR(_asset) &&
 				_maxFeePercentage <= DECIMAL_PRECISION,
@@ -2047,11 +1864,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 	}
 
-	function isTroveActive(address _asset, address _borrower)
-		internal
-		view
-		returns (bool)
-	{
+	function isTroveActive(address _asset, address _borrower) internal view returns (bool) {
 		return this.getTroveStatus(_asset, _borrower) == uint256(Status.active);
 	}
 

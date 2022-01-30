@@ -5,11 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Interfaces/IStabilityPoolManager.sol";
 
-contract StabilityPoolManager is
-	OwnableUpgradeable,
-	CheckContract,
-	IStabilityPoolManager
-{
+contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPoolManager {
 	mapping(address => address) stabilityPools;
 	mapping(address => bool) validStabilityPools;
 
@@ -19,10 +15,7 @@ contract StabilityPoolManager is
 	address public adminContact;
 
 	modifier isController() {
-		require(
-			msg.sender == owner() || msg.sender == adminContact,
-			"Invalid permissions"
-		);
+		require(msg.sender == owner() || msg.sender == adminContact, "Invalid permissions");
 		_;
 	}
 
@@ -36,12 +29,7 @@ contract StabilityPoolManager is
 		adminContact = _adminContract;
 	}
 
-	function isStabilityPool(address stabilityPool)
-		external
-		view
-		override
-		returns (bool)
-	{
+	function isStabilityPool(address stabilityPool) external view override returns (bool) {
 		return validStabilityPools[stabilityPool];
 	}
 
@@ -52,10 +40,7 @@ contract StabilityPoolManager is
 	{
 		CheckContract(asset);
 		CheckContract(stabilityPool);
-		require(
-			!validStabilityPools[stabilityPool],
-			"StabilityPool already created."
-		);
+		require(!validStabilityPools[stabilityPool], "StabilityPool already created.");
 		require(
 			IStabilityPool(stabilityPool).getAssetType() == asset,
 			"Stability Pool doesn't have the same asset type. Is it initialized?"

@@ -7,13 +7,7 @@ interface IStabilityPoolManager {
 
 	function addStabilityPool(address asset, address stabilityPool) external;
 
-	function getAssetStabilityPool(address asset)
-		external
-		view
-		returns (IStabilityPool);
+	function getAssetStabilityPool(address asset) external view returns (IStabilityPool);
 
-	function unsafeGetAssetStabilityPool(address asset)
-		external
-		view
-		returns (address);
+	function unsafeGetAssetStabilityPool(address asset) external view returns (address);
 }

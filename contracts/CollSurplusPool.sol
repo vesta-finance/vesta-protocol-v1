@@ -9,11 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 
-contract CollSurplusPool is
-	OwnableUpgradeable,
-	CheckContract,
-	ICollSurplusPool
-{
+contract CollSurplusPool is OwnableUpgradeable, CheckContract, ICollSurplusPool {
 	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -59,12 +55,7 @@ contract CollSurplusPool is
 
 	/* Returns the Asset state variable at ActivePool address.
        Not necessarily equal to the raw ether balance - ether can be forcibly sent to contracts. */
-	function getAssetBalance(address _asset)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function getAssetBalance(address _asset) external view override returns (uint256) {
 		return balances[_asset];
 	}
 
@@ -95,10 +86,7 @@ contract CollSurplusPool is
 	function claimColl(address _asset, address _account) external override {
 		_requireCallerIsBorrowerOperations();
 		uint256 claimableColl = userBalances[_account][_asset];
-		require(
-			claimableColl > 0,
-			"CollSurplusPool: No collateral available to claim"
-		);
+		require(claimableColl > 0, "CollSurplusPool: No collateral available to claim");
 
 		userBalances[_account][_asset] = 0;
 		emit CollBalanceUpdated(_account, 0);
@@ -129,17 +117,11 @@ contract CollSurplusPool is
 	}
 
 	function _requireCallerIsTroveManager() internal view {
-		require(
-			msg.sender == troveManagerAddress,
-			"CollSurplusPool: Caller is not TroveManager"
-		);
+		require(msg.sender == troveManagerAddress, "CollSurplusPool: Caller is not TroveManager");
 	}
 
 	function _requireCallerIsActivePool() internal view {
-		require(
-			msg.sender == activePoolAddress,
-			"CollSurplusPool: Caller is not Active Pool"
-		);
+		require(msg.sender == activePoolAddress, "CollSurplusPool: Caller is not Active Pool");
 	}
 
 	// --- Fallback function ---
