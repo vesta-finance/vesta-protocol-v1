@@ -1,13 +1,13 @@
-const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
+const VestaMathTester = artifacts.require("./VestaMathTester.sol")
 
 contract('LiquityMath', async accounts => {
-  let liquityMathTester
+  let vestaMathTester
   beforeEach('deploy tester', async () => {
-    liquityMathTester = await LiquityMathTester.new()
+    vestaMathTester = await VestaMathTester.new()
   })
 
   const checkFunction = async (func, cond, params) => {
-    assert.equal(await liquityMathTester[func](...params), cond(...params))
+    assert.equal(await vestaMathTester[func](...params), cond(...params))
   }
 
   it('max works if a > b', async () => {

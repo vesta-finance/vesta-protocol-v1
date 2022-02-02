@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.10;
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "../Dependencies/LiquityMath.sol";
+import "../Dependencies/VestaMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../Interfaces/IBorrowerOperations.sol";
 import "../Interfaces/ITroveManager.sol";
@@ -202,8 +202,8 @@ contract BorrowerWrappersScript is
 
 		uint256 VSTAmount = _collateral.mul(price).div(ICR);
 		uint256 borrowingRate = troveManager.getBorrowingRateWithDecay(_asset);
-		uint256 netDebt = VSTAmount.mul(LiquityMath.DECIMAL_PRECISION).div(
-			LiquityMath.DECIMAL_PRECISION.add(borrowingRate)
+		uint256 netDebt = VSTAmount.mul(VestaMath.DECIMAL_PRECISION).div(
+			VestaMath.DECIMAL_PRECISION.add(borrowingRate)
 		);
 
 		return netDebt;

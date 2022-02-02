@@ -23,7 +23,7 @@ const CommunityIssuanceTester = artifacts.require("./CommunityIssuanceTester.sol
 const StabilityPoolTester = artifacts.require("./StabilityPoolTester.sol")
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
-const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
+const VestaMathTester = artifacts.require("./VestaMathTester.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const VSTTokenTester = artifacts.require("./VSTTokenTester.sol")
@@ -57,6 +57,11 @@ VSTA contracts consist of only those contracts related to the VSTA Token:
 -the VSTAStaking contract
 -the CommunityIssuance contract 
 */
+
+const testHelpers = require("./testHelpers.js")
+
+const th = testHelpers.TestHelper
+const dec = th.dec
 
 const ZERO_ADDRESS = '0x' + '0'.repeat(40)
 const maxBytes32 = '0x' + 'f'.repeat(64)
@@ -143,7 +148,7 @@ class DeploymentHelper {
     testerContracts.vestaParameters = await VestaParameters.new()
     testerContracts.gasPool = await GasPool.new()
     testerContracts.collSurplusPool = await CollSurplusPool.new()
-    testerContracts.math = await LiquityMathTester.new()
+    testerContracts.math = await VestaMathTester.new()
     testerContracts.borrowerOperations = await BorrowerOperationsTester.new()
     testerContracts.troveManager = await TroveManagerTester.new()
     testerContracts.functionCaller = await FunctionCaller.new()
@@ -303,7 +308,7 @@ class DeploymentHelper {
 
   }
 
-  static async connectVSTAContractsToCore(VSTAContracts, coreContracts, skipPool = false) {
+  static async connectVSTAContractsToCore(VSTAContracts, coreContracts, skipPool = false, liquitySettings = true) {
     const treasurySig = await VSTAContracts.vstaToken.treasury();
 
     await VSTAContracts.vstaStaking.setAddresses(
@@ -334,9 +339,41 @@ class DeploymentHelper {
       await coreContracts.adminContract.transferOwnership(treasurySig);
 
     await VSTAContracts.vstaToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256, { from: treasurySig });
-    await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '32000000000000000000000000', 0, { from: treasurySig });
-    await VSTAContracts.vstaToken.unprotectedMint(treasurySig, '32000000000000000000000000')
-    await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '32000000000000000000000000', 0, { from: treasurySig });
+
+    const supply = dec(32000000, 18);
+    const weeklyReward = dec(32000000 / 4, 18);
+
+    await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, supply, weeklyReward, 0, { from: treasurySig });
+    await VSTAContracts.vstaToken.unprotectedMint(treasurySig, supply)
+    await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, supply, weeklyReward, 0, { from: treasurySig });
+
+    if (!liquitySettings)
+      return;
+
+    //Set Liquity Configs (since the tests have been designed with it)
+    await coreContracts.vestaParameters.setCollateralParameters(
+      ZERO_ADDRESS,
+      "1100000000000000000",
+      "1500000000000000000",
+      dec(200, 18),
+      dec(1800, 18),
+      200,
+      50,
+      500,
+      50
+    );
+
+    await coreContracts.vestaParameters.setCollateralParameters(
+      coreContracts.erc20.address,
+      "1100000000000000000",
+      "1500000000000000000",
+      dec(200, 18),
+      dec(1800, 18),
+      200,
+      50,
+      500,
+      50
+    )
   }
 }
 module.exports = DeploymentHelper

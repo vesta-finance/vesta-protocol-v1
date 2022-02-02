@@ -421,7 +421,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			 *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
 			 *
 			 */
-			debtToOffset = LiquityMath._min(_debt, _VSTInStabPool);
+			debtToOffset = VestaMath._min(_debt, _VSTInStabPool);
 			collToSendToSP = _coll.mul(debtToOffset).div(_debt);
 			debtToRedistribute = _debt.sub(debtToOffset);
 			collToRedistribute = _coll.sub(collToSendToSP);
@@ -590,7 +590,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 					break;
 				}
 
-				uint256 TCR = LiquityMath._computeCR(
+				uint256 TCR = VestaMath._computeCR(
 					vars.entireSystemColl,
 					vars.entireSystemDebt,
 					assetVars._price
@@ -804,7 +804,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 					continue;
 				}
 
-				uint256 TCR = LiquityMath._computeCR(
+				uint256 TCR = VestaMath._computeCR(
 					vars.entireSystemColl,
 					vars.entireSystemDebt,
 					_price
@@ -979,7 +979,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 
 		// Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
-		singleRedemption.VSTLot = LiquityMath._min(
+		singleRedemption.VSTLot = VestaMath._min(
 			_maxVSTamount,
 			Troves[vars._borrower][vars._asset].debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
 		);
@@ -1011,7 +1011,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 				TroveManagerOperation.redeemCollateral
 			);
 		} else {
-			uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
+			uint256 newNICR = VestaMath._computeNominalCR(newColl, newDebt);
 
 			/*
 			 * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
@@ -1266,7 +1266,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			_borrower
 		);
 
-		uint256 NICR = LiquityMath._computeNominalCR(currentAsset, currentVSTDebt);
+		uint256 NICR = VestaMath._computeNominalCR(currentAsset, currentVSTDebt);
 		return NICR;
 	}
 
@@ -1281,7 +1281,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			_borrower
 		);
 
-		uint256 ICR = LiquityMath._computeCR(currentAsset, currentVSTDebt, _price);
+		uint256 ICR = VestaMath._computeCR(currentAsset, currentVSTDebt, _price);
 		return ICR;
 	}
 
@@ -1663,7 +1663,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _entireSystemDebt,
 		uint256 _price
 	) internal view returns (bool) {
-		uint256 TCR = LiquityMath._computeCR(_entireSystemColl, _entireSystemDebt, _price);
+		uint256 TCR = VestaMath._computeCR(_entireSystemColl, _entireSystemDebt, _price);
 
 		return TCR < vestaParams.CCR(_asset);
 	}
@@ -1679,7 +1679,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 redeemedVSTFraction = _ETHDrawn.mul(_price).div(_totalVSTSupply);
 
 		uint256 newBaseRate = decayedBaseRate.add(redeemedVSTFraction.div(BETA));
-		newBaseRate = LiquityMath._min(newBaseRate, DECIMAL_PRECISION);
+		newBaseRate = VestaMath._min(newBaseRate, DECIMAL_PRECISION);
 		assert(newBaseRate > 0);
 
 		baseRate[_asset] = newBaseRate;
@@ -1704,7 +1704,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		returns (uint256)
 	{
 		return
-			LiquityMath._min(
+			VestaMath._min(
 				vestaParams.REDEMPTION_FEE_FLOOR(_asset).add(_baseRate),
 				DECIMAL_PRECISION
 			);
@@ -1754,7 +1754,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		returns (uint256)
 	{
 		return
-			LiquityMath._min(
+			VestaMath._min(
 				vestaParams.BORROWING_FEE_FLOOR(_asset).add(_baseRate),
 				vestaParams.MAX_BORROWING_FEE(_asset)
 			);
@@ -1812,7 +1812,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 	function _calcDecayedBaseRate(address _asset) internal view returns (uint256) {
 		uint256 minutesPassed = _minutesPassedSinceLastFeeOp(_asset);
-		uint256 decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
+		uint256 decayFactor = VestaMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
 
 		return baseRate[_asset].mul(decayFactor).div(DECIMAL_PRECISION);
 	}

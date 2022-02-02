@@ -118,7 +118,7 @@ contract HintHelpers is VestaBase, CheckContract {
 
 			if (netVSTDebt > remainingVST) {
 				if (netVSTDebt > vestaParams.MIN_NET_DEBT(vars._asset)) {
-					uint256 maxRedeemableVST = LiquityMath._min(
+					uint256 maxRedeemableVST = VestaMath._min(
 						remainingVST,
 						netVSTDebt.sub(vestaParams.MIN_NET_DEBT(vars._asset))
 					);
@@ -131,7 +131,7 @@ contract HintHelpers is VestaBase, CheckContract {
 					uint256 newDebt = netVSTDebt.sub(maxRedeemableVST);
 
 					uint256 compositeDebt = _getCompositeDebt(vars._asset, newDebt);
-					partialRedemptionHintNICR = LiquityMath._computeNominalCR(newColl, compositeDebt);
+					partialRedemptionHintNICR = VestaMath._computeNominalCR(newColl, compositeDebt);
 
 					remainingVST = remainingVST.sub(maxRedeemableVST);
 				}
@@ -176,7 +176,7 @@ contract HintHelpers is VestaBase, CheckContract {
 		}
 
 		hintAddress = sortedTroves.getLast(_asset);
-		diff = LiquityMath._getAbsoluteDifference(
+		diff = VestaMath._getAbsoluteDifference(
 			_CR,
 			troveManager.getNominalICR(_asset, hintAddress)
 		);
@@ -192,7 +192,7 @@ contract HintHelpers is VestaBase, CheckContract {
 			uint256 currentNICR = troveManager.getNominalICR(_asset, currentAddress);
 
 			// check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
-			uint256 currentDiff = LiquityMath._getAbsoluteDifference(currentNICR, _CR);
+			uint256 currentDiff = VestaMath._getAbsoluteDifference(currentNICR, _CR);
 
 			if (currentDiff < diff) {
 				diff = currentDiff;
@@ -203,7 +203,7 @@ contract HintHelpers is VestaBase, CheckContract {
 	}
 
 	function computeNominalCR(uint256 _coll, uint256 _debt) external pure returns (uint256) {
-		return LiquityMath._computeNominalCR(_coll, _debt);
+		return VestaMath._computeNominalCR(_coll, _debt);
 	}
 
 	function computeCR(
@@ -211,6 +211,6 @@ contract HintHelpers is VestaBase, CheckContract {
 		uint256 _debt,
 		uint256 _price
 	) external pure returns (uint256) {
-		return LiquityMath._computeCR(_coll, _debt, _price);
+		return VestaMath._computeCR(_coll, _debt, _price);
 	}
 }

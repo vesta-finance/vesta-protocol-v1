@@ -6,15 +6,20 @@ To check test coverage you can run:
 yarn coverage
 ```
 
-You can see the coverage status at mainnet deployment [here](https://codecov.io/gh/liquity/dev/tree/8f52f2906f99414c0b1c3a84c95c74c319b7a8c6).
+You can see the coverage status at mainnet deployment
+[here](https://codecov.io/gh/liquity/dev/tree/8f52f2906f99414c0b1c3a84c95c74c319b7a8c6).
 
 ![Impacted file tree graph](https://codecov.io/gh/liquity/dev/pull/707/graphs/tree.svg?width=650&height=150&src=pr&token=7AJPQ3TW0O&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=liquity)
 
-There’s also a [pull request](https://github.com/liquity/dev/pull/515) to increase the coverage, but it hasn’t been merged yet because it modifies some smart contracts (mostly removing unnecessary checks).
+There’s also a [pull request](https://github.com/liquity/dev/pull/515) to increase the
+coverage, but it hasn’t been merged yet because it modifies some smart contracts (mostly
+removing unnecessary checks).
 
 # Test output
 
-The following is the output of a complete test run, made on commit [`a1824dd8`](https://github.com/liquity/dev/tree/a1824dd88f4928b424cae372d59c4455d5c9a2c2), from April 16th, 2021.
+The following is the output of a complete test run, made on commit
+[`a1824dd8`](https://github.com/liquity/dev/tree/a1824dd88f4928b424cae372d59c4455d5c9a2c2),
+from April 16th, 2021.
 
 ```
 yarn run v1.22.11
@@ -504,7 +509,7 @@ TCR: 11.892415157517211309
     ✓ max works if a = b
     ✓ max works if a < b
 
-  Contract: LiquitySafeMath128Tester
+  Contract: VestaSafeMath128Tester
     ✓ add(): reverts if overflows
     ✓ sub(): reverts if underflows
 

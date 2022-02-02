@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/BaseMath.sol";
-import "./Dependencies/LiquityMath.sol";
+import "./Dependencies/VestaMath.sol";
 
 contract PriceFeed is OwnableUpgradeable, CheckContract, BaseMath, IPriceFeed {
 	using SafeMathUpgradeable for uint256;
@@ -52,6 +52,11 @@ contract PriceFeed is OwnableUpgradeable, CheckContract, BaseMath, IPriceFeed {
 		adminContract = _adminContract;
 		chainlinkFlags = FlagsInterface(_chainlinkFlag);
 		status = Status.chainlinkWorking;
+	}
+
+	function setAdminContract(address _admin) external onlyOwner {
+		require(_admin != address(0));
+		adminContract = _admin;
 	}
 
 	function addOracle(
@@ -245,8 +250,8 @@ contract PriceFeed is OwnableUpgradeable, CheckContract, BaseMath, IPriceFeed {
 			_prevResponse.decimals
 		);
 
-		uint256 minPrice = LiquityMath._min(currentScaledPrice, prevScaledPrice);
-		uint256 maxPrice = LiquityMath._max(currentScaledPrice, prevScaledPrice);
+		uint256 minPrice = VestaMath._min(currentScaledPrice, prevScaledPrice);
+		uint256 maxPrice = VestaMath._max(currentScaledPrice, prevScaledPrice);
 
 		/*
 		 * Use the larger price as the denominator:
@@ -266,10 +271,10 @@ contract PriceFeed is OwnableUpgradeable, CheckContract, BaseMath, IPriceFeed {
 	{
 		uint256 price;
 		if (_answerDigits >= TARGET_DIGITS) {
-			// Scale the returned price value down to Liquity's target precision
+			// Scale the returned price value down to Vesta's target precision
 			price = _price.div(10**(_answerDigits - TARGET_DIGITS));
 		} else if (_answerDigits < TARGET_DIGITS) {
-			// Scale the returned price value up to Liquity's target precision
+			// Scale the returned price value up to Vesta's target precision
 			price = _price.mul(10**(TARGET_DIGITS - _answerDigits));
 		}
 		return price;

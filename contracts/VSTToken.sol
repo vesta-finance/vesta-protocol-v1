@@ -7,24 +7,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Interfaces/IVSTToken.sol";
 
-/*
- *
- * Based upon OpenZeppelin's ERC20 contract:
- * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
- *
- * and their EIP2612 (ERC20Permit / ERC712) functionality:
- * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/53516bc555a454862470e7860a9b5254db4d00f5/contracts/token/ERC20/ERC20Permit.sol
- *
- *
- * --- Functionality added specific to the VSTToken ---
- *
- * 1) Transfer protection: blacklist of addresses that are invalid recipients (i.e. core Liquity contracts) in external
- * transfer() and transferFrom() calls. The purpose is to protect users from losing tokens by mistakenly sending VST directly to a Liquity
- * core contract, when they should rather call the right function.
- *
- * 2) sendToPool() and returnFromPool(): functions callable only Liquity core contracts, which move VST tokens between Liquity <-> user.
- */
-
 contract VSTToken is CheckContract, IVSTToken, Ownable {
 	using SafeMath for uint256;
 
@@ -53,12 +35,9 @@ contract VSTToken is CheckContract, IVSTToken, Ownable {
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
-
-		//mint 5000 for Initial Liquidity Pool. the extra is burned.
-		_mint(msg.sender, 5000 ether);
 	}
 
-	// --- Functions for intra-Liquity calls ---
+	// --- Functions for intra-Vesta calls ---
 
 	//
 	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {

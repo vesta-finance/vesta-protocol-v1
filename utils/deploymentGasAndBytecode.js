@@ -17,7 +17,7 @@ const HintHelpers = artifacts.require("./HintHelpers.sol")
 const CommunityIssuanceTester = artifacts.require("./VSTA/CommunityIssuanceTester.sol")
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
-const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
+const VestaMathTester = artifacts.require("./VestaMathTester.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const VSTTokenTester = artifacts.require("./VSTTokenTester.sol")
@@ -50,7 +50,7 @@ const TesterContractABIs = [
   CommunityIssuanceTester,
   ActivePoolTester,
   DefaultPoolTester,
-  LiquityMathTester,
+  VestaMathTester,
   BorrowerOperationsTester,
   TroveManagerTester,
   VSTTokenTester,

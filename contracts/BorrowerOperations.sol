@@ -186,8 +186,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
 		assert(vars.compositeDebt > 0);
 
-		vars.ICR = LiquityMath._computeCR(_tokenAmount, vars.compositeDebt, vars.price);
-		vars.NICR = LiquityMath._computeNominalCR(_tokenAmount, vars.compositeDebt);
+		vars.ICR = VestaMath._computeCR(_tokenAmount, vars.compositeDebt, vars.price);
+		vars.NICR = VestaMath._computeNominalCR(_tokenAmount, vars.compositeDebt);
 
 		if (isRecoveryMode) {
 			_requireICRisAboveCCR(vars.asset, vars.ICR);
@@ -424,7 +424,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.coll = contractsCache.troveManager.getTroveColl(vars.asset, _borrower);
 
 		// Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
-		vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
+		vars.oldICR = VestaMath._computeCR(vars.coll, vars.debt, vars.price);
 		vars.newICR = _getNewICRFromTroveChange(
 			vars.coll,
 			vars.debt,
@@ -894,7 +894,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			_isDebtIncrease
 		);
 
-		uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
+		uint256 newNICR = VestaMath._computeNominalCR(newColl, newDebt);
 		return newNICR;
 	}
 
@@ -917,7 +917,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			_isDebtIncrease
 		);
 
-		uint256 newICR = LiquityMath._computeCR(newColl, newDebt, _price);
+		uint256 newICR = VestaMath._computeCR(newColl, newDebt, _price);
 		return newICR;
 	}
 
@@ -952,7 +952,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		totalColl = _isCollIncrease ? totalColl.add(_collChange) : totalColl.sub(_collChange);
 		totalDebt = _isDebtIncrease ? totalDebt.add(_debtChange) : totalDebt.sub(_debtChange);
 
-		uint256 newTCR = LiquityMath._computeCR(totalColl, totalDebt, _price);
+		uint256 newTCR = VestaMath._computeCR(totalColl, totalDebt, _price);
 		return newTCR;
 	}
 

@@ -77,6 +77,14 @@ class TestHelper {
     return Number(fromWei(this.getDifference(x, y).toString()))
   }
 
+  static toUnit(value, unit = "ether") {
+    return web3.utils.toWei(value, unit)
+  }
+
+  static toUnitNumber(value, unit = "ether") {
+    return parseInt(web3.utils.toWei(value, unit))
+  }
+
   static assertIsApproximatelyEqual(x, y, error = 1000) {
     assert.isAtMost(this.getDifference(x, y), error)
   }

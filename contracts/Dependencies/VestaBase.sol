@@ -4,12 +4,11 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./BaseMath.sol";
-import "./LiquityMath.sol";
+import "./VestaMath.sol";
 import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";
 import "../Interfaces/IPriceFeed.sol";
 import "../Interfaces/IVestaBase.sol";
-import "../Interfaces/BaseVestaParameters.sol";
 
 /*
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
@@ -19,10 +18,10 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 	using SafeMathUpgradeable for uint256;
 	address public constant ETH_REF_ADDRESS = address(0);
 
-	BaseVestaParameters public override vestaParams;
+	IVestaParameters public override vestaParams;
 
 	function setVestaParameters(address _vaultParams) public onlyOwner {
-		vestaParams = BaseVestaParameters(_vaultParams);
+		vestaParams = IVestaParameters(_vaultParams);
 		emit VaultParametersBaseChanged(_vaultParams);
 	}
 
@@ -64,7 +63,7 @@ contract VestaBase is BaseMath, IVestaBase, OwnableUpgradeable {
 		uint256 entireSystemColl = getEntireSystemColl(_asset);
 		uint256 entireSystemDebt = getEntireSystemDebt(_asset);
 
-		TCR = LiquityMath._computeCR(entireSystemColl, entireSystemDebt, _price);
+		TCR = VestaMath._computeCR(entireSystemColl, entireSystemDebt, _price);
 
 		return TCR;
 	}

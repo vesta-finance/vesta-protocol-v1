@@ -4,7 +4,7 @@ const { dec } = th
 
 const MainnetDeploymentHelper = require("../utils/mainnetDeploymentHelpers.js")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
-const toBigNum = ethers.BigNumber.from
+const toBN = ethers.BigNumber.from
 
 
 let mdh;
@@ -38,6 +38,7 @@ async function mainnetDeploy(configParams) {
   console.log(`deployerETHBalance before: ${await ethers.provider.getBalance(deployerWallet.address)}`)
 
   if (config.VSTA_TOKEN_ONLY) {
+    console.log("INIT VSTA ONLY");
     const partialContracts = await mdh.deployPartially(TREASURY_WALLET, deploymentState);
 
     // create vesting rule to beneficiaries
@@ -64,8 +65,6 @@ async function mainnetDeploy(configParams) {
       }
     }
 
-
-
     await transferOwnership(partialContracts.lockedVsta, TREASURY_WALLET);
 
 
@@ -79,7 +78,7 @@ async function mainnetDeploy(configParams) {
   }
 
   // Deploy core logic contracts
-  vestaCore = await mdh.deployLiquityCoreMainnet(config.externalAddrs.TELLOR_MASTER, deploymentState, ADMIN_WALLET)
+  vestaCore = await mdh.deployLiquityCoreMainnet(deploymentState, ADMIN_WALLET)
 
   await mdh.logContractObjects(vestaCore)
 
@@ -133,6 +132,7 @@ async function addETHCollaterals() {
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
           ZERO_ADDRESS,
           dec(333_334, 18),
+          toBN(dec(333_334, 18)).div(toBN(4)),
           config.REDEMPTION_SAFETY), {
         gasPrice,
       })
@@ -149,9 +149,10 @@ async function addBTCCollaterals() {
     ? await mdh.deployMockERC20Contract(deploymentState, "renBTC")
     : config.externalAddrs.REN_BTC
 
-  if (!BTCAddress)
+  if (!BTCAddress || BTCAddress == "")
     throw ("CANNOT FIND THE renBTC Address")
 
+  console.log((await vestaCore.priceFeed.lastGoodPrice(BTCAddress)).toString());
 
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(BTCAddress)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - BTC")
@@ -161,9 +162,10 @@ async function addBTCCollaterals() {
         vestaCore.adminContract.addNewCollateral(
           BTCAddress,
           vestaCore.stabilityPoolV1.address,
-          config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
+          config.externalAddrs.CHAINLINK_BTCUSD_PROXY,
           ZERO_ADDRESS,
-          dec(333_333, 18),
+          dec(233_333, 18),
+          toBN(dec(233_333, 18)).div(toBN(4)),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolRenBTC"] = {
@@ -176,7 +178,12 @@ async function addBTCCollaterals() {
 async function addGOHMCollaterals() {
   const OHMAddress = !config.IsMainnet
     ? await mdh.deployMockERC20Contract(deploymentState, "gOHM")
-    : config.externalAddrs.OHM
+    : config.externalAddrs.GOHM
+
+
+  if (!OHMAddress || OHMAddress == "")
+    throw ("CANNOT FIND THE renBTC Address")
+
 
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(OHMAddress)) == ZERO_ADDRESS) {
     console.log("Creating Collateral - OHM")
@@ -184,19 +191,33 @@ async function addGOHMCollaterals() {
 
     txReceiptProxyOHM = await mdh
       .sendAndWaitForTransaction(
-        vestaCore.adminContract.addNewCollateralWithIndexOracle(
+        vestaCore.adminContract.addNewCollateral(
           OHMAddress,
           vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_OHM_PROXY,
           config.IsMainnet ? config.externalAddrs.CHAINLINK_OHM_INDEX_PROXY : ZERO_ADDRESS,
-          ZERO_ADDRESS,
-          dec(333_333, 18),
+          dec(133_333, 18),
+          toBN(dec(133_333, 18)).div(toBN(4)),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolOHM"] = {
       address: await vestaCore.stabilityPoolManager.getAssetStabilityPool(OHMAddress),
       txHash: txReceiptProxyOHM.transactionHash
     }
+    //Configure Collateral;
+    await mdh.sendAndWaitForTransaction(
+      vestaCore.vestaParameters.setMCR(OHMAddress, config.gOHMParameters.MCR)
+    );
+    await mdh.sendAndWaitForTransaction(
+      vestaCore.vestaParameters.setCCR(OHMAddress, config.gOHMParameters.CCR)
+    );
+    await mdh.sendAndWaitForTransaction(
+      vestaCore.vestaParameters.setPercentDivisor(OHMAddress, config.gOHMParameters.PERCENT_DIVISOR)
+    );
+    await mdh.sendAndWaitForTransaction(
+      vestaCore.vestaParameters.setBorrowingFeeFloor(OHMAddress, config.gOHMParameters.BORROWING_FEE_FLOOR)
+    );
+
   }
 }
 
@@ -224,42 +245,6 @@ async function transferOwnership(contract, newOwner) {
 
   console.log("Transfered Ownership of", contract.address)
 
-}
-
-async function OpenTrove() {
-  // Open trove if not yet opened
-  const troveStatus = await vestaCore.troveManager.getTroveStatus(ZERO_ADDRESS, deployerWallet.address)
-  if (troveStatus.toString() != '1') {
-    let _3kLUSDWithdrawal = th.dec(5000, 18) // 5000 LUSD
-    let _3ETHcoll = th.dec(5, 'ether') // 5 ETH
-    console.log('Opening trove...')
-    await mdh.sendAndWaitForTransaction(
-      vestaCore.borrowerOperations.openTrove(
-        ZERO_ADDRESS,
-        _3ETHcoll,
-        th._100pct,
-        _3kLUSDWithdrawal,
-        th.ZERO_ADDRESS,
-        th.ZERO_ADDRESS,
-        { value: _3ETHcoll, gasPrice }
-      )
-    )
-  } else {
-    console.log('Deployer already has an active trove')
-  }
-
-  // Check deployer now has an open trove
-  console.log(`deployer is in sorted list after making trove: ${await vestaCore.sortedTroves.contains(ZERO_ADDRESS, deployerWallet.address)}`)
-
-  const deployerTrove = await vestaCore.troveManager.Troves(ZERO_ADDRESS, deployerWallet.address)
-  th.logBN('deployer debt', deployerTrove[0])
-  th.logBN('deployer coll', deployerTrove[1])
-  th.logBN('deployer stake', deployerTrove[2])
-  console.log(`deployer's trove status: ${deployerTrove[3]}`)
-
-  // Check deployer has LUSD
-  let deployerLUSDBal = await vestaCore.vstToken.balanceOf(deployerWallet.address)
-  th.logBN("deployer's LUSD balance", deployerLUSDBal)
 }
 
 module.exports = {

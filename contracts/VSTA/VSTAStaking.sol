@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/CheckContract.sol";
-import "../Dependencies/LiquityMath.sol";
+import "../Dependencies/VestaMath.sol";
 import "../Interfaces/IVSTAStaking.sol";
 import "../Interfaces/IDeposit.sol";
 
@@ -168,7 +168,7 @@ contract VSTAStaking is
 		}
 
 		if (_VSTAamount > 0) {
-			uint256 VSTAToWithdraw = LiquityMath._min(_VSTAamount, currentStake);
+			uint256 VSTAToWithdraw = VestaMath._min(_VSTAamount, currentStake);
 
 			uint256 newStake = currentStake.sub(VSTAToWithdraw);
 
@@ -197,7 +197,7 @@ contract VSTAStaking is
 		emit TreasuryAddressChanged(_treasury);
 	}
 
-	// --- Reward-per-unit-staked increase functions. Called by Liquity core contracts ---
+	// --- Reward-per-unit-staked increase functions. Called by Vesta core contracts ---
 
 	function increaseF_Asset(address _asset, uint256 _AssetFee)
 		external

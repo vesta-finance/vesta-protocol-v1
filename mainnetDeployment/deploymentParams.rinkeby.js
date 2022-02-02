@@ -7,10 +7,17 @@ const externalAddrs = {
   CHAINLINK_OHM_PROXY: "0x52C9Eb2Cc68555357221CAe1e5f2dD956bC194E5",  // USE LINK-USD for now
   CHAINLINK_OHM_INDEX_PROXY: "N/A",
   CHAINLINK_FLAG_HEALTH: "0x491B1dDA0A8fa069bbC1125133A975BF4e85a91b",
-  // https://docs.tellor.io/tellor/integration/reference-page
-  TELLOR_MASTER: "0xbc2f9E092ac5CED686440E5062D11D6543202B24",
+
   WETH_ERC20: "0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681",
   REN_BTC: "NONE",
+  GOHM: "NONE",
+}
+
+const gOHMParameters = {
+  MCR: "1750000000000000000",
+  CCR: "2200000000000000000",
+  PERCENT_DIVISOR: 33,
+  BORROWING_FEE_FLOOR: 125
 }
 
 const vestaAddresses = {
@@ -76,7 +83,7 @@ const beneficiaries = {
 }
 
 const REDEMPTION_SAFETY = 0;
-const VSTA_TOKEN_ONLY = true;
+const VSTA_TOKEN_ONLY = false;
 
 const OUTPUT_FILE = './mainnetDeployment/rinkebyDeploymentOutput.json'
 
@@ -101,5 +108,6 @@ module.exports = {
   ETHERSCAN_BASE_URL,
   IsMainnet,
   REDEMPTION_SAFETY,
-  VSTA_TOKEN_ONLY
+  VSTA_TOKEN_ONLY,
+  gOHMParameters
 };

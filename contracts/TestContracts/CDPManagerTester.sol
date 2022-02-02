@@ -12,7 +12,7 @@ contract TroveManagerTester is TroveManager {
 		uint256 _debt,
 		uint256 _price
 	) external pure returns (uint256) {
-		return LiquityMath._computeCR(_coll, _debt, _price);
+		return VestaMath._computeCR(_coll, _debt, _price);
 	}
 
 	function getCollGasCompensation(address _asset, uint256 _coll)

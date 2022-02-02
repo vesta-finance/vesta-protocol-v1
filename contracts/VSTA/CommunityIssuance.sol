@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../Interfaces/IStabilityPoolManager.sol";
 import "../Interfaces/ICommunityIssuance.sol";
 import "../Dependencies/BaseMath.sol";
-import "../Dependencies/LiquityMath.sol";
+import "../Dependencies/VestaMath.sol";
 import "../Dependencies/CheckContract.sol";
 
 contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContract, BaseMath {
@@ -17,23 +17,8 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CommunityIssuance";
+	uint256 public constant DISTRIBUTION_DURATION = 7 days / 60;
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
-
-	/* The issuance factor F determines the curvature of the issuance curve.
-	 *
-	 * Minutes in one year: 60*24*365 = 525600
-	 *
-	 * For 50% of remaining tokens issued each year, with minutes as time units, we have:
-	 *
-	 * F ** 525600 = 0.5
-	 *
-	 * Re-arranging:
-	 *
-	 * 525600 * ln(F) = ln(0.5)
-	 * F = 0.5 ** (1/525600)
-	 * F = 0.999998681227695000
-	 */
-	uint256 public constant ISSUANCE_FACTOR = 999998681227695000;
 
 	IERC20Upgradeable public vstaToken;
 	IStabilityPoolManager public stabilityPoolManager;
@@ -41,6 +26,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 	mapping(address => uint256) public totalVSTAIssued;
 	mapping(address => uint256) public deploymentTime;
 	mapping(address => uint256) public VSTASupplyCaps;
+	mapping(address => uint256) public vstaDistributionsByPool;
 
 	address public adminContract;
 
@@ -53,6 +39,22 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
+		_;
+	}
+
+	modifier isStabilityPool(address _pool) {
+		require(
+			stabilityPoolManager.isStabilityPool(_pool),
+			"CommunityIssuance: caller is not SP"
+		);
+		_;
+	}
+
+	modifier onlyStabilityPool() {
+		require(
+			stabilityPoolManager.isStabilityPool(msg.sender),
+			"CommunityIssuance: caller is not SP"
+		);
 		_;
 	}
 
@@ -78,12 +80,37 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 		emit StabilityPoolAddressSet(_stabilityPoolManagerAddress);
 	}
 
+	function setAdminContract(address _admin) external onlyOwner {
+		require(_admin != address(0));
+		adminContract = _admin;
+	}
+
 	function addFundToStabilityPool(address _pool, uint256 _assignedSupply)
 		external
 		override
 		isController
 	{
 		_addFundToStabilityPoolFrom(_pool, _assignedSupply, msg.sender);
+	}
+
+	function removeFundFromStabilityPool(address _pool, uint256 _fundToRemove)
+		external
+		onlyOwner
+		activeStabilityPoolOnly(_pool)
+	{
+		uint256 newCap = VSTASupplyCaps[_pool].sub(_fundToRemove);
+		require(
+			totalVSTAIssued[_pool] <= newCap,
+			"CommunityIssuance: Stability Pool doesn't have enough supply."
+		);
+
+		VSTASupplyCaps[_pool] -= _fundToRemove;
+
+		if (totalVSTAIssued[_pool] == VSTASupplyCaps[_pool]) {
+			disableStabilityPool(_pool);
+		}
+
+		vstaToken.safeTransfer(msg.sender, _fundToRemove);
 	}
 
 	function addFundToStabilityPoolFrom(
@@ -143,49 +170,50 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 		totalVSTAIssued[_pool] = 0;
 	}
 
-	function issueVSTA() external override returns (uint256) {
-		_requireCallerIsStabilityPool();
+	function issueVSTA() external override onlyStabilityPool returns (uint256) {
+		return _issueVSTA(msg.sender);
+	}
 
-		uint256 latestTotalVSTAIssued = VSTASupplyCaps[msg.sender]
-			.mul(_getCumulativeIssuanceFraction(msg.sender))
-			.div(DECIMAL_PRECISION);
-		uint256 issuance = latestTotalVSTAIssued.sub(totalVSTAIssued[msg.sender]);
+	function _issueVSTA(address _pool) internal isStabilityPool(_pool) returns (uint256) {
+		uint256 maxPoolSupply = VSTASupplyCaps[_pool];
 
-		totalVSTAIssued[msg.sender] = latestTotalVSTAIssued;
-		emit TotalVSTAIssuedUpdated(msg.sender, latestTotalVSTAIssued);
+		if (totalVSTAIssued[_pool] >= maxPoolSupply) return 0;
+
+		uint256 latestTotalVSTAIssued = _getCumulativeTokenDistribution(_pool);
+		uint256 issuance = latestTotalVSTAIssued.sub(totalVSTAIssued[_pool]);
+
+		if (latestTotalVSTAIssued > maxPoolSupply) {
+			issuance = maxPoolSupply.sub(totalVSTAIssued[_pool]);
+			latestTotalVSTAIssued = maxPoolSupply;
+		}
+
+		totalVSTAIssued[_pool] = latestTotalVSTAIssued;
+		emit TotalVSTAIssuedUpdated(_pool, latestTotalVSTAIssued);
 
 		return issuance;
 	}
 
-	/* Gets 1-f^t    where: f < 1
-
-    f: issuance factor that determines the shape of the curve
-    t:  time passed since last VSTA issuance event  */
-	///Require StabilityPool for testing.
-	function _getCumulativeIssuanceFraction(address stabilityPool)
+	function _getCumulativeTokenDistribution(address stabilityPool)
 		internal
 		view
 		returns (uint256)
 	{
 		require(deploymentTime[stabilityPool] != 0, "Stability pool hasn't been assigned");
-		// Get the time passed since deployment
-		uint256 timePassedInMinutes = block.timestamp.sub(deploymentTime[stabilityPool]).div(
+		uint256 timePassed = block.timestamp.sub(deploymentTime[stabilityPool]).div(
 			SECONDS_IN_ONE_MINUTE
 		);
+		uint256 totalDistribuedSinceBeginning = vstaDistributionsByPool[stabilityPool].mul(
+			timePassed
+		);
 
-		// f^t
-		uint256 power = LiquityMath._decPow(ISSUANCE_FACTOR, timePassedInMinutes);
-
-		//  (1 - f^t)
-		uint256 cumulativeIssuanceFraction = (uint256(DECIMAL_PRECISION).sub(power));
-		assert(cumulativeIssuanceFraction <= DECIMAL_PRECISION); // must be in range [0,1]
-
-		return cumulativeIssuanceFraction;
+		return totalDistribuedSinceBeginning;
 	}
 
-	function sendVSTA(address _account, uint256 _VSTAamount) external override {
-		_requireCallerIsStabilityPool();
-
+	function sendVSTA(address _account, uint256 _VSTAamount)
+		external
+		override
+		onlyStabilityPool
+	{
 		uint256 balanceVSTA = vstaToken.balanceOf(address(this));
 		uint256 safeAmount = balanceVSTA >= _VSTAamount ? _VSTAamount : balanceVSTA;
 
@@ -196,12 +224,11 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 		vstaToken.transfer(_account, safeAmount);
 	}
 
-	// --- 'require' functions ---
-
-	function _requireCallerIsStabilityPool() internal view {
-		require(
-			stabilityPoolManager.isStabilityPool(msg.sender),
-			"CommunityIssuance: caller is not SP"
-		);
+	function setWeeklyVstaDistribution(address _stabilityPool, uint256 _weeklyReward)
+		external
+		isController
+		isStabilityPool(_stabilityPool)
+	{
+		vstaDistributionsByPool[_stabilityPool] = _weeklyReward.div(DISTRIBUTION_DURATION);
 	}
 }

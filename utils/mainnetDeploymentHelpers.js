@@ -51,7 +51,7 @@ class MainnetDeploymentHelper {
 
     const contract = proxy
       ? await upgrades.deployProxy(factory)
-      : await factory.deploy(...params, { gasPrice: this.configParams.GAS_PRICE });
+      : await factory.deploy(...params);
 
     await this.deployerWallet.provider.waitForTransaction(contract.deployTransaction.hash, this.configParams.TX_CONFIRMATIONS)
 
@@ -110,7 +110,7 @@ class MainnetDeploymentHelper {
   }
 
 
-  async deployLiquityCoreMainnet(tellorMasterAddr, deploymentState, multisig) {
+  async deployLiquityCoreMainnet(deploymentState, multisig) {
     // Get contract factories
     const priceFeedFactory = await this.getFactory("PriceFeed")
     const sortedTrovesFactory = await this.getFactory("SortedTroves")
@@ -124,7 +124,6 @@ class MainnetDeploymentHelper {
     const borrowerOperationsFactory = await this.getFactory("BorrowerOperations")
     const hintHelpersFactory = await this.getFactory("HintHelpers")
     const VSTTokenFactory = await this.getFactory("VSTToken")
-    const tellorCallerFactory = await this.getFactory("TellorCaller")
     const vaultParametersFactory = await this.getFactory("VestaParameters")
     const lockedVstaFactory = await this.getFactory("LockedVSTA")
     const adminContractFactory = await this.getFactory("AdminContract")
@@ -146,7 +145,6 @@ class MainnetDeploymentHelper {
     //// NO PROXY
     const stabilityPoolV1 = await this.loadOrDeploy(stabilityPoolFactory, 'stabilityPoolV1', deploymentState)
     const gasPool = await this.loadOrDeploy(gasPoolFactory, 'gasPool', deploymentState)
-    const tellorCaller = await this.loadOrDeploy(tellorCallerFactory, 'tellorCaller', deploymentState, false, [tellorMasterAddr])
     const lockedVsta = await this.loadOrDeploy(lockedVstaFactory, 'lockedVsta', deploymentState)
     const adminContract = await this.loadOrDeploy(adminContractFactory, 'adminContract', deploymentState)
 
@@ -177,7 +175,6 @@ class MainnetDeploymentHelper {
       await this.verifyContract('collSurplusPool', deploymentState)
       await this.verifyContract('borrowerOperations', deploymentState)
       await this.verifyContract('hintHelpers', deploymentState)
-      await this.verifyContract('tellorCaller', deploymentState, [tellorMasterAddr])
       await this.verifyContract('VSTToken', deploymentState, VSTTokenParams)
       await this.verifyContract('vestaParameters', deploymentState)
       await this.verifyContract('lockedVsta', deploymentState)
@@ -198,7 +195,6 @@ class MainnetDeploymentHelper {
       collSurplusPool,
       borrowerOperations,
       hintHelpers,
-      tellorCaller,
       vestaParameters,
       lockedVsta
     }

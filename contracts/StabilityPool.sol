@@ -14,144 +14,16 @@ import "./Interfaces/IVSTToken.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/ICommunityIssuance.sol";
 import "./Dependencies/VestaBase.sol";
-import "./Dependencies/LiquitySafeMath128.sol";
+import "./Dependencies/VestaSafeMath128.sol";
 import "./Dependencies/CheckContract.sol";
 
-/*
- * The Stability Pool holds VST tokens deposited by Stability Pool depositors.
- *
- * When a trove is liquidated, then depending on system conditions, some of its VST debt gets offset with
- * VST in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of VST tokens in the Stability Pool is burned.
- *
- * Thus, a liquidation causes each depositor to receive a VST loss, in proportion to their deposit as a share of total deposits.
- * They also receive an ETH gain, as the ETH collateral of the liquidated trove is distributed among Stability depositors,
- * in the same proportion.
- *
- * When a liquidation occurs, it depletes every deposit by the same fraction: for example, a liquidation that depletes 40%
- * of the total VST in the Stability Pool, depletes 40% of each deposit.
- *
- * A deposit that has experienced a series of liquidations is termed a "compounded deposit": each liquidation depletes the deposit,
- * multiplying it by some factor in range ]0,1[
- *
- *
- * --- IMPLEMENTATION ---
- *
- * We use a highly scalable method of tracking deposits and ETH gains that has O(1) complexity.
- *
- * When a liquidation occurs, rather than updating each depositor's deposit and ETH gain, we simply update two state variables:
- * a product P, and a sum S.
- *
- * A mathematical manipulation allows us to factor out the initial deposit, and accurately track all depositors' compounded deposits
- * and accumulated ETH gains over time, as liquidations occur, using just these two variables P and S. When depositors join the
- * Stability Pool, they get a snapshot of the latest P and S: P_t and S_t, respectively.
- *
- * The formula for a depositor's accumulated ETH gain is derived here:
- * https://github.com/liquity/dev/blob/main/packages/contracts/mathProofs/Scalable%20Compounding%20Stability%20Pool%20Deposits.pdf
- *
- * For a given deposit d_t, the ratio P/P_t tells us the factor by which a deposit has decreased since it joined the Stability Pool,
- * and the term d_t * (S - S_t)/P_t gives us the deposit's total accumulated ETH gain.
- *
- * Each liquidation updates the product P and sum S. After a series of liquidations, a compounded deposit and corresponding ETH gain
- * can be calculated using the initial deposit, the depositor’s snapshots of P and S, and the latest values of P and S.
- *
- * Any time a depositor updates their deposit (withdrawal, top-up) their accumulated ETH gain is paid out, their new deposit is recorded
- * (based on their latest compounded deposit and modified by the withdrawal/top-up), and they receive new snapshots of the latest P and S.
- * Essentially, they make a fresh deposit that overwrites the old one.
- *
- *
- * --- SCALE FACTOR ---
- *
- * Since P is a running product in range ]0,1] that is always-decreasing, it should never reach 0 when multiplied by a number in range ]0,1[.
- * Unfortunately, Solidity floor division always reaches 0, sooner or later.
- *
- * A series of liquidations that nearly empty the Pool (and thus each multiply P by a very small number in range ]0,1[ ) may push P
- * to its 18 digit decimal limit, and round it to 0, when in fact the Pool hasn't been emptied: this would break deposit tracking.
- *
- * So, to track P accurately, we use a scale factor: if a liquidation would cause P to decrease to <1e-9 (and be rounded to 0 by Solidity),
- * we first multiply P by 1e9, and increment a currentScale factor by 1.
- *
- * The added benefit of using 1e9 for the scale factor (rather than 1e18) is that it ensures negligible precision loss close to the
- * scale boundary: when P is at its minimum value of 1e9, the relative precision loss in P due to floor division is only on the
- * order of 1e-9.
- *
- * --- EPOCHS ---
- *
- * Whenever a liquidation fully empties the Stability Pool, all deposits should become 0. However, setting P to 0 would make P be 0
- * forever, and break all future reward calculations.
- *
- * So, every time the Stability Pool is emptied by a liquidation, we reset P = 1 and currentScale = 0, and increment the currentEpoch by 1.
- *
- * --- TRACKING DEPOSIT OVER SCALE CHANGES AND EPOCHS ---
- *
- * When a deposit is made, it gets snapshots of the currentEpoch and the currentScale.
- *
- * When calculating a compounded deposit, we compare the current epoch to the deposit's epoch snapshot. If the current epoch is newer,
- * then the deposit was present during a pool-emptying liquidation, and necessarily has been depleted to 0.
- *
- * Otherwise, we then compare the current scale to the deposit's scale snapshot. If they're equal, the compounded deposit is given by d_t * P/P_t.
- * If it spans one scale change, it is given by d_t * P/(P_t * 1e9). If it spans more than one scale change, we define the compounded deposit
- * as 0, since it is now less than 1e-9'th of its initial value (e.g. a deposit of 1 billion VST has depleted to < 1 VST).
- *
- *
- *  --- TRACKING DEPOSITOR'S ETH GAIN OVER SCALE CHANGES AND EPOCHS ---
- *
- * In the current epoch, the latest value of S is stored upon each scale change, and the mapping (scale -> S) is stored for each epoch.
- *
- * This allows us to calculate a deposit's accumulated ETH gain, during the epoch in which the deposit was non-zero and earned ETH.
- *
- * We calculate the depositor's accumulated ETH gain for the scale at which they made the deposit, using the ETH gain formula:
- * e_1 = d_t * (S - S_t) / P_t
- *
- * and also for scale after, taking care to divide the latter by a factor of 1e9:
- * e_2 = d_t * S / (P_t * 1e9)
- *
- * The gain in the second scale will be full, as the starting point was in the previous scale, thus no need to subtract anything.
- * The deposit therefore was present for reward events from the beginning of that second scale.
- *
- *        S_i-S_t + S_{i+1}
- *      .<--------.------------>
- *      .         .
- *      . S_i     .   S_{i+1}
- *   <--.-------->.<----------->
- *   S_t.         .
- *   <->.         .
- *      t         .
- *  |---+---------|-------------|-----...
- *         i            i+1
- *
- * The sum of (e_1 + e_2) captures the depositor's total accumulated ETH gain, handling the case where their
- * deposit spanned one scale change. We only care about gains across one scale change, since the compounded
- * deposit is defined as being 0 once it has spanned more than one scale change.
- *
- *
- * --- UPDATING P WHEN A LIQUIDATION OCCURS ---
- *
- * Please see the implementation spec in the proof document, which closely follows on from the compounded deposit / ETH gain derivations:
- * https://github.com/liquity/liquity/blob/master/papers/Scalable_Reward_Distribution_with_Compounding_Stakes.pdf
- *
- *
- * --- VSTA ISSUANCE TO STABILITY POOL DEPOSITORS ---
- *
- * An VSTA issuance event occurs at every deposit operation, and every liquidation.
- *
- *
- * All deposits earn a share of the issued VSTA in proportion to the deposit as a share of total deposits. The VSTA earned
- * by a given deposit.
- *
- * Please see the system Readme for an overview:
- * https://github.com/liquity/dev/blob/main/README.md#VSTA-issuance-to-stability-providers
- *
- * We use the same mathematical product-sum approach to track VSTA gains for depositors, where 'G' is the sum corresponding to VSTA gains.
- * The product P (and snapshot P_t) is re-used, as the ratio P/P_t tracks a deposit's depletion due to liquidations.
- *
- */
 contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	using SafeMathUpgradeable for uint256;
-	using LiquitySafeMath128 for uint128;
+	using VestaSafeMath128 for uint128;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
-	bytes32 public constant STABILITY_POOL_BYTES =
+	bytes32 public constant STABILITY_POOL_NAME_BYTES =
 		0xf704b47f65a99b2219b7213612db4be4a436cdf50624f4baca1373ef0de0aac7;
 
 	IBorrowerOperations public borrowerOperations;
@@ -234,7 +106,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	// --- Contract setters ---
 
 	function getNameBytes() external pure override returns (bytes32) {
-		return STABILITY_POOL_BYTES;
+		return STABILITY_POOL_NAME_BYTES;
 	}
 
 	function getAssetType() external view override returns (address) {
@@ -354,7 +226,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
 
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
-		uint256 VSTtoWithdraw = LiquityMath._min(_amount, compoundedVSTDeposit);
+		uint256 VSTtoWithdraw = VestaMath._min(_amount, compoundedVSTDeposit);
 		uint256 VSTLoss = initialDeposit.sub(compoundedVSTDeposit); // Needed only for event log
 
 		// First pay out any VSTA gains

@@ -33,8 +33,8 @@ contract('CommunityIssuance', async accounts => {
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
       await deploymentHelper.connectVSTAContractsToCore(VSTAContracts, contracts, true)
 
-      await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, contracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '0', 0)
-      await contracts.adminContract.addNewCollateral(erc20.address, contracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '0', 0)
+      await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, contracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '0', 0, 0)
+      await contracts.adminContract.addNewCollateral(erc20.address, contracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, '0', 0, 0)
 
       stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
       stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
@@ -95,6 +95,43 @@ contract('CommunityIssuance', async accounts => {
 
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), supply.mul(toBN(2)))
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply)
+    })
+
+    it("removeFundFromStabilityPool: Called by user, valid inputs, then reverts", async () => {
+      const supply = toBN(dec(100, 18))
+
+      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
+      await assertRevert(communityIssuance.removeFundFromStabilityPool(stabilityPool.address, dec(50, 18), { from: user }))
+    })
+
+
+    it("removeFundFromStabilityPool: Called by owner, invalid inputs, then reverts", async () => {
+      const supply = toBN(dec(100, 18))
+
+      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
+      await assertRevert(communityIssuance.removeFundFromStabilityPool(stabilityPool.address, dec(101, 18), { from: treasury }))
+    })
+
+    it("removeFundFromStabilityPool: Called by owner, valid amount, then remove from supply and give to caller", async () => {
+      const supply = toBN(dec(100, 18))
+      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
+
+      const beforeBalance = await vstaToken.balanceOf(communityIssuance.address);
+
+      await communityIssuance.removeFundFromStabilityPool(stabilityPool.address, dec(50, 18), { from: treasury })
+      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(50, 18))
+      assert.equal((await vstaToken.balanceOf(communityIssuance.address)).toString(), beforeBalance.sub(toBN(dec(50, 18))))
+    })
+
+
+    it("removeFundFromStabilityPool: Called by owner, max supply, then disable pool", async () => {
+      const supply = toBN(dec(100, 18))
+      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
+      await communityIssuance.removeFundFromStabilityPool(stabilityPool.address, supply, { from: treasury })
+
+      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
+      assert.equal((await communityIssuance.deploymentTime(stabilityPool.address)).toString(), 0)
+      assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
     })
 
     it("transferFundToAnotherStabilityPool : Called by user, valid inputs, revert transaction", async () => {

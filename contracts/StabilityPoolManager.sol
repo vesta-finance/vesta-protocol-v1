@@ -12,10 +12,10 @@ contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPo
 	string public constant NAME = "StabilityPoolManager";
 
 	bool public isInitialized;
-	address public adminContact;
+	address public adminContract;
 
 	modifier isController() {
-		require(msg.sender == owner() || msg.sender == adminContact, "Invalid permissions");
+		require(msg.sender == owner() || msg.sender == adminContract, "Invalid permissions");
 		_;
 	}
 
@@ -26,7 +26,12 @@ contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPo
 
 		__Ownable_init();
 
-		adminContact = _adminContract;
+		adminContract = _adminContract;
+	}
+
+	function setAdminContract(address _admin) external onlyOwner {
+		require(_admin != address(0));
+		adminContract = _admin;
 	}
 
 	function isStabilityPool(address stabilityPool) external view override returns (bool) {

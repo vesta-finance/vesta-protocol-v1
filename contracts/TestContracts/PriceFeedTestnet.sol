@@ -11,8 +11,16 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract PriceFeedTestnet is IPriceFeed {
 	using SafeMath for uint256;
 
-	uint256 private _price = 200 * 1 ether;
+	uint256 private _price = 200 ether;
 	uint256 private _index = 1 ether;
+
+	struct MockOracleData {
+		address chainLinkOracle;
+		address chainLinkIndex;
+		bool registed;
+	}
+
+	mapping(address => MockOracleData) public oracles;
 
 	// --- Functions ---
 
@@ -29,7 +37,9 @@ contract PriceFeedTestnet is IPriceFeed {
 		address _token,
 		address _chainlinkOracle,
 		address _chainlinkIndex
-	) external override {}
+	) external override {
+		oracles[_token] = MockOracleData(_chainlinkOracle, _chainlinkIndex, true);
+	}
 
 	function fetchPrice(address _asset) external override returns (uint256) {
 		// Fire an event just like the mainnet version would.

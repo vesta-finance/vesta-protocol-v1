@@ -7,18 +7,18 @@ import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
 
 import "./Interfaces/IStabilityPoolManager.sol";
-import "./Interfaces/BaseVestaParameters.sol";
+import "./Interfaces/IVestaParameters.sol";
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICommunityIssuance.sol";
 
 contract AdminContract is ProxyAdmin {
 	string public constant NAME = "AdminContract";
 
-	bytes32 public constant STABILITY_POOL_BYTES =
+	bytes32 public constant STABILITY_POOL_NAME_BYTES =
 		0xf704b47f65a99b2219b7213612db4be4a436cdf50624f4baca1373ef0de0aac7;
 	bool public isInitialized;
 
-	BaseVestaParameters private vestaParameters;
+	IVestaParameters private vestaParameters;
 	IStabilityPoolManager private stabilityPoolManager;
 	ICommunityIssuance private communityIssuance;
 
@@ -52,7 +52,7 @@ contract AdminContract is ProxyAdmin {
 		sortedTrovesAddress = _sortedTrovesAddress;
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 
-		vestaParameters = BaseVestaParameters(_paramaters);
+		vestaParameters = IVestaParameters(_paramaters);
 		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManager);
 	}
 
@@ -63,6 +63,7 @@ contract AdminContract is ProxyAdmin {
 		address _chainlinkOracle,
 		address _chainlinkIndex,
 		uint256 assignedToken,
+		uint256 _tokenPerWeekDistributed,
 		uint256 redemptionLockInDay
 	) external onlyOwner {
 		require(
@@ -70,9 +71,10 @@ contract AdminContract is ProxyAdmin {
 			"This collateral already exists"
 		);
 		require(
-			IStabilityPool(_stabilityPoolImplementation).getNameBytes() == STABILITY_POOL_BYTES,
+			IStabilityPool(_stabilityPoolImplementation).getNameBytes() == STABILITY_POOL_NAME_BYTES,
 			"Invalid Stability pool"
 		);
+
 		vestaParameters.priceFeed().addOracle(_asset, _chainlinkOracle, _chainlinkIndex);
 		vestaParameters.setAsDefaultWithRemptionBlock(_asset, redemptionLockInDay);
 
@@ -97,5 +99,6 @@ contract AdminContract is ProxyAdmin {
 		address proxyAddress = address(proxy);
 		stabilityPoolManager.addStabilityPool(_asset, proxyAddress);
 		communityIssuance.addFundToStabilityPoolFrom(proxyAddress, assignedToken, msg.sender);
+		communityIssuance.setWeeklyVstaDistribution(proxyAddress, _tokenPerWeekDistributed);
 	}
 }
