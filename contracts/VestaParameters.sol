@@ -140,8 +140,8 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		setVSTGasCompensation(_asset, gasCompensation);
 		setMinNetDebt(_asset, minNetDebt);
 		setPercentDivisor(_asset, precentDivisor);
-		setBorrowingFeeFloor(_asset, borrowingFeeFloor);
 		setMaxBorrowingFee(_asset, maxBorrowingFee);
+		setBorrowingFeeFloor(_asset, borrowingFeeFloor);
 		setRedemptionFeeFloor(_asset, redemptionFeeFloor);
 	}
 

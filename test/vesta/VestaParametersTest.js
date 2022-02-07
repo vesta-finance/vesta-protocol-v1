@@ -296,6 +296,7 @@ contract('VestaParameters', async accounts => {
       await vestaParameters.setBorrowingFeeFloor(ZERO_ADDRESS, BORROWING_FEE_FLOOR_SAFETY_MIN);
       assert.equal(expectedMin.toString(), (await vestaParameters.BORROWING_FEE_FLOOR(ZERO_ADDRESS)));
 
+      await vestaParameters.setMaxBorrowingFee(ZERO_ADDRESS, MAX_BORROWING_FEE_SAFETY_MAX);
       await vestaParameters.setBorrowingFeeFloor(ZERO_ADDRESS, BORROWING_FEE_FLOOR_SAFETY_MAX);
       assert.equal(expectedMax.toString(), (await vestaParameters.BORROWING_FEE_FLOOR(ZERO_ADDRESS)));
     })
@@ -506,6 +507,7 @@ contract('VestaParameters', async accounts => {
       await vestaParameters.sanitizeParameters(erc20.address)
 
       await vestaParameters.setBorrowingFeeFloor(ZERO_ADDRESS, BORROWING_FEE_FLOOR_SAFETY_MIN)
+      await vestaParameters.setMaxBorrowingFee(erc20.address, MAX_BORROWING_FEE_SAFETY_MAX);
       await vestaParameters.setBorrowingFeeFloor(erc20.address, BORROWING_FEE_FLOOR_SAFETY_MAX);
 
       assert.equal(applyDecimalPrecision(BORROWING_FEE_FLOOR_SAFETY_MIN).toString(), (await vestaParameters.BORROWING_FEE_FLOOR(ZERO_ADDRESS)));
