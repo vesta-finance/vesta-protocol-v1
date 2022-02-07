@@ -30,7 +30,7 @@ contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPo
 	}
 
 	function setAdminContract(address _admin) external onlyOwner {
-		require(_admin != address(0));
+		require(_admin != address(0), "Admin cannot be empty address");
 		adminContract = _admin;
 	}
 
@@ -53,6 +53,11 @@ contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPo
 
 		stabilityPools[asset] = stabilityPool;
 		validStabilityPools[stabilityPool] = true;
+	}
+
+	function removeStabilityPool(address asset) external isController {
+		delete validStabilityPools[stabilityPools[asset]];
+		delete stabilityPools[asset];
 	}
 
 	function getAssetStabilityPool(address asset)
