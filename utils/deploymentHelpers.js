@@ -78,6 +78,7 @@ class DeploymentHelper {
     const troveManager = await TroveManager.new()
     const activePool = await ActivePool.new()
     const stabilityPoolTemplate = await StabilityPool.new()
+    const stabilityPoolTemplateV2 = await StabilityPool.new()
     const stabilityPoolManager = await StabilityPoolManager.new()
     const vestaParameters = await VestaParameters.new()
     const gasPool = await GasPool.new()
@@ -102,6 +103,7 @@ class DeploymentHelper {
     TroveManager.setAsDeployed(troveManager)
     ActivePool.setAsDeployed(activePool)
     StabilityPool.setAsDeployed(stabilityPoolTemplate)
+    StabilityPool.setAsDeployed(stabilityPoolTemplateV2)
     GasPool.setAsDeployed(gasPool)
     CollSurplusPool.setAsDeployed(collSurplusPool)
     FunctionCaller.setAsDeployed(functionCaller)
@@ -118,6 +120,7 @@ class DeploymentHelper {
       troveManager,
       activePool,
       stabilityPoolTemplate,
+      stabilityPoolTemplateV2,
       stabilityPoolManager,
       vestaParameters,
       gasPool,

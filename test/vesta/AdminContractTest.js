@@ -3,6 +3,8 @@ const { web3 } = require("@openzeppelin/test-helpers/src/setup")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
+const StabilityPool = artifacts.require("./StabilityPool.sol")
+
 const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN
@@ -18,6 +20,7 @@ contract('AdminContract', async accounts => {
   let adminContract
   let vstaToken
   let stabilityPoolV1;
+  let stabilityPoolV2;
   let stabilityPoolManager;
   let VSTAContracts;
 
@@ -30,6 +33,7 @@ contract('AdminContract', async accounts => {
       adminContract = contracts.adminContract
       vstaToken = VSTAContracts.vstaToken;
       stabilityPoolV1 = contracts.stabilityPoolTemplate;
+      stabilityPoolV2 = contracts.stabilityPoolTemplateV2;
       stabilityPoolManager = contracts.stabilityPoolManager;
 
       await deploymentHelper.connectCoreContracts(contracts, VSTAContracts)
@@ -63,6 +67,28 @@ contract('AdminContract', async accounts => {
       assert.notEqual(await stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS), ZERO_ADDRESS)
       assert.equal((await vstaToken.balanceOf(VSTAContracts.communityIssuance.address)).toString(), dec(100, 18))
       assert.notEqual((await VSTAContracts.communityIssuance.vstaDistributionsByPool), 0);
+    })
+
+    it("UpgradeStabilityPool: As Owner - Upgrade stability pool to V2", async () => {
+      await adminContract.addNewCollateral(ZERO_ADDRESS, stabilityPoolV1.address, fakeOracle, fakeIndex, dec(100, 18), dec(1, 18), 14);
+
+      const proxy = await stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS);
+      await adminContract.upgrade(proxy, stabilityPoolV2.address);
+
+      const proxyWithSPABI = await StabilityPool.at(proxy)
+
+      await assertRevert(proxyWithSPABI.setAddresses(
+        ZERO_ADDRESS,
+        contracts.borrowerOperations.address,
+        contracts.troveManager.address,
+        contracts.vstToken.address,
+        contracts.sortedTroves.address,
+        VSTAContracts.communityIssuance.address,
+        contracts.vestaParameters.address
+      ));
+
+      assert.notEqual(stabilityPoolV1.address, stabilityPoolV2.address);
+      assert.equal(await adminContract.getProxyImplementation(proxy), stabilityPoolV2.address);
     })
   })
 })
