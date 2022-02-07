@@ -117,10 +117,12 @@ contract('CommunityIssuance', async accounts => {
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
 
       const beforeBalance = await vstaToken.balanceOf(communityIssuance.address);
+      const beforeBalanceTreasury = await vstaToken.balanceOf(treasury);
 
       await communityIssuance.removeFundFromStabilityPool(stabilityPool.address, dec(50, 18), { from: treasury })
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(50, 18))
       assert.equal((await vstaToken.balanceOf(communityIssuance.address)).toString(), beforeBalance.sub(toBN(dec(50, 18))))
+      assert.equal((await vstaToken.balanceOf(treasury)).toString(), beforeBalanceTreasury.add(toBN(dec(50, 18))).toString())
     })
 
 
