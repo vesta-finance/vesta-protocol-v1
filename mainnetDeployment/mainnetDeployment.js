@@ -131,8 +131,8 @@ async function addETHCollaterals() {
           vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
           ZERO_ADDRESS,
-          dec(333_334, 18),
-          toBN(dec(333_334, 18)).div(toBN(4)),
+          dec(100_000, 18),
+          toBN(dec(100_000, 18)).div(toBN(4)),
           config.REDEMPTION_SAFETY), {
         gasPrice,
       })
@@ -164,8 +164,8 @@ async function addBTCCollaterals() {
           vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_BTCUSD_PROXY,
           ZERO_ADDRESS,
-          dec(233_333, 18),
-          toBN(dec(233_333, 18)).div(toBN(4)),
+          dec(30_000, 18),
+          toBN(dec(30_000, 18)).div(toBN(4)),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolRenBTC"] = {
@@ -196,8 +196,8 @@ async function addGOHMCollaterals() {
           vestaCore.stabilityPoolV1.address,
           config.externalAddrs.CHAINLINK_OHM_PROXY,
           config.IsMainnet ? config.externalAddrs.CHAINLINK_OHM_INDEX_PROXY : ZERO_ADDRESS,
-          dec(133_333, 18),
-          toBN(dec(133_333, 18)).div(toBN(4)),
+          dec(30_000, 18),
+          toBN(dec(30_000, 18)).div(toBN(4)),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolOHM"] = {

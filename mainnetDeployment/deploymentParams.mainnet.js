@@ -7,7 +7,7 @@ const externalAddrs = {
 
   WETH_ERC20: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
   REN_BTC: "0xdbf31df14b66535af65aac99c32e9ea844e14501",
-  GOHM: "NONE",
+  GOHM: "0x8d9ba570d6cb60c7e3e0f31343efe75ab8e65fb1",
 }
 
 const gOHMParameters = {
