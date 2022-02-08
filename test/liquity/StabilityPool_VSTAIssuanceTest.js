@@ -1151,6 +1151,252 @@ contract('StabilityPool - VSTA Rewards', async accounts => {
       assert.isAtMost(getDifference(expectedGain, VSTAGain_E), 20e18)
       assert.isAtMost(getDifference(expectedGain, VSTAGain_F), 20e18)
     })
+
+    //COPY PASTE FROM THE LAST TO TEST ONE THING, IM IN A RUSH< PLEASE DONT JUDGE
+    it("withdrawFromSP(): Several deposits of 100 VST span one scale factor change. Depositors withdraw correct VSTA gains and set distributrion at zero", async () => {
+      // Whale opens Trove with 100 ETH
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, await getOpenTroveVSTAmount(dec(10000, 18)), whale, whale, { from: whale, value: dec(100, 'ether') })
+
+      const fiveDefaulters = [defaulter_1, defaulter_2, defaulter_3, defaulter_4, defaulter_5]
+
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: A, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: B, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: C, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: D, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: E, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: F, value: dec(10000, 'ether') })
+
+      for (const defaulter of fiveDefaulters) {
+        // Defaulters 1-5 each withdraw to 9999.9 debt (including gas comp)
+        await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, await getOpenTroveVSTAmount('9999900000000000000000'), defaulter, defaulter, { from: defaulter, value: dec(100, 'ether') })
+      }
+
+      // Defaulter 6 withdraws to 10k debt (inc. gas comp)
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, await getOpenTroveVSTAmount(dec(10000, 18)), defaulter_6, defaulter_6, { from: defaulter_6, value: dec(100, 'ether') })
+
+      // Confirm all depositors have 0 VSTA
+      for (const depositor of [A, B, C, D, E, F]) {
+        assert.equal(await vstaToken.balanceOf(depositor), '0')
+      }
+      // price drops by 50%
+      await priceFeed.setPrice(dec(100, 18));
+
+      // Check scale is 0
+      // assert.equal(await stabilityPool.currentScale(), '0')
+
+      // A provides to SP
+      await stabilityPool.provideToSP(dec(10000, 18), { from: A })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 1 liquidated.  Value of P updated to  to 1e-5
+      const txL1 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_1, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_1))
+      assert.isTrue(txL1.receipt.status)
+
+      // Check scale is 0
+      assert.equal(await stabilityPool.currentScale(), '0')
+      assert.equal(await stabilityPool.P(), dec(1, 13)) //P decreases: P = 1e(18-5) = 1e13
+
+      // B provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: B })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 2 liquidated
+      const txL2 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_2, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_2))
+      assert.isTrue(txL2.receipt.status)
+
+      // Check scale is 1
+      assert.equal(await stabilityPool.currentScale(), '1')
+      assert.equal(await stabilityPool.P(), dec(1, 17)) //Scale changes and P changes: P = 1e(13-5+9) = 1e17
+
+      // C provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: C })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 3 liquidated
+      const txL3 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_3, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_3))
+      assert.isTrue(txL3.receipt.status)
+
+      // Check scale is 1
+      assert.equal(await stabilityPool.currentScale(), '1')
+      assert.equal(await stabilityPool.P(), dec(1, 12)) //P decreases: P 1e(17-5) = 1e12
+
+      // D provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: D })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 4 liquidated
+      const txL4 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_4, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_4))
+      assert.isTrue(txL4.receipt.status)
+
+      // Check scale is 2
+      assert.equal(await stabilityPool.currentScale(), '2')
+      assert.equal(await stabilityPool.P(), dec(1, 16)) //Scale changes and P changes:: P = 1e(12-5+9) = 1e16
+
+      // E provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: E })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 5 liquidated
+      const txL5 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_5, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_5))
+      assert.isTrue(txL5.receipt.status)
+
+      // Check scale is 2
+      assert.equal(await stabilityPool.currentScale(), '2')
+      assert.equal(await stabilityPool.P(), dec(1, 11)) // P decreases: P = 1e(16-5) = 1e11
+
+      // F provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: F })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      assert.equal(await stabilityPool.currentEpoch(), '0')
+
+      // Defaulter 6 liquidated
+      const txL6 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_6, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_6))
+      assert.isTrue(txL6.receipt.status)
+
+      // Check scale is 0, epoch is 1
+      assert.equal(await stabilityPool.currentScale(), '0')
+      assert.equal(await stabilityPool.currentEpoch(), '1')
+      assert.equal(await stabilityPool.P(), dec(1, 18)) // P resets to 1e18 after pool-emptying
+
+      // price doubles
+      await priceFeed.setPrice(dec(200, 18));
+
+      /* All depositors withdraw fully from SP.  Withdraw in reverse order, so that the largest remaining
+      deposit (F) withdraws first, and does not get extra VSTA gains from the periods between withdrawals */
+      for (depositor of [F, E, D]) {
+        await stabilityPool.withdrawFromSP(dec(10000, 18), { from: depositor })
+      }
+
+      //SET Distribution to zero, 
+      await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, 0);
+
+      for (depositor of [C, B, A]) {
+        await stabilityPool.withdrawFromSP(dec(10000, 18), { from: depositor })
+      }
+
+      const VSTAGain_A = await vstaToken.balanceOf(A)
+      const VSTAGain_B = await vstaToken.balanceOf(B)
+      const VSTAGain_C = await vstaToken.balanceOf(C)
+      const VSTAGain_D = await vstaToken.balanceOf(D)
+      const VSTAGain_E = await vstaToken.balanceOf(E)
+      const VSTAGain_F = await vstaToken.balanceOf(F)
+
+      //The timespam in a blockchain is a little bit different, which is why we are allowing 20 tokens of difference for the tests
+      //This won't be an issue on the mainnet
+      const expectedGain = issuance_M1;  // using M1 assurance since technically this is splitted between 6 personnes, so 6M / 6 = 1M
+
+      assert.isAtMost(getDifference(expectedGain, VSTAGain_A), 20e18)
+      assert.isAtMost(getDifference(expectedGain, VSTAGain_B), 20e18)
+      assert.isAtMost(getDifference(expectedGain, VSTAGain_C), 20e18)
+      assert.isAtMost(getDifference(expectedGain, VSTAGain_D), 20e18)
+
+      assert.isAtMost(getDifference(expectedGain, VSTAGain_E), 20e18)
+      assert.isAtMost(getDifference(expectedGain, VSTAGain_F), 20e18)
+
+    })
+
+    it("withdrawFromSP(): Play with settings", async () => {
+      // Whale opens Trove with 100 ETH
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, await getOpenTroveVSTAmount(dec(10000, 18)), whale, whale, { from: whale, value: dec(100, 'ether') })
+
+      const fiveDefaulters = [defaulter_1, defaulter_2, defaulter_3, defaulter_4, defaulter_5]
+
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: A, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: B, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: C, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: D, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: E, value: dec(10000, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), ZERO_ADDRESS, ZERO_ADDRESS, { from: F, value: dec(10000, 'ether') })
+
+      for (const defaulter of fiveDefaulters) {
+        // Defaulters 1-5 each withdraw to 9999.9 debt (including gas comp)
+        await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, await getOpenTroveVSTAmount('9999900000000000000000'), defaulter, defaulter, { from: defaulter, value: dec(100, 'ether') })
+      }
+
+      // Defaulter 6 withdraws to 10k debt (inc. gas comp)
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, await getOpenTroveVSTAmount(dec(10000, 18)), defaulter_6, defaulter_6, { from: defaulter_6, value: dec(100, 'ether') })
+
+      // Confirm all depositors have 0 VSTA
+      for (const depositor of [A, B, C, D, E, F]) {
+        assert.equal(await vstaToken.balanceOf(depositor), '0')
+      }
+      // price drops by 50%
+      await priceFeed.setPrice(dec(100, 18));
+
+      // Check scale is 0
+      // assert.equal(await stabilityPool.currentScale(), '0')
+
+      // A provides to SP
+      await stabilityPool.provideToSP(dec(10000, 18), { from: A })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 1 liquidated.  Value of P updated to  to 1e-5
+      const txL1 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_1, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_1))
+      assert.isTrue(txL1.receipt.status)
+
+      // Check scale is 0
+      assert.equal(await stabilityPool.currentScale(), '0')
+      assert.equal(await stabilityPool.P(), dec(1, 13)) //P decreases: P = 1e(18-5) = 1e13
+
+      // B provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: B })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 2 liquidated
+      const txL2 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_2, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_2))
+      assert.isTrue(txL2.receipt.status)
+
+      // Check scale is 1
+      assert.equal(await stabilityPool.currentScale(), '1')
+      assert.equal(await stabilityPool.P(), dec(1, 17)) //Scale changes and P changes: P = 1e(13-5+9) = 1e17
+
+      // C provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: C })
+      await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, 0);
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+
+      // Defaulter 3 liquidated
+      const txL3 = await troveManager.liquidate(ZERO_ADDRESS, defaulter_3, { from: owner });
+      assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, defaulter_3))
+      assert.isTrue(txL3.receipt.status)
+
+      // Check scale is 1
+      assert.equal(await stabilityPool.currentScale(), '1')
+      assert.equal(await stabilityPool.P(), dec(1, 12)) //P decreases: P 1e(17-5) = 1e12
+
+      // D provides to SP
+      await stabilityPool.provideToSP(dec(99999, 17), { from: D })
+
+      // 1 month passes
+      await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
+    })
   })
 })
 

@@ -84,12 +84,12 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
 
 
   it("Cumulative issuance is correct after a week", async () => {
-    const initialIssuance = await communityIssuanceTester.getComulativeTokenDistribution(stabilityPool.address);
-    const initialIssuanceERC20 = await communityIssuanceTester.getComulativeTokenDistribution(stabilityPoolERC20.address);
+    const initialIssuance = await communityIssuanceTester.getLastUpdateTokenDistribution(stabilityPool.address);
+    const initialIssuanceERC20 = await communityIssuanceTester.getLastUpdateTokenDistribution(stabilityPoolERC20.address);
     await th.fastForwardTime(timeValues.MINUTES_IN_ONE_WEEK, web3.currentProvider)
 
-    const issuanceFractionAfter = await communityIssuanceTester.getComulativeTokenDistribution(stabilityPool.address)
-    const issuanceFractionAfterERC20 = await communityIssuanceTester.getComulativeTokenDistribution(stabilityPoolERC20.address)
+    const issuanceFractionAfter = await communityIssuanceTester.getLastUpdateTokenDistribution(stabilityPool.address)
+    const issuanceFractionAfterERC20 = await communityIssuanceTester.getLastUpdateTokenDistribution(stabilityPoolERC20.address)
     assert.isAtMost(th.getDifferenceEther(issuanceFractionAfter, initialIssuance), th.toUnitNumber(ETH_WEEKLY))
     assert.isAtMost(th.getDifferenceEther(issuanceFractionAfterERC20, initialIssuanceERC20), th.toUnitNumber(ERC_WEEKLY))
   })
@@ -98,8 +98,8 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
   it("Cumulative issuance is correct after two week", async () => {
     await th.fastForwardTime(timeValues.MINUTES_IN_ONE_WEEK * 2, web3.currentProvider)
 
-    const issuanceFractionAfter = await communityIssuanceTester.getComulativeTokenDistribution(stabilityPool.address)
-    const issuanceFractionAfterERC20 = await communityIssuanceTester.getComulativeTokenDistribution(stabilityPoolERC20.address)
+    const issuanceFractionAfter = await communityIssuanceTester.getLastUpdateTokenDistribution(stabilityPool.address)
+    const issuanceFractionAfterERC20 = await communityIssuanceTester.getLastUpdateTokenDistribution(stabilityPoolERC20.address)
     assert.isAtMost(issuanceFractionAfter.div(toBN(ETH_WEEKLY).mul(toBN(2))).toNumber(), 2)
     assert.isAtMost(issuanceFractionAfterERC20.div(toBN(ERC_WEEKLY).mul(toBN(2))).toNumber(), 2)
   })

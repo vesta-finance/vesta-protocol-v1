@@ -10,12 +10,12 @@ contract CommunityIssuanceTester is CommunityIssuance {
 		vstaToken.transfer(msg.sender, _amount);
 	}
 
-	function getComulativeTokenDistribution(address stabilityPool)
+	function getLastUpdateTokenDistribution(address stabilityPool)
 		external
 		view
 		returns (uint256)
 	{
-		return _getCumulativeTokenDistribution(stabilityPool);
+		return _getLastUpdateTokenDistribution(stabilityPool);
 	}
 
 	function unprotectedIssueVSTA(address stabilityPool) external returns (uint256) {

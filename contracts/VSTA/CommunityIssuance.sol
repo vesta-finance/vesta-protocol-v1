@@ -24,7 +24,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 	IStabilityPoolManager public stabilityPoolManager;
 
 	mapping(address => uint256) public totalVSTAIssued;
-	mapping(address => uint256) public deploymentTime;
+	mapping(address => uint256) public lastUpdateTime;
 	mapping(address => uint256) public VSTASupplyCaps;
 	mapping(address => uint256) public vstaDistributionsByPool;
 
@@ -33,7 +33,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 	bool public isInitialized;
 
 	modifier activeStabilityPoolOnly(address _pool) {
-		require(deploymentTime[_pool] != 0, "CommunityIssuance: Pool needs to be added first.");
+		require(lastUpdateTime[_pool] != 0, "CommunityIssuance: Pool needs to be added first.");
 		_;
 	}
 
@@ -131,8 +131,8 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 			"CommunityIssuance: Invalid Stability Pool"
 		);
 
-		if (deploymentTime[_pool] == 0) {
-			deploymentTime[_pool] = block.timestamp;
+		if (lastUpdateTime[_pool] == 0) {
+			lastUpdateTime[_pool] = block.timestamp;
 		}
 
 		VSTASupplyCaps[_pool] += _assignedSupply;
@@ -165,7 +165,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 	}
 
 	function disableStabilityPool(address _pool) internal {
-		deploymentTime[_pool] = 0;
+		lastUpdateTime[_pool] = 0;
 		VSTASupplyCaps[_pool] = 0;
 		totalVSTAIssued[_pool] = 0;
 	}
@@ -179,27 +179,28 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 
 		if (totalVSTAIssued[_pool] >= maxPoolSupply) return 0;
 
-		uint256 latestTotalVSTAIssued = _getCumulativeTokenDistribution(_pool);
-		uint256 issuance = latestTotalVSTAIssued.sub(totalVSTAIssued[_pool]);
+		uint256 issuance = _getLastUpdateTokenDistribution(_pool);
+		uint256 totalIssuance = issuance.add(totalVSTAIssued[_pool]);
 
-		if (latestTotalVSTAIssued > maxPoolSupply) {
+		if (totalIssuance > maxPoolSupply) {
 			issuance = maxPoolSupply.sub(totalVSTAIssued[_pool]);
-			latestTotalVSTAIssued = maxPoolSupply;
+			totalIssuance = maxPoolSupply;
 		}
 
-		totalVSTAIssued[_pool] = latestTotalVSTAIssued;
-		emit TotalVSTAIssuedUpdated(_pool, latestTotalVSTAIssued);
+		lastUpdateTime[_pool] = block.timestamp;
+		totalVSTAIssued[_pool] = totalIssuance;
+		emit TotalVSTAIssuedUpdated(_pool, totalIssuance);
 
 		return issuance;
 	}
 
-	function _getCumulativeTokenDistribution(address stabilityPool)
+	function _getLastUpdateTokenDistribution(address stabilityPool)
 		internal
 		view
 		returns (uint256)
 	{
-		require(deploymentTime[stabilityPool] != 0, "Stability pool hasn't been assigned");
-		uint256 timePassed = block.timestamp.sub(deploymentTime[stabilityPool]).div(
+		require(lastUpdateTime[stabilityPool] != 0, "Stability pool hasn't been assigned");
+		uint256 timePassed = block.timestamp.sub(lastUpdateTime[stabilityPool]).div(
 			SECONDS_IN_ONE_MINUTE
 		);
 		uint256 totalDistribuedSinceBeginning = vstaDistributionsByPool[stabilityPool].mul(
