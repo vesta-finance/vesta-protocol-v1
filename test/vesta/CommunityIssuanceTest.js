@@ -69,16 +69,16 @@ contract('CommunityIssuance', async accounts => {
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, dec(100, 18), { from: treasury })
       await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, dec(100, 18), { from: treasury })
 
-      const deployTimePool = await communityIssuance.deploymentTime(stabilityPool.address);
-      const deployTimePoolERC20 = await communityIssuance.deploymentTime(stabilityPoolERC20.address);
+      const deployTimePool = await communityIssuance.lastUpdateTime(stabilityPool.address);
+      const deployTimePoolERC20 = await communityIssuance.lastUpdateTime(stabilityPoolERC20.address);
 
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_DAY, web3.currentProvider)
 
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, dec(100, 18), { from: treasury })
       await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, dec(100, 18), { from: treasury })
 
-      const deployTimePoolAfter = await communityIssuance.deploymentTime(stabilityPool.address);
-      const deployTimePoolAfterERC20 = await communityIssuance.deploymentTime(stabilityPoolERC20.address);
+      const deployTimePoolAfter = await communityIssuance.lastUpdateTime(stabilityPool.address);
+      const deployTimePoolAfterERC20 = await communityIssuance.lastUpdateTime(stabilityPoolERC20.address);
 
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(200, 18))
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), dec(200, 18))
@@ -132,7 +132,7 @@ contract('CommunityIssuance', async accounts => {
       await communityIssuance.removeFundFromStabilityPool(stabilityPool.address, supply, { from: treasury })
 
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.deploymentTime(stabilityPool.address)).toString(), 0)
+      assert.equal((await communityIssuance.lastUpdateTime(stabilityPool.address)).toString(), 0)
       assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
     })
 
@@ -207,7 +207,7 @@ contract('CommunityIssuance', async accounts => {
       await communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, lefOver, { from: treasury })
 
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.deploymentTime(stabilityPool.address)).toString(), 0)
+      assert.equal((await communityIssuance.lastUpdateTime(stabilityPool.address)).toString(), 0)
       assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply.add(lefOver))
     })
@@ -222,7 +222,7 @@ contract('CommunityIssuance', async accounts => {
       await communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, supply, { from: treasury })
 
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.deploymentTime(stabilityPool.address)).toString(), 0)
+      assert.equal((await communityIssuance.lastUpdateTime(stabilityPool.address)).toString(), 0)
       assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
 
       assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply.add(supply))

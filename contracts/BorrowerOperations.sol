@@ -13,6 +13,7 @@ import "./Interfaces/IVSTAStaking.sol";
 import "./Interfaces/IStabilityPoolManager.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
+import "./Dependencies/SafetyTransfer.sol";
 
 contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	using SafeMathUpgradeable for uint256;
@@ -654,7 +655,12 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			(bool success, ) = address(_activePool).call{ value: _amount }("");
 			require(success, "BorrowerOps: Sending ETH to ActivePool failed");
 		} else {
-			IERC20Upgradeable(_asset).safeTransferFrom(msg.sender, address(_activePool), _amount);
+			IERC20Upgradeable(_asset).safeTransferFrom(
+				msg.sender,
+				address(_activePool),
+				SafetyTransfer.decimalsCorrection(_asset, _amount)
+			);
+
 			_activePool.receivedERC20(_asset, _amount);
 		}
 	}

@@ -1227,7 +1227,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(dennis)).toString(), toBN('27692307692307700000000').mul(toBN(2))), 200000000000)
       // 300*0.995 * 40000/97500
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '122461538461538466100'), 100000000000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '122461538461538466100'), 100000000000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '12246153846'), 100000000000)
 
       // Two more defaulters are liquidated
       await troveManager.liquidate(ZERO_ADDRESS, defaulter_3, { from: owner });
@@ -1332,7 +1332,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       const dennis_ETHWithdrawnERC20 = th.getEventArgByName(txDERC20, EVENT_ASSET_GAIN_NAME, EVENT_ASSET_GAIN_PARAM).toString()
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(dennis)).toString(), toBN('1666666666666666666666').mul(toBN(2))), 200000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '82916666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '82916666666666666667'), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '8291666666'), 100000)
 
       await troveManager.liquidate(ZERO_ADDRESS, defaulter_4, { from: owner });
       await troveManager.liquidate(erc20.address, defaulter_4, { from: owner });

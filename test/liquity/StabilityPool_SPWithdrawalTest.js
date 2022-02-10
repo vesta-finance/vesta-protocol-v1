@@ -148,9 +148,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, '33166666666666666667'), 10000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '33166666666666666667'), 10000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '33166666666666666667'), 10000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '33166666666666666667'), 10000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '33166666666666666667'), 10000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '3316666666'), 10000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '3316666666'), 10000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '3316666666'), 10000)
     })
 
     it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after two identical liquidations", async () => {
@@ -209,9 +209,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, '66333333333333333333'), 10000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '66333333333333333333'), 10000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '66333333333333333333'), 10000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '66333333333333333333'), 10000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '66333333333333333333'), 10000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '6633333333'), 10000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '6633333333'), 10000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '6633333333'), 10000)
     })
 
     it("withdrawFromSP():  Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after three identical liquidations", async () => {
@@ -274,9 +274,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, dec(99500, 15)), 10000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, dec(99500, 15)), 10000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(99500, 15)), 10000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(99500, 15)), 10000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(99500, 15)), 10000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(99500, 5)), 10000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(99500, 5)), 10000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(99500, 5)), 10000)
     })
 
     // --- Identical deposits, increasing liquidation amounts ---
@@ -337,9 +337,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, dec(398, 17)), 10000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, dec(398, 17)), 10000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(398, 17)), 10000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(398, 17)), 10000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(398, 17)), 10000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(398, 7)), 10000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(398, 7)), 10000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(398, 7)), 10000)
     })
 
     it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after three liquidations of increasing VST", async () => {
@@ -403,9 +403,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, dec(597, 17)), 10000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, dec(597, 17)), 10000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(597, 17)), 10000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(597, 17)), 10000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(597, 17)), 10000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(597, 7)), 10000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(597, 7)), 10000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(597, 7)), 10000)
     })
 
     // --- Increasing deposits, identical liquidation amounts ---
@@ -473,9 +473,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, '66333333333333333333'), 100000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, dec(995, 17)), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '33166666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '66333333333333333333'), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(995, 17)), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '3316666666'), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '6633333333'), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(995, 7)), 100000)
     })
 
     it("withdrawFromSP(): Depositors with varying deposits withdraw correct compounded deposit and ETH Gain after three identical liquidations", async () => {
@@ -545,9 +545,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, dec(995, 17)), 100000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '149250000000000000000'), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '49750000000000000000'), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '149250000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '4975000000'), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '14925000000'), 100000)
     })
 
     // --- Varied deposits and varied liquidation amount ---
@@ -630,9 +630,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, '2610021651454043834000'), 10000000000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '74980885162385912900'), 10000000000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '11447463383570366500'), 10000000000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '2610021651454043834000'), 10000000000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '74980885162385912900'), 10000000000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '1144746338'), 10000000000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '261002165145'), 10000000000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '7498088516'), 10000000000)
     })
 
     // --- Deposit enters at t > 0
@@ -711,10 +711,10 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '82916666666666666667'), 100000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '49750000000000000000'), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '82916666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '82916666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '82916666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '49750000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '8291666666'), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '8291666666'), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '8291666666'), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '4975000000'), 100000)
     })
 
     it("withdrawFromSP(): A, B, C Deposit -> 2 liquidations -> D deposits -> 2 liquidations. All deposits and liquidations = 100 VST.  A, B, C, D withdraw correct VST deposit and ETH Gain", async () => {
@@ -794,10 +794,10 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, dec(995, 17)), 100000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, dec(995, 17)), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, dec(995, 17)), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, dec(995, 7)), 100000)
     })
 
     it("withdrawFromSP(): A, B, C Deposit -> 2 liquidations -> D deposits -> 2 liquidations. Various deposit and liquidation vals.  A, B, C, D withdraw correct VST deposit and ETH Gain", async () => {
@@ -898,10 +898,10 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '104890866873065014000'), 100000000000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '131691176470588233700'), 100000000000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '419563467492260055900'), 100000000000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '139854489164086692700'), 100000000000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '104890866873065014000'), 100000000000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '131691176470588233700'), 100000000000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '41956346749'), 100000000000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '13985448916'), 100000000000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '10489086687'), 100000000000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '13169117647'), 100000000000)
     })
 
     // --- Depositor leaves ---
@@ -951,7 +951,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       const dennis_ETHWithdrawnERC20 = th.getEventArgByName(txDERC20, EVENT_ASSET_GAIN_NAME, EVENT_ASSET_GAIN_PARAM).toString()
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(dennis)).toString(), toBN('5000000000000000000000').mul(toBN(2))), 100000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '49750000000000000000'), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '49750000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '4975000000'), 100000)
 
       // Two more defaulters are liquidated
       await troveManager.liquidate(ZERO_ADDRESS, defaulter_3, { from: owner });
@@ -1058,7 +1058,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(dennis)).toString(), toBN('27692307692307700000000').mul(toBN(2))), 100000000000)
       // 300*0.995 * 40000/97500
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '122461538461538466100'), 100000000000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '122461538461538466100'), 100000000000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '12246153846'), 100000000000)
 
       // Two more defaulters are liquidated
       await troveManager.liquidate(ZERO_ADDRESS, defaulter_3, { from: owner });
@@ -1155,7 +1155,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       const dennis_ETHWithdrawnERC20 = th.getEventArgByName(txDERC20, EVENT_ASSET_GAIN_NAME, EVENT_ASSET_GAIN_PARAM).toString()
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(dennis)).toString(), toBN('1666666666666666666666').mul(toBN(2))), 100000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '82916666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '82916666666666666667'), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '8291666666'), 100000)
 
       await troveManager.liquidate(ZERO_ADDRESS, defaulter_4, { from: owner });
       await troveManager.liquidate(erc20.address, defaulter_4, { from: owner });
@@ -1185,9 +1185,9 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, '92866666666666666667'), 100000)
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '79600000000000000000'), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '92866666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '92866666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '79600000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, '9286666666'), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '9286666666'), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '7960000000'), 100000)
     })
 
     // --- Tests for full offset - Pool empties to 0 ---
@@ -1269,8 +1269,8 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(alice_ETHWithdrawn, dec(995, 17)), 100000)
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, dec(995, 17)), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 17)), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 7)), 100000)
 
       // Expect Carol And Dennis' compounded deposit to be 50 VST
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(carol)).toString(), toBN('5000000000000000000000').mul(toBN(2))), 100000)
@@ -1280,8 +1280,8 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(carol_ETHWithdrawn, '49750000000000000000'), 100000)
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '49750000000000000000'), 100000)
 
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '49750000000000000000'), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '49750000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '4975000000'), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '4975000000'), 100000)
     })
 
     // A, B deposit 10000
@@ -1521,11 +1521,11 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(dennis_ETHWithdrawn, '33166666666666666667'), 100000)
       assert.isAtMost(th.getDifference(erin_ETHWithdrawn, '49750000000000000000'), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '16583333333333333333'), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '33166666666666666667'), 100000)
-      assert.isAtMost(th.getDifference(erin_ETHWithdrawnERC20, '49750000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, '1658333333'), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, '3316666666'), 100000)
+      assert.isAtMost(th.getDifference(erin_ETHWithdrawnERC20, '4975000000'), 100000)
     })
 
     // A deposits 10000
@@ -1573,7 +1573,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
 
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(alice)).toString(), 0), 100000)
       assert.isAtMost(th.getDifference(alice_ETHWithdrawn, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 17)), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 7)), 100000)
     })
 
     //--- Serial full offsets ---
@@ -1714,14 +1714,14 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isAtMost(th.getDifference(graham_ETHWithdrawn, dec(995, 17)), 100000)
       assert.isAtMost(th.getDifference(harriet_ETHWithdrawn, dec(995, 17)), 100000)
 
-      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(erin_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(flyn_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(graham_ETHWithdrawnERC20, dec(995, 17)), 100000)
-      assert.isAtMost(th.getDifference(harriet_ETHWithdrawnERC20, dec(995, 17)), 100000)
+      assert.isAtMost(th.getDifference(alice_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(dennis_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(erin_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(flyn_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(graham_ETHWithdrawnERC20, dec(995, 7)), 100000)
+      assert.isAtMost(th.getDifference(harriet_ETHWithdrawnERC20, dec(995, 7)), 100000)
 
       const finalEpoch = (await stabilityPool.currentEpoch()).toString()
       const finalEpochERC20 = (await stabilityPoolERC20.currentEpoch()).toString()
@@ -1794,7 +1794,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       // Expect Bob to withdraw 1% of initial deposit (100 VST) and all the liquidated ETH (60 ether)
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(bob)).toString(), toBN('100000000000000000000').mul(toBN(2))), 100000)
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, '59700000000000000000'), 100000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '59700000000000000000'), 100000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, '5970000000'), 100000)
     })
 
     // A deposits 10000
@@ -1977,7 +1977,7 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       // Bob should withdraw 1e-5 of initial deposit: 0.1 VST and the full ETH gain of 100 ether
       assert.isAtMost(th.getDifference((await VSTToken.balanceOf(bob)).toString(), toBN(dec(1, 17)).mul(toBN(2))), 100000)
       assert.isAtMost(th.getDifference(bob_ETHWithdrawn, dec(995, 17)), 100000000000)
-      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 17)), 100000000000)
+      assert.isAtMost(th.getDifference(bob_ETHWithdrawnERC20, dec(995, 7)), 100000000000)
     })
 
     // A make deposit 10000 VST
@@ -2240,10 +2240,10 @@ contract('StabilityPool - Withdrawal of stability deposit - Reward calculations'
       assert.isTrue(toBN(carol_ETHWithdrawn).sub(toBN(dec(995, 17))).abs().lte(toBN(dec(1, 17))))
       assert.isTrue(toBN(dennis_ETHWithdrawn).sub(toBN(dec(995, 17))).abs().lte(toBN(dec(1, 17))))
 
-      assert.isTrue(toBN(alice_ETHWithdrawnERC20).sub(toBN(dec(995, 17))).abs().lte(toBN(dec(1, 17))))
-      assert.isTrue(toBN(bob_ETHWithdrawnERC20).sub(toBN(dec(995, 17))).abs().lte(toBN(dec(1, 17))))
-      assert.isTrue(toBN(carol_ETHWithdrawnERC20).sub(toBN(dec(995, 17))).abs().lte(toBN(dec(1, 17))))
-      assert.isTrue(toBN(dennis_ETHWithdrawnERC20).sub(toBN(dec(995, 17))).abs().lte(toBN(dec(1, 17))))
+      assert.isTrue(toBN(alice_ETHWithdrawnERC20).sub(toBN(dec(995, 7))).abs().lte(toBN(dec(1, 7))))
+      assert.isTrue(toBN(bob_ETHWithdrawnERC20).sub(toBN(dec(995, 7))).abs().lte(toBN(dec(1, 7))))
+      assert.isTrue(toBN(carol_ETHWithdrawnERC20).sub(toBN(dec(995, 7))).abs().lte(toBN(dec(1, 7))))
+      assert.isTrue(toBN(dennis_ETHWithdrawnERC20).sub(toBN(dec(995, 7))).abs().lte(toBN(dec(1, 7))))
     })
 
     it("withdrawFromSP(): 2 depositors can withdraw after each receiving half of a pool-emptying liquidation", async () => {

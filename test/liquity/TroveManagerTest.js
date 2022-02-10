@@ -173,7 +173,7 @@ contract('TroveManager', async accounts => {
     th.assertIsApproximatelyEqual(activePooL_VSTDebt_Before, A_totalDebt.add(B_totalDebt))
 
     assert.equal(activePool_ETH_Before_Asset, A_collateral_Asset.add(B_collateral_Asset))
-    assert.equal(activePool_RawEther_Before_Asset, A_collateral_Asset.add(B_collateral_Asset))
+    assert.equal(activePool_RawEther_Before_Asset, A_collateral_Asset.add(B_collateral_Asset).div(toBN(10 ** 10)))
     th.assertIsApproximatelyEqual(activePooL_VSTDebt_Before_Asset, A_totalDebt_Asset.add(B_totalDebt_Asset))
 
     // price drops to 1ETH:100VST, reducing Bob's ICR below MCR
@@ -202,7 +202,7 @@ contract('TroveManager', async accounts => {
     th.assertIsApproximatelyEqual(activePooL_VSTDebt_After, A_totalDebt)
 
     assert.equal(activePool_ETH_After_Asset, A_collateral_Asset)
-    assert.equal(activePool_RawEther_After_Asset, A_collateral_Asset)
+    assert.equal(activePool_RawEther_After_Asset, A_collateral_Asset.div(toBN(10 ** 10)))
     th.assertIsApproximatelyEqual(activePooL_VSTDebt_After_Asset, A_totalDebt_Asset)
   })
 
@@ -260,7 +260,7 @@ contract('TroveManager', async accounts => {
 
     const defaultPool_ETH_Asset = th.applyLiquidationFee(B_collateral_Asset)
     assert.equal(defaultPool_ETH_After_Asset, defaultPool_ETH_Asset)
-    assert.equal(defaultPool_RawEther_After_Asset, defaultPool_ETH_Asset)
+    assert.equal(defaultPool_RawEther_After_Asset, defaultPool_ETH_Asset.div(toBN(10 ** 10)))
     th.assertIsApproximatelyEqual(defaultPooL_VSTDebt_After_Asset, B_totalDebt_Asset)
   })
 
@@ -1074,7 +1074,7 @@ contract('TroveManager', async accounts => {
     assert.isAtMost(th.getDifference(dennis_Deposit_Before, spDeposit.sub(liquidatedDebt)), 1000000)
     assert.isAtMost(th.getDifference(dennis_ETHGain_Before, liquidatedColl), 1000)
     assert.isAtMost(th.getDifference(dennis_Deposit_Before_Asset, spDeposit.sub(liquidatedDebt_Asset)), 1000000)
-    assert.isAtMost(th.getDifference(dennis_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
+    assert.isAtMost(th.getDifference(dennis_ETHGain_Before_Asset, liquidatedColl_Asset.div(toBN(10 ** 10))), 1000)
 
     // Confirm system is not in Recovery Mode
     assert.isFalse(await th.checkRecoveryMode(contracts));
@@ -1151,7 +1151,7 @@ contract('TroveManager', async accounts => {
     assert.isAtMost(th.getDifference(bob_ETHGain_Before, liquidatedColl), 1000)
 
     assert.isAtMost(th.getDifference(bob_Deposit_Before_Asset, spDeposit.sub(liquidatedDebt_Asset)), 1000000)
-    assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
+    assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, liquidatedColl_Asset.div(toBN(10 ** 10))), 1000)
 
     // Confirm system is not in Recovery Mode
     assert.isFalse(await th.checkRecoveryMode(contracts));
@@ -1214,7 +1214,7 @@ contract('TroveManager', async accounts => {
     assert.isAtMost(th.getDifference(bob_ETHGain_Before, th.applyLiquidationFee(C_collateral)), 1000)
 
     assert.isAtMost(th.getDifference(bob_Deposit_Before_Asset, B_spDeposit.sub(C_debt_Asset)), 1000000)
-    assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, th.applyLiquidationFee(C_collateral_Asset)), 1000)
+    assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, th.applyLiquidationFee(C_collateral_Asset).div(toBN(10 ** 10))), 1000)
 
     // Alice provides VST to SP
     await stabilityPool.provideToSP(A_spDeposit, { from: alice })
@@ -1256,7 +1256,7 @@ contract('TroveManager', async accounts => {
     assert.isAtMost(th.getDifference(alice_ETHGain_After, th.applyLiquidationFee(B_collateral).mul(A_spDeposit).div(totalDeposits)), 1000000)
 
     assert.isAtMost(th.getDifference(alice_Deposit_After_Asset, A_spDeposit.sub(B_debt_Asset.mul(A_spDeposit).div(totalDeposits_Asset))), 1000000)
-    assert.isAtMost(th.getDifference(alice_ETHGain_After_Asset, th.applyLiquidationFee(B_collateral_Asset).mul(A_spDeposit).div(totalDeposits_Asset)), 1000000)
+    assert.isAtMost(th.getDifference(alice_ETHGain_After_Asset, th.applyLiquidationFee(B_collateral_Asset).mul(A_spDeposit).div(totalDeposits_Asset).div(toBN(10 ** 10))), 1000000)
 
     const bob_Deposit_After = await stabilityPool.getCompoundedVSTDeposit(bob)
     const bob_ETHGain_After = await stabilityPool.getDepositorAssetGain(bob)
@@ -1267,7 +1267,7 @@ contract('TroveManager', async accounts => {
     assert.isAtMost(th.getDifference(bob_Deposit_After, bob_Deposit_Before.sub(B_debt.mul(bob_Deposit_Before).div(totalDeposits))), 1000000)
     assert.isAtMost(th.getDifference(bob_ETHGain_After, bob_ETHGain_Before.add(th.applyLiquidationFee(B_collateral).mul(bob_Deposit_Before).div(totalDeposits))), 1000000)
     assert.isAtMost(th.getDifference(bob_Deposit_After_Asset, bob_Deposit_Before_Asset.sub(B_debt.mul(bob_Deposit_Before_Asset).div(totalDeposits_Asset))), 1000000)
-    assert.isAtMost(th.getDifference(bob_ETHGain_After_Asset, bob_ETHGain_Before_Asset.add(th.applyLiquidationFee(B_collateral_Asset).mul(bob_Deposit_Before_Asset).div(totalDeposits_Asset))), 1000000)
+    assert.isAtMost(th.getDifference(bob_ETHGain_After_Asset, bob_ETHGain_Before_Asset.add(th.applyLiquidationFee(B_collateral_Asset.div(toBN(10 ** 10))).mul(bob_Deposit_Before_Asset).div(totalDeposits_Asset))), 1000000)
   })
 
   it("liquidate(): does not alter the liquidated user's token balance", async () => {
@@ -2589,9 +2589,9 @@ contract('TroveManager', async accounts => {
     assert.isAtMost(th.getDifference(alice_Deposit_After_Asset, A_deposit.sub(liquidatedDebt_Asset.mul(A_deposit).div(totalDeposits_Asset))), 100000)
     assert.isAtMost(th.getDifference(bob_Deposit_After_Asset, B_deposit.sub(liquidatedDebt_Asset.mul(B_deposit).div(totalDeposits_Asset))), 100000)
 
-    assert.isAtMost(th.getDifference(whale_ETHGain_Asset, th.applyLiquidationFee(liquidatedColl_Asset).mul(whaleDeposit).div(totalDeposits_Asset)), 100000)
-    assert.isAtMost(th.getDifference(alice_ETHGain_Asset, th.applyLiquidationFee(liquidatedColl_Asset).mul(A_deposit).div(totalDeposits_Asset)), 100000)
-    assert.isAtMost(th.getDifference(bob_ETHGain_Asset, th.applyLiquidationFee(liquidatedColl_Asset).mul(B_deposit).div(totalDeposits_Asset)), 100000)
+    assert.isAtMost(th.getDifference(whale_ETHGain_Asset, th.applyLiquidationFee(liquidatedColl_Asset).mul(whaleDeposit).div(totalDeposits_Asset).div(toBN(10 ** 10))), 100000)
+    assert.isAtMost(th.getDifference(alice_ETHGain_Asset, th.applyLiquidationFee(liquidatedColl_Asset).mul(A_deposit).div(totalDeposits_Asset).div(toBN(10 ** 10))), 100000)
+    assert.isAtMost(th.getDifference(bob_ETHGain_Asset, th.applyLiquidationFee(liquidatedColl_Asset).mul(B_deposit).div(totalDeposits_Asset).div(toBN(10 ** 10))), 100000)
 
     // Check total remaining deposits and ETH gain in Stability Pool
     const total_VSTinSP = (await stabilityPool.getTotalVSTDeposits()).toString()
@@ -3685,7 +3685,7 @@ contract('TroveManager', async accounts => {
     const expectedReceivedETH_Asset = expectedTotalETHDrawn_Asset.sub(toBN(ETHFee_Asset))
 
     th.assertIsApproximatelyEqual(expectedReceivedETH, receivedETH)
-    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset, receivedETH_Asset)
+    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset.div(toBN(10 ** 10)), receivedETH_Asset)
 
     const dennis_VSTBalance_After = (await VSTToken.balanceOf(dennis)).toString()
     assert.equal(dennis_VSTBalance_After, dennis_VSTBalance_Before.sub(redemptionAmount).sub(redemptionAmount_Asset))
@@ -3815,7 +3815,7 @@ contract('TroveManager', async accounts => {
     const expectedReceivedETH_Asset = expectedTotalETHDrawn_Asset.sub(toBN(ETHFee_Asset))
 
     th.assertIsApproximatelyEqual(expectedReceivedETH, receivedETH)
-    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset, receivedETH_Asset)
+    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset.div(toBN(10 ** 10)), receivedETH_Asset)
 
     const dennis_VSTBalance_After = (await VSTToken.balanceOf(dennis)).toString()
     assert.equal(dennis_VSTBalance_After, dennis_VSTBalance_Before.sub(redemptionAmount).sub(redemptionAmount_Asset))
@@ -3943,7 +3943,7 @@ contract('TroveManager', async accounts => {
     const expectedReceivedETH_Asset = expectedTotalETHDrawn_Asset.sub(toBN(ETHFee_Asset))
 
     th.assertIsApproximatelyEqual(expectedReceivedETH, receivedETH)
-    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset, receivedETH_Asset)
+    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset.div(toBN(10 ** 10)), receivedETH_Asset)
 
     const dennis_VSTBalance_After = (await VSTToken.balanceOf(dennis)).toString()
     assert.equal(dennis_VSTBalance_After, dennis_VSTBalance_Before.sub(redemptionAmount).sub(redemptionAmount_Asset))
@@ -4079,7 +4079,7 @@ contract('TroveManager', async accounts => {
     const expectedReceivedETH_Asset = expectedTotalETHDrawn_Asset.sub(toBN(ETHFee_Asset))
 
     th.assertIsApproximatelyEqual(expectedReceivedETH, receivedETH)
-    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset, receivedETH_Asset)
+    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset.div(toBN(10 ** 10)), receivedETH_Asset)
 
     const dennis_VSTBalance_After = (await VSTToken.balanceOf(dennis)).toString()
     assert.equal(dennis_VSTBalance_After, dennis_VSTBalance_Before.sub(redemptionAmount).sub(redemptionAmount_Asset))
@@ -4491,7 +4491,7 @@ contract('TroveManager', async accounts => {
     const expectedReceivedETH_Asset = expectedTotalETHDrawn_Asset.sub(ETHFee_Asset)
 
     th.assertIsApproximatelyEqual(expectedReceivedETH, receivedETH)
-    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset, receivedETH_Asset)
+    th.assertIsApproximatelyEqual(expectedReceivedETH_Asset.div(toBN(10 ** 10)), receivedETH_Asset)
 
     const dennis_VSTBalance_After = (await VSTToken.balanceOf(dennis)).toString()
     th.assertIsApproximatelyEqual(
@@ -6262,7 +6262,7 @@ contract('TroveManager', async accounts => {
       ETHDrawn.sub(
         toBN(dec(5, 15)).add(redemptionAmount.mul(mv._1e18BN).div(totalDebt_Asset).div(toBN(2)))
           .mul(ETHDrawn).div(mv._1e18BN)
-      ),
+      ).div(toBN(10 ** 10)),
       100000
     )
   })
@@ -6566,9 +6566,9 @@ contract('TroveManager', async accounts => {
     th.assertIsApproximatelyEqual(B_balanceAfter, B_balanceBefore.add(B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price))))
     th.assertIsApproximatelyEqual(C_balanceAfter, C_balanceBefore.add(C_coll.sub(C_netDebt.mul(mv._1e18BN).div(price))))
 
-    th.assertIsApproximatelyEqual(A_balanceAfter_Asset, A_balanceBefore_Asset.add(A_coll_Asset.sub(A_netDebt_Asset.mul(mv._1e18BN).div(price))))
-    th.assertIsApproximatelyEqual(B_balanceAfter_Asset, B_balanceBefore_Asset.add(B_coll_Asset.sub(B_netDebt_Asset.mul(mv._1e18BN).div(price))))
-    th.assertIsApproximatelyEqual(C_balanceAfter_Asset, C_balanceBefore_Asset.add(C_coll_Asset.sub(C_netDebt_Asset.mul(mv._1e18BN).div(price))))
+    th.assertIsApproximatelyEqual(A_balanceAfter_Asset, A_balanceBefore_Asset.add(A_coll_Asset.sub(A_netDebt_Asset.mul(mv._1e18BN).div(price)).div(toBN(10 ** 10))))
+    th.assertIsApproximatelyEqual(B_balanceAfter_Asset, B_balanceBefore_Asset.add(B_coll_Asset.sub(B_netDebt_Asset.mul(mv._1e18BN).div(price)).div(toBN(10 ** 10))))
+    th.assertIsApproximatelyEqual(C_balanceAfter_Asset, C_balanceBefore_Asset.add(C_coll_Asset.sub(C_netDebt_Asset.mul(mv._1e18BN).div(price)).div(toBN(10 ** 10))))
   })
 
   it("redeemCollateral(): a redemption that closes a trove leaves the trove's ETH surplus (collateral - ETH drawn) available for the trove owner after re-opening trove", async () => {
@@ -6642,9 +6642,9 @@ contract('TroveManager', async accounts => {
     th.assertIsApproximatelyEqual(B_balanceAfter, B_balanceBefore.add(B_surplus))
     th.assertIsApproximatelyEqual(C_balanceAfter, C_balanceBefore.add(C_surplus))
 
-    th.assertIsApproximatelyEqual(A_balanceAfter_Asset, A_balanceBefore_Asset.add(A_surplus_Asset))
-    th.assertIsApproximatelyEqual(B_balanceAfter_Asset, B_balanceBefore_Asset.add(B_surplus_Asset))
-    th.assertIsApproximatelyEqual(C_balanceAfter_Asset, C_balanceBefore_Asset.add(C_surplus_Asset))
+    th.assertIsApproximatelyEqual(A_balanceAfter_Asset, A_balanceBefore_Asset.add(A_surplus_Asset.div(toBN(10 ** 10))))
+    th.assertIsApproximatelyEqual(B_balanceAfter_Asset, B_balanceBefore_Asset.add(B_surplus_Asset.div(toBN(10 ** 10))))
+    th.assertIsApproximatelyEqual(C_balanceAfter_Asset, C_balanceBefore_Asset.add(C_surplus_Asset.div(toBN(10 ** 10))))
   })
 
   it('redeemCollateral(): reverts if fee eats up all returned collateral', async () => {

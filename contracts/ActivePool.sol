@@ -13,6 +13,7 @@ import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IDeposit.sol";
 import "./Dependencies/CheckContract.sol";
+import "./Dependencies/SafetyTransfer.sol";
 
 /*
  * The Active Pool holds the collaterals and VST debt (but not VST tokens) for all active troves.
@@ -105,10 +106,13 @@ contract ActivePool is
 			assert(address(stabilityPoolManager.getAssetStabilityPool(_asset)) == msg.sender);
 		}
 
+		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
+		if (safetyTransferAmount == 0) return;
+
 		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
 
 		if (_asset != ETH_REF_ADDRESS) {
-			IERC20Upgradeable(_asset).safeTransfer(_account, _amount);
+			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
 
 			if (isERC20DepositContract(_account)) {
 				IDeposit(_account).receivedERC20(_asset, _amount);
@@ -119,7 +123,7 @@ contract ActivePool is
 		}
 
 		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
-		emit AssetSent(_account, _asset, _amount);
+		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
 	function isERC20DepositContract(address _account) private view returns (bool) {

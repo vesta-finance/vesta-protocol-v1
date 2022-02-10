@@ -2218,7 +2218,7 @@ contract('StabilityPool', async accounts => {
 
       const aliceExpectedETHGainERC20 = liquidatedCollERC20.mul(toBN(dec(15000, 18))).div(toBN(dec(200000, 18)))
       const aliceETHGainERC20 = await stabilityPoolERC20.getDepositorAssetGain(alice)
-      assert.isTrue(aliceExpectedETHGainERC20.eq(aliceETHGainERC20))
+      assert.isTrue(aliceExpectedETHGainERC20.div(toBN(10 ** 10)).eq(aliceETHGainERC20))
 
       // Alice retrieves all of her deposit
       await stabilityPool.withdrawFromSP(dec(15000, 18), { from: alice })
@@ -2241,7 +2241,7 @@ contract('StabilityPool', async accounts => {
 
       // Expect StabilityPool to have decreased by Alice's AssetGain
       assert.isAtMost(th.getDifference(stability_ETH_Difference, aliceETHGain), 10000)
-      assert.isAtMost(th.getDifference(stability_ETH_DifferenceERC20, aliceETHGainERC20), 10000)
+      assert.isAtMost(th.getDifference(stability_ETH_DifferenceERC20.div(toBN(10 ** 10)), aliceETHGainERC20), 10000)
     })
 
     it("withdrawFromSP(): All depositors are able to withdraw from the SP to their account", async () => {
@@ -3873,7 +3873,7 @@ contract('StabilityPool', async accounts => {
       const Trove_ETH_IncreaseERC20 = (aliceTrove_ETH_AfterERC20.sub(aliceTrove_ETH_BeforeERC20)).toString()
 
       assert.equal(Trove_ETH_Increase, ETHGain_A)
-      assert.equal(Trove_ETH_IncreaseERC20, ETHGain_AERC20)
+      assert.equal(toBN(Trove_ETH_IncreaseERC20).div(toBN(10 ** 10)).toString(), ETHGain_AERC20)
     })
 
     it("withdrawETHGainToTrove(): reverts if it would leave trove with ICR < MCR", async () => {
@@ -4040,7 +4040,7 @@ contract('StabilityPool', async accounts => {
 
       const aliceExpectedETHGainERC20 = liquidatedCollERC20.mul(toBN(dec(15000, 18))).div(toBN(dec(200000, 18)))
       const aliceETHGainERC20 = await stabilityPoolERC20.getDepositorAssetGain(alice)
-      assert.isTrue(aliceExpectedETHGainERC20.eq(aliceETHGainERC20))
+      assert.isTrue(aliceExpectedETHGainERC20.div(toBN(10 ** 10)).eq(aliceETHGainERC20))
 
       // price bounces back
       await priceFeed.setPrice(dec(200, 18));
@@ -4072,8 +4072,8 @@ contract('StabilityPool', async accounts => {
       assert.isAtMost(th.getDifference(active_ETH_Difference, aliceETHGain), 10000)
       assert.isAtMost(th.getDifference(stability_ETH_Difference, aliceETHGain), 10000)
 
-      assert.isAtMost(th.getDifference(active_ETH_DifferenceERC20, aliceETHGainERC20), 10000)
-      assert.isAtMost(th.getDifference(stability_ETH_DifferenceERC20, aliceETHGainERC20), 10000)
+      assert.isAtMost(th.getDifference(active_ETH_DifferenceERC20.div(toBN(10 ** 10)), aliceETHGainERC20), 10000)
+      assert.isAtMost(th.getDifference(stability_ETH_DifferenceERC20.div(toBN(10 ** 10)), aliceETHGainERC20), 10000)
     })
 
     it("withdrawETHGainToTrove(): All depositors are able to withdraw their ETH gain from the SP to their Trove", async () => {
@@ -4304,9 +4304,9 @@ contract('StabilityPool', async accounts => {
       const bob_expectedColalteral = (bob_Collateral_Before.add(bob_ETHGain_Before)).toString()
       const carol_expectedCollateral = (carol_Collateral_Before.add(carol_ETHGain_Before)).toString()
 
-      const alice_expectedCollateralERC20 = (alice_Collateral_BeforeERC20.add(alice_ETHGain_BeforeERC20)).toString()
-      const bob_expectedColalteralERC20 = (bob_Collateral_BeforeERC20.add(bob_ETHGain_BeforeERC20)).toString()
-      const carol_expectedCollateralERC20 = (carol_Collateral_BeforeERC20.add(carol_ETHGain_BeforeERC20)).toString()
+      const alice_expectedCollateralERC20 = (alice_Collateral_BeforeERC20.div(toBN(10 ** 10)).add(alice_ETHGain_BeforeERC20)).toString()
+      const bob_expectedColalteralERC20 = (bob_Collateral_BeforeERC20.div(toBN(10 ** 10)).add(bob_ETHGain_BeforeERC20)).toString()
+      const carol_expectedCollateralERC20 = (carol_Collateral_BeforeERC20.div(toBN(10 ** 10)).add(carol_ETHGain_BeforeERC20)).toString()
 
       const alice_Collateral_After = (await troveManager.Troves(alice, ZERO_ADDRESS,))[th.TROVE_COLL_INDEX]
       const bob_Collateral_After = (await troveManager.Troves(bob, ZERO_ADDRESS,))[th.TROVE_COLL_INDEX]
@@ -4320,9 +4320,9 @@ contract('StabilityPool', async accounts => {
       assert.equal(bob_expectedColalteral, bob_Collateral_After)
       assert.equal(carol_expectedCollateral, carol_Collateral_After)
 
-      assert.equal(alice_expectedCollateralERC20, alice_Collateral_AfterERC20)
-      assert.equal(bob_expectedColalteralERC20, bob_Collateral_AfterERC20)
-      assert.equal(carol_expectedCollateralERC20, carol_Collateral_AfterERC20)
+      assert.equal(alice_expectedCollateralERC20, alice_Collateral_AfterERC20.div(toBN(10 ** 10)))
+      assert.equal(bob_expectedColalteralERC20, bob_Collateral_AfterERC20.div(toBN(10 ** 10)))
+      assert.equal(carol_expectedCollateralERC20, carol_Collateral_AfterERC20.div(toBN(10 ** 10)))
 
       // Check ETH in SP has reduced to zero
       const ETHinSP_After = (await stabilityPool.getAssetBalance()).toString()
