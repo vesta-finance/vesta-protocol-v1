@@ -12,6 +12,7 @@ import "../Dependencies/CheckContract.sol";
 import "../Dependencies/VestaMath.sol";
 import "../Interfaces/IVSTAStaking.sol";
 import "../Interfaces/IDeposit.sol";
+import "../Dependencies/SafetyTransfer.sol";
 
 contract VSTAStaking is
 	IVSTAStaking,
@@ -289,6 +290,7 @@ contract VSTAStaking is
 	}
 
 	function _sendAssetGainToUser(address _asset, uint256 _assetGain) internal {
+		_assetGain = SafetyTransfer.decimalsCorrection(_asset, _assetGain);
 		_sendAsset(msg.sender, _asset, _assetGain);
 		emit AssetSent(_asset, msg.sender, _assetGain);
 	}

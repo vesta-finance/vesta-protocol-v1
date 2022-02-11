@@ -90,8 +90,8 @@ contract('StabilityPool - VSTA Rewards', async accounts => {
 
     // using the result of this to advance time by the desired amount from the deployment time, whether or not some extra time has passed in the meanwhile
     const getDuration = async (expectedDuration) => {
-      const deploymentTime = (await communityIssuanceTester.deploymentTime(stabilityPool.address)).toNumber()
-      const deploymentTimeERC = (await communityIssuanceTester.deploymentTime(stabilityPoolERC20.address)).toNumber()
+      const deploymentTime = (await communityIssuanceTester.lastUpdateTime(stabilityPool.address)).toNumber()
+      const deploymentTimeERC = (await communityIssuanceTester.lastUpdateTime(stabilityPoolERC20.address)).toNumber()
 
       const time = Math.max(deploymentTime, deploymentTimeERC);
       const currentTime = await th.getLatestBlockTimestamp(web3)

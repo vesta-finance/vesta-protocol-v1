@@ -113,6 +113,8 @@ class DeploymentHelper {
     ERC20Test.setAsDeployed(erc20);
     AdminContract.setAsDeployed(adminContract);
 
+    await erc20.setDecimals(8);
+
     const coreContracts = {
       priceFeedTestnet,
       vstToken,
