@@ -103,7 +103,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		}
 
 		if (redemptionBlock[_asset] == 0) {
-			redemptionBlock[_asset] = block.timestamp * (blockInDays * 1 days);
+			redemptionBlock[_asset] = block.timestamp + (blockInDays * 1 days);
 		}
 
 		_setAsDefault(_asset);
