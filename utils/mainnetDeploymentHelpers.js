@@ -66,9 +66,11 @@ class MainnetDeploymentHelper {
   }
 
 
-  async deployMockERC20Contract(deploymentState, name) {
+  async deployMockERC20Contract(deploymentState, name, decimals = 18) {
     const ERC20MockFactory = await this.getFactory("ERC20Mock")
-    const erc20Mock = await this.loadOrDeploy(ERC20MockFactory, name, deploymentState, false, [name, name, ZERO_ADDRESS, 0])
+    const erc20Mock = await this.loadOrDeploy(ERC20MockFactory, name, deploymentState, false, [name, name, decimals])
+
+    await erc20Mock.mint(this.deployerWallet.address, "1000".concat("0".repeat(decimals)));
 
     return erc20Mock.address
   }

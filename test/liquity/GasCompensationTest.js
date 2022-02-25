@@ -429,7 +429,7 @@ contract('Gas compensation tests', async accounts => {
 
     const compensationReceived_AERC20 = (liquidatorBalance_after_AERC20.sub(liquidatorBalance_before_AERC20)).toString()
     const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
+    assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20.div(toBN(10 ** 10)))
 
     // Check SP VST has decreased due to the liquidation 
     const VSTinSP_A = await stabilityPool.getTotalVSTDeposits()
@@ -470,7 +470,7 @@ contract('Gas compensation tests', async accounts => {
 
     const compensationReceived_BERC20 = (liquidatorBalance_after_BERC20.sub(liquidatorBalance_before_BERC20)).toString()
     const _0pt5percent_bobCollERC20 = bobCollERC20.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20) // 0.5% of 2 ETH
+    assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20.div(toBN(10 ** 10))) // 0.5% of 2 ETH
 
     // Check SP VST has decreased due to the liquidation of B
     const VSTinSP_B = await stabilityPool.getTotalVSTDeposits();
@@ -516,7 +516,7 @@ contract('Gas compensation tests', async accounts => {
 
     const compensationReceived_CERC20 = (liquidatorBalance_after_CERC20.sub(liquidatorBalance_before_CERC20)).toString()
     const _0pt5percent_carolCollERC20 = carolCollERC20.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_CERC20, _0pt5percent_carolCollERC20)
+    assert.equal(compensationReceived_CERC20, _0pt5percent_carolCollERC20.div(toBN(10 ** 10)))
 
     // Check SP VST has decreased due to the liquidation of C
     assert.isTrue((await stabilityPool.getTotalVSTDeposits()).lt(VSTinSP_B))
@@ -597,7 +597,7 @@ contract('Gas compensation tests', async accounts => {
 
     const compensationReceived_AERC20 = (liquidatorBalance_after_AERC20.sub(liquidatorBalance_before_AERC20)).toString()
     const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
+    assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20.div(toBN(10 ** 10)))
 
     // Check SP VST has decreased due to the liquidation of A
     const VSTinSP_A = await stabilityPool.getTotalVSTDeposits()
@@ -659,7 +659,7 @@ contract('Gas compensation tests', async accounts => {
 
     const _0pt5percent_bobCollERC20 = bobCollERC20.div(web3.utils.toBN('200'))
     const compensationReceived_BERC20 = (liquidatorBalance_after_BERC20.sub(liquidatorBalance_before_BERC20)).toString()
-    assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20)
+    assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20.div(toBN(10 ** 10)))
 
     // Check SP VST has decreased due to the liquidation of B
     assert.isTrue((await stabilityPool.getTotalVSTDeposits()).lt(VSTinSP_A))
@@ -747,7 +747,7 @@ contract('Gas compensation tests', async accounts => {
     assert.equal(compensationReceived_A, _0pt5percent_aliceColl)
 
     const compensationReceived_AERC20 = (liquidatorBalance_after_AERC20.sub(liquidatorBalance_before_AERC20)).toString()
-    assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
+    assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20.div(toBN(10 ** 10)))
 
     // Check SP VST has decreased due to the liquidation of A 
     const VSTinSP_A = await stabilityPool.getTotalVSTDeposits()
@@ -804,7 +804,7 @@ contract('Gas compensation tests', async accounts => {
     assert.equal(compensationReceived_B, _0pt5percent_bobColl)
 
     const compensationReceived_BERC20 = (liquidatorBalance_after_BERC20.sub(liquidatorBalance_before_BERC20)).toString()
-    assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20)
+    assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20.div(toBN(10 ** 10)))
 
     // Check SP VST has decreased due to the liquidation of B
     assert.isTrue((await stabilityPool.getTotalVSTDeposits()).lt(VSTinSP_A))
@@ -1308,7 +1308,7 @@ contract('Gas compensation tests', async accounts => {
     assert.equal(expectedGasComp, compensationReceived)
 
     const compensationReceivedERC20 = (liquidatorBalance_afterERC20.sub(liquidatorBalance_beforeERC20)).toString()
-    assert.equal(expectedGasCompERC20, compensationReceivedERC20)
+    assert.equal(expectedGasCompERC20.div(toBN(10 ** 10)), compensationReceivedERC20)
 
     // Check ETH in stability pool now equals the expected liquidated collateral
     const ETHinSP = (await stabilityPool.getAssetBalance()).toString()
@@ -1425,14 +1425,14 @@ contract('Gas compensation tests', async accounts => {
     const compensationReceivedERC20 = (liquidatorBalance_afterERC20.sub(liquidatorBalance_beforeERC20)).toString()
 
     assert.isAtMost(th.getDifference(expectedGasComp, compensationReceived), 1000)
-    assert.isAtMost(th.getDifference(expectedGasCompERC20, compensationReceivedERC20), 1000)
+    assert.isAtMost(th.getDifference(expectedGasCompERC20.div(toBN(10 ** 10)), compensationReceivedERC20), 1000)
 
     // Check ETH in defaultPool now equals the expected liquidated collateral
     const ETHinDefaultPool = (await defaultPool.getAssetBalance(ZERO_ADDRESS)).toString()
     assert.isAtMost(th.getDifference(expectedLiquidatedColl, ETHinDefaultPool), 1000)
 
     const ETHinDefaultPoolERC20 = (await defaultPool.getAssetBalance(erc20.address)).toString()
-    assert.isAtMost(th.getDifference(expectedLiquidatedCollERC20, ETHinDefaultPoolERC20), 1000)
+    assert.isAtMost(th.getDifference(expectedLiquidatedCollERC20, toBN(ETHinDefaultPoolERC20)), 1000)
   })
 
   //  --- event emission in liquidation sequence ---

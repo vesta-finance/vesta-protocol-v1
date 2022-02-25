@@ -53,8 +53,8 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
 
   // using the result of this to advance time by the desired amount from the deployment time, whether or not some extra time has passed in the meanwhile
   const getDuration = async (expectedDuration) => {
-    const deploymentTimeETH = (await communityIssuanceTester.deploymentTime(stabilityPool.address)).toNumber()
-    const deploymentTimeERC20 = (await communityIssuanceTester.deploymentTime(stabilityPoolERC20.address)).toNumber()
+    const deploymentTimeETH = (await communityIssuanceTester.lastUpdateTime(stabilityPool.address)).toNumber()
+    const deploymentTimeERC20 = (await communityIssuanceTester.lastUpdateTime(stabilityPoolERC20.address)).toNumber()
     const deploymentTime = Math.max(deploymentTimeETH, deploymentTimeERC20)
     const currentTime = await th.getLatestBlockTimestamp(web3)
     const duration = Math.max(expectedDuration - (currentTime - deploymentTime), 0)

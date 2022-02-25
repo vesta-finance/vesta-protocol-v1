@@ -146,7 +146,7 @@ async function addETHCollaterals() {
 
 async function addBTCCollaterals() {
   const BTCAddress = !config.IsMainnet
-    ? await mdh.deployMockERC20Contract(deploymentState, "renBTC")
+    ? await mdh.deployMockERC20Contract(deploymentState, "renBTC", 8)
     : config.externalAddrs.REN_BTC
 
   if (!BTCAddress || BTCAddress == "")

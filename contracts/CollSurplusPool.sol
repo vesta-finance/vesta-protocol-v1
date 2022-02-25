@@ -8,6 +8,7 @@ import "./Interfaces/ICollSurplusPool.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
+import "./Dependencies/SafetyTransfer.sol";
 
 contract CollSurplusPool is OwnableUpgradeable, CheckContract, ICollSurplusPool {
 	using SafeMathUpgradeable for uint256;
@@ -85,20 +86,29 @@ contract CollSurplusPool is OwnableUpgradeable, CheckContract, ICollSurplusPool 
 
 	function claimColl(address _asset, address _account) external override {
 		_requireCallerIsBorrowerOperations();
-		uint256 claimableColl = userBalances[_account][_asset];
-		require(claimableColl > 0, "CollSurplusPool: No collateral available to claim");
+		uint256 claimableCollEther = userBalances[_account][_asset];
+
+		uint256 safetyTransferclaimableColl = SafetyTransfer.decimalsCorrection(
+			_asset,
+			userBalances[_account][_asset]
+		);
+
+		require(
+			safetyTransferclaimableColl > 0,
+			"CollSurplusPool: No collateral available to claim"
+		);
 
 		userBalances[_account][_asset] = 0;
 		emit CollBalanceUpdated(_account, 0);
 
-		balances[_asset] = balances[_asset].sub(claimableColl);
-		emit AssetSent(_account, claimableColl);
+		balances[_asset] = balances[_asset].sub(claimableCollEther);
+		emit AssetSent(_account, safetyTransferclaimableColl);
 
 		if (_asset == ETH_REF_ADDRESS) {
-			(bool success, ) = _account.call{ value: claimableColl }("");
+			(bool success, ) = _account.call{ value: claimableCollEther }("");
 			require(success, "CollSurplusPool: sending ETH failed");
 		} else {
-			IERC20Upgradeable(_asset).safeTransfer(_account, claimableColl);
+			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferclaimableColl);
 		}
 	}
 

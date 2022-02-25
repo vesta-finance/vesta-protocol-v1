@@ -156,7 +156,7 @@ contract('BorrowerOperations', async accounts => {
       const activePool_RawEther_Before = toBN(await web3.eth.getBalance(activePool.address))
 
       const activePool_ETH_Before_Asset = await activePool.getAssetBalance(erc20.address)
-      const activePool_RawEther_Before_Asset = toBN(await erc20.balanceOf(activePool.address))
+      const activePool_RawEther_Before_Asset = toBN(await erc20.balanceOf(activePool.address)).mul(toBN(10 ** 10))
 
       assert.isTrue(activePool_ETH_Before.eq(aliceColl))
       assert.isTrue(activePool_RawEther_Before.eq(aliceColl))
@@ -175,7 +175,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(activePool_ETH_After.eq(aliceColl.add(toBN(dec(1, 'ether')))))
       assert.isTrue(activePool_RawEther_After.eq(aliceColl.add(toBN(dec(1, 'ether')))))
       assert.isTrue(activePool_ETH_After_Asset.eq(aliceCollAsset.add(toBN(dec(1, 'ether')))))
-      assert.isTrue(activePool_RawEther_After_Asset.eq(aliceCollAsset.add(toBN(dec(1, 'ether')))))
+      assert.isTrue(activePool_RawEther_After_Asset.eq(aliceCollAsset.div(toBN(10 ** 10)).add(toBN(dec(1, 8)))))
     })
 
     it("addColl(), active Trove: adds the correct collateral amount to the Trove", async () => {
@@ -806,7 +806,7 @@ contract('BorrowerOperations', async accounts => {
       const activePool_ETH_After_Asset = await activePool.getAssetBalance(erc20.address)
       const activePool_RawEther_After_Asset = toBN(await erc20.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After_Asset.eq(activePool_ETH_before_Asset.sub(toBN(dec(1, 'ether')))))
-      assert.isTrue(activePool_RawEther_After_Asset.eq(activePool_RawEther_before_Asset.sub(toBN(dec(1, 'ether')))))
+      assert.isTrue(activePool_RawEther_After_Asset.eq(activePool_RawEther_before_Asset.sub(toBN(dec(1, 8)))))
     })
 
     it("withdrawColl(): updates the stake and updates the total stakes", async () => {
@@ -872,7 +872,7 @@ contract('BorrowerOperations', async accounts => {
       const balanceDiff_Asset = alice_ETHBalance_After_Asset.sub(alice_ETHBalance_Before_Asset)
 
       assert.isTrue(balanceDiff.eq(toBN(dec(1, 'ether'))))
-      assert.isTrue(balanceDiff_Asset.eq(toBN(dec(1, 'ether'))))
+      assert.isTrue(balanceDiff_Asset.eq(toBN(dec(1, 8))))
     })
 
     it("withdrawColl(): applies pending rewards and updates user's L_ETH, L_VSTDebt snapshots", async () => {
@@ -3773,7 +3773,7 @@ contract('BorrowerOperations', async accounts => {
       const activePool_ETH_After_Asset = await activePool.getAssetBalance(erc20.address)
       const activePool_RawEther_After_Asset = toBN(await erc20.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After_Asset.eq(activePool_ETH_Before_Asset.sub(toBN(dec(1, 17)))))
-      assert.isTrue(activePool_RawEther_After_Asset.eq(activePool_ETH_Before_Asset.sub(toBN(dec(1, 17)))))
+      assert.isTrue(activePool_RawEther_After_Asset.eq(activePool_ETH_Before_Asset.div(toBN(10 ** 10)).sub(toBN(dec(1, 7)))))
     })
 
     it("adjustTrove(): Changes the activePool ETH and raw ether balance by the amount of ETH sent", async () => {
@@ -3805,7 +3805,7 @@ contract('BorrowerOperations', async accounts => {
       const activePool_ETH_After_Asset = await activePool.getAssetBalance(erc20.address)
       const activePool_RawEther_After_Asset = toBN(await erc20.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After_Asset.eq(activePool_ETH_Before_Asset.add(toBN(dec(1, 18)))))
-      assert.isTrue(activePool_RawEther_After_Asset.eq(activePool_ETH_Before_Asset.add(toBN(dec(1, 18)))))
+      assert.isTrue(activePool_RawEther_After_Asset.eq(activePool_ETH_Before_Asset.div(toBN(10 ** 10)).add(toBN(dec(1, 8)))))
     })
 
     it("adjustTrove(): Changes the VST debt in ActivePool by requested decrease", async () => {
@@ -4359,7 +4359,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(activePool_ETH_before_Asset.gt(toBN('0')))
 
       assert.isTrue(activePool_RawEther_before.eq(activePool_ETH_before))
-      assert.isTrue(activePool_RawEther_before_Asset.eq(activePool_ETH_before_Asset))
+      assert.isTrue(activePool_RawEther_before_Asset.eq(activePool_ETH_before_Asset.div(toBN(10 ** 10))))
 
       // to compensate borrowing fees
       await vstToken.transfer(alice, await vstToken.balanceOf(dennis), { from: dennis })
@@ -4377,7 +4377,7 @@ contract('BorrowerOperations', async accounts => {
       const activePool_ETH_After_Asset = await activePool.getAssetBalance(erc20.address)
       const activePool_RawEther_After_Asset = toBN(await erc20.balanceOf(activePool.address))
       assert.isTrue(activePool_ETH_After_Asset.eq(dennisColl_Asset))
-      assert.isTrue(activePool_RawEther_After_Asset.eq(dennisColl_Asset))
+      assert.isTrue(activePool_RawEther_After_Asset.eq(dennisColl_Asset.div(toBN(10 ** 10))))
     })
 
     it("closeTrove(): reduces ActivePool debt by correct amount", async () => {
@@ -4496,7 +4496,7 @@ contract('BorrowerOperations', async accounts => {
         const balanceDiff_Asset = alice_ETHBalance_After_Asset.sub(alice_ETHBalance_Before_Asset)
 
         assert.isTrue(balanceDiff.eq(aliceColl))
-        assert.isTrue(balanceDiff_Asset.eq(aliceColl_Asset))
+        assert.isTrue(balanceDiff_Asset.eq(aliceColl_Asset.div(toBN(10 ** 10))))
       })
     }
 
@@ -5830,10 +5830,11 @@ contract('BorrowerOperations', async accounts => {
       const activePool_ETH_After_Asset = await activePool.getAssetBalance(erc20.address)
       const activePool_RawEther_After_Asset = toBN(await erc20.balanceOf(activePool.address))
 
+
       assert.isTrue(activePool_ETH_After.eq(aliceCollAfter))
       assert.isTrue(activePool_RawEther_After.eq(aliceCollAfter))
       assert.isTrue(activePool_ETH_After_Asset.eq(aliceCollAfter_Asset))
-      assert.isTrue(activePool_RawEther_After_Asset.eq(aliceCollAfter_Asset))
+      assert.isTrue(activePool_RawEther_After_Asset.eq(aliceCollAfter_Asset.div(toBN(10 ** 10))))
     })
 
     it("openTrove(): records up-to-date initial snapshots of L_ETH and L_VSTDebt", async () => {

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 
 import "./Interfaces/IDefaultPool.sol";
 import "./Dependencies/CheckContract.sol";
+import "./Dependencies/SafetyTransfer.sol";
 
 /*
  * The Default Pool holds the ETH and VST debt (but not VST tokens) from liquidations that have been redistributed
@@ -76,10 +77,14 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 		callerIsTroveManager
 	{
 		address activePool = activePoolAddress; // cache to save an SLOAD
+
+		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
+		if (safetyTransferAmount == 0) return;
+
 		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
 
 		if (_asset != ETH_REF_ADDRESS) {
-			IERC20Upgradeable(_asset).safeTransfer(activePool, _amount);
+			IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
 			IDeposit(activePool).receivedERC20(_asset, _amount);
 		} else {
 			(bool success, ) = activePool.call{ value: _amount }("");
@@ -87,7 +92,7 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 		}
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
-		emit AssetSent(activePool, _asset, _amount);
+		emit AssetSent(activePool, _asset, safetyTransferAmount);
 	}
 
 	function increaseVSTDebt(address _asset, uint256 _amount)

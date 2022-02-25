@@ -388,7 +388,7 @@ contract('VSTAStaking revenue share tests', async accounts => {
     const A_ETHGain_Asset = A_ETHBalance_After_Asset.sub(A_ETHBalance_Before_Asset)
 
     assert.isAtMost(th.getDifference(expectedTotalETHGain, A_ETHGain), 1000)
-    assert.isAtMost(th.getDifference(expectedTotalETHGain_Asset, A_ETHGain_Asset), 1000)
+    assert.isAtMost(th.getDifference(expectedTotalETHGain_Asset.div(toBN(10 ** 10)), A_ETHGain_Asset), 1000)
     assert.isAtMost(th.getDifference(expectedTotalVSTGain, A_VSTGain), 1000)
   })
 
@@ -484,7 +484,7 @@ contract('VSTAStaking revenue share tests', async accounts => {
     const A_VSTGain = A_VSTBalance_After.sub(A_VSTBalance_Before)
 
     assert.isAtMost(th.getDifference(expectedTotalETHGain, A_ETHGain), 1000)
-    assert.isAtMost(th.getDifference(expectedTotalETHGain_Asset, A_ETHGain_Asset), 1000)
+    assert.isAtMost(th.getDifference(expectedTotalETHGain_Asset.div(toBN(10 ** 10)), A_ETHGain_Asset), 1000)
     assert.isAtMost(th.getDifference(expectedTotalVSTGain, A_VSTGain), 1000)
   })
 
@@ -860,13 +860,13 @@ contract('VSTAStaking revenue share tests', async accounts => {
 
     // Check gains match expected amounts
     assert.isAtMost(th.getDifference(expectedETHGain_A, A_ETHGain), 1000)
-    assert.isAtMost(th.getDifference(expectedETHGain_A_Asset, A_ETHGain_Asset), 1000)
+    assert.isAtMost(th.getDifference(expectedETHGain_A_Asset.div(toBN(10 ** 10)), A_ETHGain_Asset), 1000)
     assert.isAtMost(th.getDifference(expectedETHGain_B, B_ETHGain), 1000)
-    assert.isAtMost(th.getDifference(expectedETHGain_B_Asset, B_ETHGain_Asset), 1000)
+    assert.isAtMost(th.getDifference(expectedETHGain_B_Asset.div(toBN(10 ** 10)), B_ETHGain_Asset), 1000)
     assert.isAtMost(th.getDifference(expectedETHGain_C, C_ETHGain), 1000)
-    assert.isAtMost(th.getDifference(expectedETHGain_C_Asset, C_ETHGain_Asset), 1000)
+    assert.isAtMost(th.getDifference(expectedETHGain_C_Asset.div(toBN(10 ** 10)), C_ETHGain_Asset), 1000)
     assert.isAtMost(th.getDifference(expectedETHGain_D, D_ETHGain), 1000)
-    assert.isAtMost(th.getDifference(expectedETHGain_D_Asset, D_ETHGain_Asset), 1000)
+    assert.isAtMost(th.getDifference(expectedETHGain_D_Asset.div(toBN(10 ** 10)), D_ETHGain_Asset), 1000)
 
     assert.isAtMost(th.getDifference(expectedVSTGain_A.add(expectedVSTGain_A_Asset), A_VSTGain), 1000)
     assert.isAtMost(th.getDifference(expectedVSTGain_B.add(expectedVSTGain_B_Asset), B_VSTGain), 1000)

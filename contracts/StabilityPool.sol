@@ -16,6 +16,7 @@ import "./Interfaces/ICommunityIssuance.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/VestaSafeMath128.sol";
 import "./Dependencies/CheckContract.sol";
+import "./Dependencies/SafetyTransfer.sol";
 
 contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 	using SafeMathUpgradeable for uint256;
@@ -181,6 +182,8 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		_triggerVSTAIssuance(communityIssuanceCached);
 
 		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
+		uint256 depositorAssetGainEther = getDepositorAssetGain1e18(msg.sender);
+
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
 		uint256 VSTLoss = initialDeposit.sub(compoundedVSTDeposit); // Needed only for event log
 
@@ -201,7 +204,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		emit UserDepositChanged(msg.sender, newDeposit);
 		emit AssetGainWithdrawn(msg.sender, depositorAssetGain, VSTLoss); // VST Loss required for event log
 
-		_sendAssetGainToDepositor(depositorAssetGain);
+		_sendAssetGainToDepositor(depositorAssetGain, depositorAssetGainEther);
 	}
 
 	/*  withdrawFromSP():
@@ -224,6 +227,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		_triggerVSTAIssuance(communityIssuanceCached);
 
 		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
+		uint256 depositorAssetGainEther = getDepositorAssetGain1e18(msg.sender);
 
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
 		uint256 VSTtoWithdraw = VestaMath._min(_amount, compoundedVSTDeposit);
@@ -247,7 +251,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		emit AssetGainWithdrawn(msg.sender, depositorAssetGain, VSTLoss); // VST Loss required for event log
 
-		_sendAssetGainToDepositor(depositorAssetGain);
+		_sendAssetGainToDepositor(depositorAssetGain, depositorAssetGainEther);
 	}
 
 	/* withdrawETHGainToTrove:
@@ -266,7 +270,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		_triggerVSTAIssuance(communityIssuanceCached);
 
-		uint256 depositorAssetGain = getDepositorAssetGain(msg.sender);
+		uint256 depositorAssetGain = getDepositorAssetGain1e18(msg.sender);
 
 		uint256 compoundedVSTDeposit = getCompoundedVSTDeposit(msg.sender);
 		uint256 VSTLoss = initialDeposit.sub(compoundedVSTDeposit); // Needed only for event log
@@ -506,8 +510,23 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 
 		Snapshots memory snapshots = depositSnapshots[_depositor];
 
-		uint256 AssetGain = _getAssetGainFromSnapshots(initialDeposit, snapshots);
-		return AssetGain;
+		return
+			SafetyTransfer.decimalsCorrection(
+				assetAddress,
+				_getAssetGainFromSnapshots(initialDeposit, snapshots)
+			);
+	}
+
+	function getDepositorAssetGain1e18(address _depositor) public view returns (uint256) {
+		uint256 initialDeposit = deposits[_depositor];
+
+		if (initialDeposit == 0) {
+			return 0;
+		}
+
+		Snapshots memory snapshots = depositSnapshots[_depositor];
+
+		return _getAssetGainFromSnapshots(initialDeposit, snapshots);
 	}
 
 	function _getAssetGainFromSnapshots(uint256 initialDeposit, Snapshots memory snapshots)
@@ -551,12 +570,7 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		}
 
 		Snapshots memory snapshots = depositSnapshots[_depositor];
-
-		uint256 VSTAGain = DECIMAL_PRECISION
-			.mul(_getVSTAGainFromSnapshots(initialDeposit, snapshots))
-			.div(DECIMAL_PRECISION);
-
-		return VSTAGain;
+		return _getVSTAGainFromSnapshots(initialDeposit, snapshots);
 	}
 
 	function _getVSTAGainFromSnapshots(uint256 initialStake, Snapshots memory snapshots)
@@ -672,21 +686,22 @@ contract StabilityPool is VestaBase, CheckContract, IStabilityPool {
 		emit StabilityPoolVSTBalanceUpdated(newTotalVSTDeposits);
 	}
 
-	function _sendAssetGainToDepositor(uint256 _amount) internal {
+	function _sendAssetGainToDepositor(uint256 _amount, uint256 _amountEther) internal {
 		if (_amount == 0) {
 			return;
 		}
-		uint256 newETH = assetBalance.sub(_amount);
-		assetBalance = newETH;
-		emit StabilityPoolAssetBalanceUpdated(newETH);
-		emit AssetSent(msg.sender, _amount);
+
+		assetBalance = assetBalance.sub(_amountEther);
 
 		if (assetAddress == ETH_REF_ADDRESS) {
-			(bool success, ) = msg.sender.call{ value: _amount }("");
+			(bool success, ) = msg.sender.call{ value: _amountEther }("");
 			require(success, "StabilityPool: sending ETH failed");
 		} else {
 			IERC20Upgradeable(assetAddress).safeTransfer(msg.sender, _amount);
 		}
+
+		emit StabilityPoolAssetBalanceUpdated(assetBalance);
+		emit AssetSent(msg.sender, _amount);
 	}
 
 	// Send VST to user and decrease VST in Pool
