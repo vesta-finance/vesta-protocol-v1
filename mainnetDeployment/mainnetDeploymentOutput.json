@@ -104,6 +104,9 @@
 	"ProxyStabilityPoolRenBTC": {
 		"address": "0x3282dfAf0fBba4d3E771C4E5F669Cb4E14D8adb0"
 	},
+	"ProxyStabilityPoolGMX": {
+		"address": "0x78D46Cecf0AE4757F430d95B2d7Eaa18D7087872"
+	},
 	"ProxyAdmin": {
 		"address": "0xedc3bE991a29D094CA802B1C92AE6b7f74B53a19"
 	}
