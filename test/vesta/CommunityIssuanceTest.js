@@ -1,3 +1,4 @@
+const { assert } = require("hardhat")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
@@ -13,6 +14,12 @@ contract('CommunityIssuance', async accounts => {
   const DECIMAL_PRECISION = toBN(dec(1, 18))
   const [owner, user, A, C, B, multisig, treasury] = accounts;
   const timeValues = testHelpers.TimeValues
+
+  const INDEX_REWARD_TOKEN = 0;
+  const INDEX_TOTAL_REWARD_ISSUED = 1;
+  const INDEX_LAST_UPDATE_TIME = 2;
+  const INDEX_TOTAL_REWARD_SUPPLY = 3;
+  const INDEX_REWARD_DISTRIBUTION = 4;
 
   let communityIssuance
   let stabilityPool
@@ -38,6 +45,10 @@ contract('CommunityIssuance', async accounts => {
 
       stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
       stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
+
+      await communityIssuance.configStabilityPool(stabilityPool.address, vstaToken.address, 0);
+      await communityIssuance.configStabilityPool(stabilityPoolERC20.address, vstaToken.address, 0);
+
       await communityIssuance.transferOwnership(treasury);
       await VSTAContracts.vstaToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256, { from: treasury });
     })
@@ -61,8 +72,12 @@ contract('CommunityIssuance', async accounts => {
     it("addFundToStabilityPool: Called by owner, valid inputs, add stability pool", async () => {
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, dec(100, 18), { from: treasury })
       await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, dec(100, 18), { from: treasury })
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(100, 18))
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), dec(100, 18))
+
+      const distribution = await communityIssuance.stabilityPoolRewards(stabilityPool.address);
+      const distributionERC20 = await communityIssuance.stabilityPoolRewards(stabilityPoolERC20.address);
+
+      assert.equal(distribution[INDEX_TOTAL_REWARD_SUPPLY].toString(), dec(100, 18))
+      assert.equal(distributionERC20[INDEX_TOTAL_REWARD_SUPPLY].toString(), dec(100, 18))
     })
 
     it("addFundToStabilityPool: Called by owner twice, double total supply, don't change deploy time", async () => {
@@ -80,8 +95,11 @@ contract('CommunityIssuance', async accounts => {
       const deployTimePoolAfter = await communityIssuance.lastUpdateTime(stabilityPool.address);
       const deployTimePoolAfterERC20 = await communityIssuance.lastUpdateTime(stabilityPoolERC20.address);
 
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(200, 18))
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), dec(200, 18))
+      const distribution = await communityIssuance.stabilityPoolRewards(stabilityPool.address);
+      const distributionERC20 = await communityIssuance.stabilityPoolRewards(stabilityPoolERC20.address);
+
+      assert.equal(distribution[INDEX_TOTAL_REWARD_SUPPLY].toString(), dec(200, 18))
+      assert.equal(distributionERC20[INDEX_TOTAL_REWARD_SUPPLY].toString(), dec(200, 18))
       assert.equal(deployTimePool.toString(), deployTimePoolAfter.toString())
       assert.equal(deployTimePoolERC20.toString(), deployTimePoolAfterERC20.toString())
     })
@@ -93,8 +111,11 @@ contract('CommunityIssuance', async accounts => {
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
       await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
 
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), supply.mul(toBN(2)))
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply)
+      const distribution = await communityIssuance.stabilityPoolRewards(stabilityPool.address);
+      const distributionERC20 = await communityIssuance.stabilityPoolRewards(stabilityPoolERC20.address);
+
+      assert.equal(distribution[INDEX_TOTAL_REWARD_SUPPLY].toString(), supply.mul(toBN(2)))
+      assert.equal(distributionERC20[INDEX_TOTAL_REWARD_SUPPLY].toString(), supply)
     })
 
     it("removeFundFromStabilityPool: Called by user, valid inputs, then reverts", async () => {
@@ -120,112 +141,47 @@ contract('CommunityIssuance', async accounts => {
       const beforeBalanceTreasury = await vstaToken.balanceOf(treasury);
 
       await communityIssuance.removeFundFromStabilityPool(stabilityPool.address, dec(50, 18), { from: treasury })
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), dec(50, 18))
+
+      const distribution = await communityIssuance.stabilityPoolRewards(stabilityPool.address);
+
+      assert.equal(distribution[INDEX_TOTAL_REWARD_SUPPLY].toString(), dec(50, 18))
       assert.equal((await vstaToken.balanceOf(communityIssuance.address)).toString(), beforeBalance.sub(toBN(dec(50, 18))))
       assert.equal((await vstaToken.balanceOf(treasury)).toString(), beforeBalanceTreasury.add(toBN(dec(50, 18))).toString())
     })
 
-
     it("removeFundFromStabilityPool: Called by owner, max supply, then disable pool", async () => {
       const supply = toBN(dec(100, 18))
+
       await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
       await communityIssuance.removeFundFromStabilityPool(stabilityPool.address, supply, { from: treasury })
 
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.lastUpdateTime(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
+      const distribution = await communityIssuance.stabilityPoolRewards(stabilityPool.address);
+
+      assert.equal(distribution[INDEX_TOTAL_REWARD_SUPPLY].toString(), 0)
+      assert.equal(distribution[INDEX_LAST_UPDATE_TIME].toString(), 0)
+      assert.equal(distribution[INDEX_TOTAL_REWARD_ISSUED].toString(), 0)
     })
 
-    it("transferFundToAnotherStabilityPool : Called by user, valid inputs, revert transaction", async () => {
-      const supply = toBN(dec(100, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await assertRevert(communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, dec(50, 18), { from: user }))
+    it("setStabilityPoolAdmin: Called by user, then reverts", async () => {
+      await assertRevert(communityIssuance.setStabilityPoolAdmin(stabilityPool.address, user, true, { from: user }))
     })
 
-    it("transferFundToAnotherStabilityPool : Called by owner, invalid target then invalid receiver, revert transaction", async () => {
-      const supply = toBN(dec(100, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await assertRevert(communityIssuance.transferFundToAnotherStabilityPool(communityIssuance.address, stabilityPoolERC20.address, dec(50, 18), { from: treasury }))
-      await assertRevert(communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, communityIssuance.address, dec(50, 18), { from: treasury }))
+    it("setStabilityPoolAdmin: Called by owner, then update user status", async () => {
+      await communityIssuance.setStabilityPoolAdmin(stabilityPool.address, user, true, { from: owner })
+      assert.isTrue(await communityIssuance.isWalletAdminOfPool(stabilityPool.address, user));
     })
 
-    it("transferFundToAnotherStabilityPool : Called by owner, valid pools, quantity over cap, revert transaction", async () => {
-      const supply = toBN(dec(100, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await assertRevert(communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, supply.add(toBN(1)), { from: treasury }))
+    it("setProtocolAccessOf: Called by user, then reverts", async () => {
+      await assertRevert(communityIssuance.setProtocolAccessOf(user, true, { from: user }))
     })
 
-    it("transferFundToAnotherStabilityPool : Called by owner, valid pools, issuedVSTA, transfer over caps, revert transaction", async () => {
-      const supply = toBN(dec(100, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await th.fastForwardTime(timeValues.MINUTES_IN_ONE_WEEK, web3.currentProvider)
-      await communityIssuance.unprotectedIssueVSTA(stabilityPool.address)
-
-      const issued = await communityIssuance.totalVSTAIssued(stabilityPool.address);
-      const gapsOverByOne = supply.sub(issued).add(toBN(1))
-
-      await assertRevert(communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, gapsOverByOne, { from: treasury }))
+    it("setProtocolAccessOf: Called by owner, then update user status", async () => {
+      await communityIssuance.setProtocolAccessOf(user, true, { from: owner })
+      assert.isTrue(await communityIssuance.protocolFullAccess(user));
     })
 
-    it("transferFundToAnotherStabilityPool : Called by owner, valid inputs, 50% balance, transfer VSTA", async () => {
-      const supply = toBN(dec(100, 18))
-      const supplyTransfered = supply.div(toBN(2))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, supplyTransfered, { from: treasury })
-
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), supplyTransfered)
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply.add(supplyTransfered))
-    })
-
-    it("transferFundToAnotherStabilityPool : Called by owner, valid inputs, 100% balance, transfer VSTA and close pool", async () => {
-      const supply = toBN(dec(100, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await th.fastForwardTime(timeValues.MINUTES_IN_ONE_WEEK, web3.currentProvider)
-      await communityIssuance.unprotectedIssueVSTA(stabilityPool.address)
-
-      const issued = await communityIssuance.totalVSTAIssued(stabilityPool.address);
-      const lefOver = supply.sub(issued)
-
-      await communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, lefOver, { from: treasury })
-
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.lastUpdateTime(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply.add(lefOver))
-    })
-
-
-    it("transferFundToAnotherStabilityPool : Called by owner, valid inputs, issued VSTA, 100% left over, transfer VSTA and close pool", async () => {
-      const supply = toBN(dec(100, 18))
-
-      await communityIssuance.addFundToStabilityPool(stabilityPool.address, supply, { from: treasury })
-      await communityIssuance.addFundToStabilityPool(stabilityPoolERC20.address, supply, { from: treasury })
-
-      await communityIssuance.transferFundToAnotherStabilityPool(stabilityPool.address, stabilityPoolERC20.address, supply, { from: treasury })
-
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.lastUpdateTime(stabilityPool.address)).toString(), 0)
-      assert.equal((await communityIssuance.totalVSTAIssued(stabilityPool.address)).toString(), 0)
-
-      assert.equal((await communityIssuance.VSTASupplyCaps(stabilityPoolERC20.address)).toString(), supply.add(supply))
+    it("convertPoolFundV1toV2: Called by user, then reverts", async () => {
+      await assertRevert(communityIssuance.convertPoolFundV1toV2([], { from: user }))
     })
   })
 })

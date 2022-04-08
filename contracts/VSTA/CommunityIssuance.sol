@@ -32,13 +32,40 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 
 	bool public isInitialized;
 
+	//V2
+	mapping(address => DistributionRewards) public stabilityPoolRewards;
+	mapping(address => bool) public protocolFullAccess;
+	mapping(address => mapping(address => bool)) public stabilityPoolAdmin;
+
 	modifier activeStabilityPoolOnly(address _pool) {
-		require(lastUpdateTime[_pool] != 0, "CommunityIssuance: Pool needs to be added first.");
+		require(
+			stabilityPoolRewards[_pool].lastUpdateTime != 0,
+			"CommunityIssuance: Pool needs to be added first."
+		);
+		_;
+	}
+
+	modifier disabledStabilityPoolOnly(address _pool) {
+		require(
+			stabilityPoolRewards[_pool].lastUpdateTime == 0,
+			"CommunityIssuance: Pool is already started."
+		);
 		_;
 	}
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
+		_;
+	}
+
+	modifier onlyStabilityPoolAdmins(address _pool) {
+		require(
+			stabilityPoolAdmin[_pool][msg.sender] ||
+				msg.sender == owner() ||
+				protocolFullAccess[msg.sender] ||
+				msg.sender == adminContract,
+			"Not an admin"
+		);
 		_;
 	}
 
@@ -80,15 +107,43 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 		emit StabilityPoolAddressSet(_stabilityPoolManagerAddress);
 	}
 
+	function setProtocolAccessOf(address _address, bool _access) external onlyOwner {
+		protocolFullAccess[_address] = _access;
+	}
+
+	function setStabilityPoolAdmin(
+		address _pool,
+		address _user,
+		bool _access
+	) external onlyOwner {
+		stabilityPoolAdmin[_pool][_user] = _access;
+	}
+
 	function setAdminContract(address _admin) external onlyOwner {
 		require(_admin != address(0));
 		adminContract = _admin;
 	}
 
+	function convertPoolFundV1toV2(address[] memory _pools) external onlyOwner {
+		for (uint256 i = 0; i < _pools.length; i++) {
+			address pool = _pools[i];
+
+			if (stabilityPoolRewards[pool].lastUpdateTime > 0) continue;
+
+			stabilityPoolRewards[pool] = DistributionRewards(
+				address(vstaToken),
+				totalVSTAIssued[pool],
+				lastUpdateTime[pool],
+				VSTASupplyCaps[pool],
+				vstaDistributionsByPool[pool]
+			);
+		}
+	}
+
 	function addFundToStabilityPool(address _pool, uint256 _assignedSupply)
 		external
 		override
-		isController
+		onlyStabilityPoolAdmins(_pool)
 	{
 		_addFundToStabilityPoolFrom(_pool, _assignedSupply, msg.sender);
 	}
@@ -98,27 +153,31 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 		onlyOwner
 		activeStabilityPoolOnly(_pool)
 	{
-		uint256 newCap = VSTASupplyCaps[_pool].sub(_fundToRemove);
+		DistributionRewards storage distributionRewards = stabilityPoolRewards[_pool];
+
+		uint256 newCap = distributionRewards.totalRewardSupply.sub(_fundToRemove);
 		require(
-			totalVSTAIssued[_pool] <= newCap,
+			distributionRewards.totalRewardIssued <= newCap,
 			"CommunityIssuance: Stability Pool doesn't have enough supply."
 		);
 
-		VSTASupplyCaps[_pool] -= _fundToRemove;
+		distributionRewards.totalRewardSupply -= _fundToRemove;
 
-		if (totalVSTAIssued[_pool] == VSTASupplyCaps[_pool]) {
+		IERC20Upgradeable(distributionRewards.rewardToken).safeTransfer(msg.sender, _fundToRemove);
+
+		if (distributionRewards.totalRewardIssued == distributionRewards.totalRewardSupply) {
 			disableStabilityPool(_pool);
 		}
-
-		vstaToken.safeTransfer(msg.sender, _fundToRemove);
 	}
 
 	function addFundToStabilityPoolFrom(
 		address _pool,
 		uint256 _assignedSupply,
 		address _spender
-	) external override isController {
-		_addFundToStabilityPoolFrom(_pool, _assignedSupply, _spender);
+	) external override onlyStabilityPoolAdmins(_pool) {
+		// We are disabling this so we don't have issue while using the Admin contract to create
+		// The new flow is to updateStabilityPoolRewardsToken() then addFund
+		//_addFundToStabilityPoolFrom(_pool, _assignedSupply, _spender);
 	}
 
 	function _addFundToStabilityPoolFrom(
@@ -131,105 +190,161 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 			"CommunityIssuance: Invalid Stability Pool"
 		);
 
-		if (lastUpdateTime[_pool] == 0) {
-			lastUpdateTime[_pool] = block.timestamp;
+		DistributionRewards storage distributionRewards = stabilityPoolRewards[_pool];
+
+		if (distributionRewards.lastUpdateTime == 0) {
+			distributionRewards.lastUpdateTime = block.timestamp;
 		}
 
-		VSTASupplyCaps[_pool] += _assignedSupply;
-		vstaToken.safeTransferFrom(_spender, address(this), _assignedSupply);
-	}
-
-	function transferFundToAnotherStabilityPool(
-		address _target,
-		address _receiver,
-		uint256 _quantity
-	)
-		external
-		override
-		onlyOwner
-		activeStabilityPoolOnly(_target)
-		activeStabilityPoolOnly(_receiver)
-	{
-		uint256 newCap = VSTASupplyCaps[_target].sub(_quantity);
-		require(
-			totalVSTAIssued[_target] <= newCap,
-			"CommunityIssuance: Stability Pool doesn't have enough supply."
+		distributionRewards.totalRewardSupply += _assignedSupply;
+		IERC20Upgradeable(distributionRewards.rewardToken).safeTransferFrom(
+			_spender,
+			address(this),
+			_assignedSupply
 		);
-
-		VSTASupplyCaps[_target] -= _quantity;
-		VSTASupplyCaps[_receiver] += _quantity;
-
-		if (totalVSTAIssued[_target] == VSTASupplyCaps[_target]) {
-			disableStabilityPool(_target);
-		}
 	}
 
 	function disableStabilityPool(address _pool) internal {
-		lastUpdateTime[_pool] = 0;
-		VSTASupplyCaps[_pool] = 0;
-		totalVSTAIssued[_pool] = 0;
+		delete stabilityPoolRewards[_pool];
 	}
 
+	// Alias Name: issueAsset() - We do not rename it due of dependencies
 	function issueVSTA() external override onlyStabilityPool returns (uint256) {
 		return _issueVSTA(msg.sender);
 	}
 
 	function _issueVSTA(address _pool) internal isStabilityPool(_pool) returns (uint256) {
-		uint256 maxPoolSupply = VSTASupplyCaps[_pool];
+		DistributionRewards storage distributionRewards = stabilityPoolRewards[_pool];
 
-		if (totalVSTAIssued[_pool] >= maxPoolSupply) return 0;
+		uint256 maxPoolSupply = distributionRewards.totalRewardSupply;
+		uint256 totalIssued = distributionRewards.totalRewardIssued;
+
+		if (totalIssued >= maxPoolSupply) return 0;
 
 		uint256 issuance = _getLastUpdateTokenDistribution(_pool);
-		uint256 totalIssuance = issuance.add(totalVSTAIssued[_pool]);
+		uint256 totalIssuance = issuance.add(totalIssued);
 
 		if (totalIssuance > maxPoolSupply) {
-			issuance = maxPoolSupply.sub(totalVSTAIssued[_pool]);
+			issuance = maxPoolSupply.sub(totalIssued);
 			totalIssuance = maxPoolSupply;
 		}
 
-		lastUpdateTime[_pool] = block.timestamp;
-		totalVSTAIssued[_pool] = totalIssuance;
+		distributionRewards.lastUpdateTime = block.timestamp;
+		distributionRewards.totalRewardIssued = totalIssuance;
 		emit TotalVSTAIssuedUpdated(_pool, totalIssuance);
 
 		return issuance;
 	}
 
-	function _getLastUpdateTokenDistribution(address stabilityPool)
+	function _getLastUpdateTokenDistribution(address _pool)
 		internal
 		view
+		activeStabilityPoolOnly(_pool)
 		returns (uint256)
 	{
-		require(lastUpdateTime[stabilityPool] != 0, "Stability pool hasn't been assigned");
-		uint256 timePassed = block.timestamp.sub(lastUpdateTime[stabilityPool]).div(
+		DistributionRewards memory distributionRewards = stabilityPoolRewards[_pool];
+
+		uint256 timePassed = block.timestamp.sub(distributionRewards.lastUpdateTime).div(
 			SECONDS_IN_ONE_MINUTE
 		);
-		uint256 totalDistribuedSinceBeginning = vstaDistributionsByPool[stabilityPool].mul(
+		uint256 totalDistribuedSinceBeginning = distributionRewards.rewardDistributionPerMin.mul(
 			timePassed
 		);
 
 		return totalDistribuedSinceBeginning;
 	}
 
-	function sendVSTA(address _account, uint256 _VSTAamount)
+	//Alias Name: sendAsset - We do not rename it due of dependencies
+	function sendVSTA(address _account, uint256 _vstaAmount)
 		external
 		override
 		onlyStabilityPool
+		activeStabilityPoolOnly(msg.sender)
 	{
-		uint256 balanceVSTA = vstaToken.balanceOf(address(this));
-		uint256 safeAmount = balanceVSTA >= _VSTAamount ? _VSTAamount : balanceVSTA;
+		IERC20Upgradeable erc20Asset = IERC20Upgradeable(
+			stabilityPoolRewards[msg.sender].rewardToken
+		);
+
+		uint256 balance = erc20Asset.balanceOf(address(this));
+		uint256 safeAmount = balance >= _vstaAmount ? _vstaAmount : balance;
 
 		if (safeAmount == 0) {
 			return;
 		}
 
-		vstaToken.transfer(_account, safeAmount);
+		erc20Asset.transfer(_account, safeAmount);
 	}
 
+	//Alias Name: setWeeklyAssetDistribution - We do not rename it due of dependencies
 	function setWeeklyVstaDistribution(address _stabilityPool, uint256 _weeklyReward)
 		external
-		isController
 		isStabilityPool(_stabilityPool)
+		onlyStabilityPoolAdmins(_stabilityPool)
 	{
-		vstaDistributionsByPool[_stabilityPool] = _weeklyReward.div(DISTRIBUTION_DURATION);
+		stabilityPoolRewards[_stabilityPool].rewardDistributionPerMin = _weeklyReward.div(
+			DISTRIBUTION_DURATION
+		);
+	}
+
+	function configStabilityPool(
+		address _pool,
+		address _rewardToken,
+		uint256 _weeklyReward
+	) external onlyOwner disabledStabilityPoolOnly(_pool) {
+		_config(_pool, _rewardToken, _weeklyReward);
+	}
+
+	function configStabilityPoolAndSend(
+		address _pool,
+		address _rewardToken,
+		uint256 _weeklyReward,
+		uint256 _totalSupply
+	) external onlyOwner disabledStabilityPoolOnly(_pool) {
+		_config(_pool, _rewardToken, _weeklyReward);
+		_addFundToStabilityPoolFrom(_pool, _totalSupply, msg.sender);
+	}
+
+	function _config(
+		address _pool,
+		address _rewardToken,
+		uint256 _weeklyReward
+	) internal {
+		stabilityPoolRewards[_pool] = DistributionRewards(
+			_rewardToken,
+			0,
+			0,
+			0,
+			_weeklyReward.div(DISTRIBUTION_DURATION)
+		);
+	}
+
+	function updateStabilityPoolTokenRewards(address _pool, address _token) external onlyOwner {
+		DistributionRewards storage distribution = stabilityPoolRewards[_pool];
+		address currentToken = distribution.rewardToken;
+
+		if (currentToken != address(0)) {
+			IERC20Upgradeable(currentToken).safeTransfer(
+				msg.sender,
+				this.getRewardsLeftInStabilityPool(_pool)
+			);
+		}
+
+		distribution.rewardToken = _token;
+		distribution.lastUpdateTime = 0;
+		distribution.totalRewardSupply = 0;
+		distribution.totalRewardIssued = 0;
+	}
+
+	function getRewardsLeftInStabilityPool(address _pool) external view returns (uint256) {
+		DistributionRewards memory distributionRewards = stabilityPoolRewards[_pool];
+		return distributionRewards.totalRewardSupply.sub(distributionRewards.totalRewardIssued);
+	}
+
+	function getTotalAssetIssued(address _pool) external view returns (uint256) {
+		return stabilityPoolRewards[_pool].totalRewardIssued;
+	}
+
+	function isWalletAdminOfPool(address _pool, address _user) external view returns (bool) {
+		return stabilityPoolAdmin[_pool][_user];
 	}
 }
