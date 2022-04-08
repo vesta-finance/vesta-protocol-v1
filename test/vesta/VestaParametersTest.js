@@ -502,6 +502,15 @@ contract('VestaParameters', async accounts => {
       assert.equal(REDEMPTION_FEE_FLOOR.toString(), (await vestaParameters.REDEMPTION_FEE_FLOOR(ZERO_ADDRESS)));
     })
 
+    it("setVstMintCap: as User, then reverts", async () => {
+      await assertRevert(vestaParameters.setVstMintCap(ZERO_ADDRESS, 0, { from: user }))
+    })
+
+    it("setVstMintCap: as Owner, then new mint limit is changed", async () => {
+      await vestaParameters.setVstMintCap(ZERO_ADDRESS, dec(1000, 18), { from: owner })
+      assert.equal(await vestaParameters.vstMintCap(ZERO_ADDRESS), dec(1000, 18))
+    })
+
     it("openTrove(): Borrowing at zero base rate charges minimum fee with different borrowingFeeFloor", async () => {
       await vestaParameters.sanitizeParameters(ZERO_ADDRESS)
       await vestaParameters.sanitizeParameters(erc20.address)
