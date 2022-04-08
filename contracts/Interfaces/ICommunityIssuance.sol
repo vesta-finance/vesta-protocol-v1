@@ -9,6 +9,14 @@ interface ICommunityIssuance {
 	event StabilityPoolAddressSet(address _stabilityPoolAddress);
 	event TotalVSTAIssuedUpdated(address indexed stabilityPool, uint256 _totalVSTAIssued);
 
+	struct DistributionRewards {
+		address rewardToken;
+		uint256 totalRewardIssued;
+		uint256 lastUpdateTime;
+		uint256 totalRewardSupply;
+		uint256 rewardDistributionPerMin;
+	}
+
 	// --- Functions ---
 
 	function setAddresses(
@@ -19,7 +27,7 @@ interface ICommunityIssuance {
 
 	function issueVSTA() external returns (uint256);
 
-	function sendVSTA(address _account, uint256 _VSTAamount) external;
+	function sendVSTA(address _account, uint256 _vstaAmount) external;
 
 	function addFundToStabilityPool(address _pool, uint256 _assignedSupply) external;
 
@@ -27,12 +35,6 @@ interface ICommunityIssuance {
 		address _pool,
 		uint256 _assignedSupply,
 		address _spender
-	) external;
-
-	function transferFundToAnotherStabilityPool(
-		address _target,
-		address _receiver,
-		uint256 _quantity
 	) external;
 
 	function setWeeklyVstaDistribution(address _stabilityPool, uint256 _weeklyReward) external;

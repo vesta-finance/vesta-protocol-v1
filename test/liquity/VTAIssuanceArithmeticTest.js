@@ -78,8 +78,10 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
     stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
     stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
 
-    await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, ETH_WEEKLY);
-    await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPoolERC20.address, ERC_WEEKLY);
+    const supply = dec(32000000, 18);
+    await communityIssuanceTester.configStabilityPoolAndSend(stabilityPool.address, VSTAToken.address, ERC_WEEKLY, supply);
+    await communityIssuanceTester.configStabilityPool(stabilityPoolERC20.address, VSTAToken.address, ERC_WEEKLY);
+    await communityIssuanceTester.addFundToStabilityPool(stabilityPoolERC20.address, supply);
   })
 
 
@@ -111,7 +113,7 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
     await th.fastForwardTime(toBN(timeValues.SECONDS_IN_ONE_WEEK).mul(toBN(4).add(toBN(120))), web3.currentProvider)
 
     await communityIssuanceTester.unprotectedIssueVSTA(stabilityPool.address)
-    const totalIssued = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
+    const totalIssued = await communityIssuanceTester.getTotalAssetIssued(stabilityPool.address)
     assert.equal(totalIssued.toString(), dec(32_000_000, 18));
 
   })
@@ -123,7 +125,7 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
     await th.fastForwardTime(toBN(timeValues.SECONDS_IN_ONE_WEEK).mul(toBN(8)), web3.currentProvider)
 
     await communityIssuanceTester.unprotectedIssueVSTA(stabilityPool.address)
-    const totalIssued = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
+    const totalIssued = await communityIssuanceTester.getTotalAssetIssued(stabilityPool.address)
     assert.equal(totalIssued.toString(), dec(32_000_000, 18));
   })
 
@@ -136,10 +138,10 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
     await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, distribution);
     await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPoolERC20.address, distribution);
 
-    const initialIssuance = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
+    const initialIssuance = await communityIssuanceTester.getTotalAssetIssued(stabilityPool.address)
     assert.equal(initialIssuance, 0)
 
-    const initialIssuanceERC20 = await communityIssuanceTester.totalVSTAIssued(stabilityPoolERC20.address)
+    const initialIssuanceERC20 = await communityIssuanceTester.getTotalAssetIssued(stabilityPoolERC20.address)
     assert.equal(initialIssuanceERC20, 0)
 
     // Fast forward time
@@ -147,12 +149,12 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
 
     // Issue VSTA
     await communityIssuanceTester.unprotectedIssueVSTA(stabilityPool.address)
-    const totalVSTAIssued = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
+    const getTotalAssetIssued = await communityIssuanceTester.getTotalAssetIssued(stabilityPool.address)
 
     await communityIssuanceTester.unprotectedIssueVSTA(stabilityPoolERC20.address)
-    const totalVSTAIssuedERC20 = await communityIssuanceTester.totalVSTAIssued(stabilityPoolERC20.address)
+    const totalVSTAIssuedERC20 = await communityIssuanceTester.getTotalAssetIssued(stabilityPoolERC20.address)
 
-    assert.isAtMost(th.getDifference(totalVSTAIssued, expectedReward), 1000000000000000)
+    assert.isAtMost(th.getDifference(getTotalAssetIssued, expectedReward), 1000000000000000)
     assert.isAtMost(th.getDifference(totalVSTAIssuedERC20, expectedReward), 1000000000000000)
   })
 
@@ -161,10 +163,10 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
     await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, distribution);
     await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPoolERC20.address, dec(distribution.toString(), 18));
 
-    const initialIssuance = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
+    const initialIssuance = await communityIssuanceTester.getTotalAssetIssued(stabilityPool.address)
     assert.equal(initialIssuance, 0)
 
-    const initialIssuanceERC20 = await communityIssuanceTester.totalVSTAIssued(stabilityPoolERC20.address)
+    const initialIssuanceERC20 = await communityIssuanceTester.getTotalAssetIssued(stabilityPoolERC20.address)
     assert.equal(initialIssuanceERC20, 0)
 
     // Fast forward time
@@ -172,12 +174,12 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
 
     // Issue VSTA
     await communityIssuanceTester.unprotectedIssueVSTA(stabilityPool.address)
-    const totalVSTAIssued = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
+    const getTotalAssetIssued = await communityIssuanceTester.getTotalAssetIssued(stabilityPool.address)
 
     await communityIssuanceTester.unprotectedIssueVSTA(stabilityPoolERC20.address)
-    const totalVSTAIssuedERC20 = await communityIssuanceTester.totalVSTAIssued(stabilityPoolERC20.address)
+    const totalVSTAIssuedERC20 = await communityIssuanceTester.getTotalAssetIssued(stabilityPoolERC20.address)
 
-    assert.isAtMost(th.getDifference(totalVSTAIssued, distribution.mul(toBN(4))), 1000000000000000)
+    assert.isAtMost(th.getDifference(getTotalAssetIssued, distribution.mul(toBN(4))), 1000000000000000)
     assert.isAtMost(th.getDifference(totalVSTAIssuedERC20, distribution.mul(toBN(4))), 1000000000000000)
   })
 })

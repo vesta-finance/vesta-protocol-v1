@@ -113,5 +113,8 @@
     "address": "0x71172e27152CE727E3585E2B61853DF8Eb72a670",
     "txHash": "0xfa66ffe8bd34d80c1c12c6905b6df2390b7ebbc95c489e9837ca3d417e1b38a5",
     "verification": "https://rinkeby-explorer.arbitrum.io/address/0x71172e27152CE727E3585E2B61853DF8Eb72a670#code"
+  },
+  "AdminProxy": {
+    "address": "0x4408E22454b057B83501feF5CeA25B888470673f"
   }
 }
