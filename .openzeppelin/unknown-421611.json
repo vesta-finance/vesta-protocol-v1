@@ -6082,6 +6082,142 @@
           }
         }
       }
+    },
+    "7378e8046222a5f431704ff8fd3106ac39ef3439adef2f073e42a7abdf57ce7f": {
+      "address": "0xC1051880ff27db12a138E81Ff63d53607923376D",
+      "txHash": "0x3b6d323816c0a89d92b82673c2bf4868a678ec742408d9e75c9e0f8b1fdd7189",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:82"
+          },
+          {
+            "contract": "VestaBase",
+            "label": "vestaParams",
+            "type": "t_contract(IVestaParameters)7295",
+            "src": "contracts\\Dependencies\\VestaBase.sol:21"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "troveManager",
+            "type": "t_contract(ITroveManager)6794",
+            "src": "contracts\\BorrowerOperations.sol:26"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "stabilityPoolManager",
+            "type": "t_contract(IStabilityPoolManager)6107",
+            "src": "contracts\\BorrowerOperations.sol:28"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "gasPoolAddress",
+            "type": "t_address",
+            "src": "contracts\\BorrowerOperations.sol:30"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "collSurplusPool",
+            "type": "t_contract(ICollSurplusPool)5538",
+            "src": "contracts\\BorrowerOperations.sol:32"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "VSTAStaking",
+            "type": "t_contract(IVSTAStaking)6937",
+            "src": "contracts\\BorrowerOperations.sol:34"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "VSTAStakingAddress",
+            "type": "t_address",
+            "src": "contracts\\BorrowerOperations.sol:35"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "VSTToken",
+            "type": "t_contract(IVSTToken)7003",
+            "src": "contracts\\BorrowerOperations.sol:37"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "sortedTroves",
+            "type": "t_contract(ISortedTroves)5873",
+            "src": "contracts\\BorrowerOperations.sol:40"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\BorrowerOperations.sol:42"
+          }
+        ],
+        "types": {
+          "t_contract(ITroveManager)6794": {
+            "label": "contract ITroveManager"
+          },
+          "t_contract(IStabilityPoolManager)6107": {
+            "label": "contract IStabilityPoolManager"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(ICollSurplusPool)5538": {
+            "label": "contract ICollSurplusPool"
+          },
+          "t_contract(IVSTAStaking)6937": {
+            "label": "contract IVSTAStaking"
+          },
+          "t_contract(IVSTToken)7003": {
+            "label": "contract IVSTToken"
+          },
+          "t_contract(ISortedTroves)5873": {
+            "label": "contract ISortedTroves"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IVestaParameters)7295": {
+            "label": "contract IVestaParameters"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   }
 }

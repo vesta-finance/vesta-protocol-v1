@@ -182,6 +182,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			vars.netDebt = vars.netDebt.add(vars.VSTFee);
 		}
 		_requireAtLeastMinNetDebt(vars.asset, vars.netDebt);
+		_requireLowerOrEqualsToVSTLimit(vars.asset, vars.netDebt, true);
 
 		// ICR is based on the composite debt, i.e. the requested VST amount + VST borrowing fee + VST gas comp.
 		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
@@ -379,6 +380,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 		LocalVariables_adjustTrove memory vars;
 		vars.asset = _asset;
+
+		_requireLowerOrEqualsToVSTLimit(vars.asset, _VSTChange, _isDebtIncrease);
 
 		require(
 			msg.value == 0 || msg.value == _assetSent,
@@ -877,6 +880,21 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 					_maxFeePercentage <= vestaParams.DECIMAL_PRECISION(),
 				"Max fee percentage must be between 0.5% and 100%"
 			);
+		}
+	}
+
+	function _requireLowerOrEqualsToVSTLimit(
+		address _asset,
+		uint256 _vstChange,
+		bool _isIncreasing
+	) internal view {
+		uint256 vstLimit = vestaParams.vstMintCap(_asset);
+		uint256 newDebt = _isIncreasing
+			? getEntireSystemDebt(_asset) + _vstChange
+			: getEntireSystemDebt(_asset) - _vstChange;
+
+		if (vstLimit != 0) {
+			require(vstLimit >= newDebt, "Reached the cap limit of vst.");
 		}
 	}
 

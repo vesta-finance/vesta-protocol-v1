@@ -1963,6 +1963,33 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(alice_VSTTokenBalance_After.eq(alice_VSTTokenBalance_Before.add(toBN(dec(10000, 18)))))
     })
 
+
+    it("withdrawVST(): total debt reach vst mint limit, then continue", async () => {
+      await vestaParams.setVstMintCap(ZERO_ADDRESS, dec(10000, 18));
+
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(4000, 18), alice, alice, { from: alice, value: dec(100, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(2000, 18), alice, alice, { from: bob, value: dec(100, 'ether') })
+
+      const systemDebt = await borrowerOperations.getEntireSystemDebt(ZERO_ADDRESS);
+      const allowedToMint = toBN(dec(10000, 18)).sub(systemDebt);
+
+      alice_VSTTokenBalance_Before = await vstToken.balanceOf(alice)
+
+      await borrowerOperations.withdrawVST(ZERO_ADDRESS, th._100pct, allowedToMint, alice, alice, { from: alice })
+
+      alice_VSTTokenBalance_After = await vstToken.balanceOf(alice)
+      assert.equal(alice_VSTTokenBalance_After.toString(), alice_VSTTokenBalance_Before.add(allowedToMint).toString())
+    })
+
+    it("withdrawVST(): total debt reach over the vst mint limit, then reverts", async () => {
+      await vestaParams.setVstMintCap(ZERO_ADDRESS, dec(10000, 18));
+
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(4000, 18), alice, alice, { from: alice, value: dec(100, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(2000, 18), alice, alice, { from: bob, value: dec(100, 'ether') })
+
+      await assertRevert(borrowerOperations.withdrawVST(ZERO_ADDRESS, th._100pct, dec(4001, 18), alice, alice, { from: alice }))
+    })
+
     // --- repayVST() ---
     it("repayVST(): reverts when repayment would leave trove with ICR < MCR", async () => {
       // alice creates a Trove and adds first collateral
@@ -5999,6 +6026,20 @@ contract('BorrowerOperations', async accounts => {
       // check after
       const alice_VSTTokenBalance_After = await vstToken.balanceOf(alice)
       assert.equal(alice_VSTTokenBalance_After, dec(20000, 18))
+    })
+
+    it("openTrove(): reaching extact vst limit cap, then proceed", async () => {
+      await vestaParams.setVstMintCap(ZERO_ADDRESS, dec(10000, 18));
+      // check before
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(7750, 18), alice, alice, { from: alice, value: dec(100, 'ether') })
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(2000, 18), alice, alice, { from: bob, value: dec(100, 'ether') })
+    })
+
+    it("openTrove(): reaching over the vst limit cap, then proceed", async () => {
+      await vestaParams.setVstMintCap(ZERO_ADDRESS, dec(10000, 18));
+      // check before
+      await borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(8000, 18), alice, alice, { from: alice, value: dec(100, 'ether') })
+      await assertRevert(borrowerOperations.openTrove(ZERO_ADDRESS, 0, th._100pct, dec(2001, 18), alice, alice, { from: bob, value: dec(100, 'ether') }))
     })
 
     //  --- getNewICRFromTroveChange - (external wrapper in Tester contract calls internal function) ---

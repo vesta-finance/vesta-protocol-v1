@@ -26,6 +26,7 @@ interface IVestaParameters {
 	);
 	event RedemptionBlockRemoved(address _asset);
 	event PriceFeedChanged(address indexed addr);
+	event VstMintCapChanged(address indexed _asset, uint256 _newCap);
 
 	function DECIMAL_PRECISION() external view returns (uint256);
 
@@ -56,6 +57,8 @@ interface IVestaParameters {
 	function defaultPool() external view returns (IDefaultPool);
 
 	function priceFeed() external view returns (IPriceFeed);
+
+	function vstMintCap(address _collateral) external view returns (uint256);
 
 	function setAddresses(
 		address _activePool,
@@ -89,4 +92,6 @@ interface IVestaParameters {
 	function setRedemptionFeeFloor(address _asset, uint256 redemptionFeeFloor) external;
 
 	function removeRedemptionBlock(address _asset) external;
+
+	function setVstMintCap(address _asset, uint256 _cap) external;
 }

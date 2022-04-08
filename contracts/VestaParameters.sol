@@ -46,6 +46,8 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 
 	bool public isInitialized;
 
+	mapping(address => uint256) public override vstMintCap;
+
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permissions");
 		_;
@@ -251,6 +253,12 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		emit RedemptionBlockRemoved(_asset);
 	}
 
+	function setVstMintCap(address _asset, uint256 _cap) external override onlyOwner {
+		vstMintCap[_asset] = _cap;
+
+		emit VstMintCapChanged(_asset, _cap);
+	}
+
 	modifier safeCheck(
 		string memory parameter,
 		address _asset,
@@ -269,3 +277,4 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		_;
 	}
 }
+
