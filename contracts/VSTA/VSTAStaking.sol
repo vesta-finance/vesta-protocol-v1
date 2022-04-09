@@ -290,9 +290,7 @@ contract VSTAStaking is
 	}
 
 	function _sendAssetGainToUser(address _asset, uint256 _assetGain) internal {
-		_assetGain = SafetyTransfer.decimalsCorrection(_asset, _assetGain);
 		_sendAsset(msg.sender, _asset, _assetGain);
-		emit AssetSent(_asset, msg.sender, _assetGain);
 	}
 
 	function _sendAsset(
@@ -304,8 +302,11 @@ contract VSTAStaking is
 			(bool success, ) = _sendTo.call{ value: _amount }("");
 			require(success, "VSTAStaking: Failed to send accumulated AssetGain");
 		} else {
+			_amount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 			IERC20Upgradeable(_asset).safeTransfer(_sendTo, _amount);
 		}
+
+		emit AssetSent(_asset, _sendTo, _amount);
 	}
 
 	// --- 'require' functions ---
