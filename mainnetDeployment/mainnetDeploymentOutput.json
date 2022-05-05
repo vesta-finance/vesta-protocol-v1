@@ -107,6 +107,9 @@
 	"ProxyStabilityPoolGMX": {
 		"address": "0x78D46Cecf0AE4757F430d95B2d7Eaa18D7087872"
 	},
+	"ProxyStabilityPoolDPX": {
+		"address": "0x0B1Be49dcB62D6cbc27e510361E910a8A30f37A9"
+	},
 	"ProxyAdmin": {
 		"address": "0xedc3bE991a29D094CA802B1C92AE6b7f74B53a19"
 	}
