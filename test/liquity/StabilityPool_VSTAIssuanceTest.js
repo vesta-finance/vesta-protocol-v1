@@ -84,8 +84,8 @@ contract('StabilityPool - VSTA Rewards', async accounts => {
       // Check community issuance starts with 32 million VSTA
       assert.isAtMost(getDifference(toBN(await vstaToken.balanceOf(communityIssuanceTester.address)), '64000000000000000000000000'), 1000)
 
-      await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, dec(204_425, 18));
-      await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPoolERC20.address, dec(204_425, 18));
+      await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, dec(204_425, 18), { from: treasury });
+      await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPoolERC20.address, dec(204_425, 18), { from: treasury });
     })
 
     // using the result of this to advance time by the desired amount from the deployment time, whether or not some extra time has passed in the meanwhile
@@ -126,10 +126,10 @@ contract('StabilityPool - VSTA Rewards', async accounts => {
 
       // Check VSTA has been issued
       const totalVSTAIssued_1 = await communityIssuanceTester.totalVSTAIssued(stabilityPool.address)
-      assert.isTrue(totalVSTAIssued_1.gt(toBN('0')))
+      assert.isTrue(totalVSTAIssued_1.eq(toBN('0')))
 
       const totalVSTAIssued_1ERC20 = await communityIssuanceTester.totalVSTAIssued(stabilityPoolERC20.address)
-      assert.isTrue(totalVSTAIssued_1ERC20.gt(toBN('0')))
+      assert.isTrue(totalVSTAIssued_1ERC20.eq(toBN('0')))
 
       await troveManager.liquidate(ZERO_ADDRESS, B)
       await troveManager.liquidate(erc20.address, B)
