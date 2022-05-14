@@ -343,6 +343,11 @@ class DeploymentHelper {
     if (await coreContracts.adminContract.owner() != treasurySig)
       await coreContracts.adminContract.transferOwnership(treasurySig);
 
+    if (await VSTAContracts.communityIssuance.owner() != treasurySig) {
+      await VSTAContracts.communityIssuance.setProtocolAccessOf(await VSTAContracts.communityIssuance.owner(), true);
+      await VSTAContracts.communityIssuance.transferOwnership(treasurySig);
+    }
+
     await VSTAContracts.vstaToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256, { from: treasurySig });
 
     const supply = dec(32000000, 18);
@@ -351,6 +356,12 @@ class DeploymentHelper {
     await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, supply, weeklyReward, 0, { from: treasurySig });
     await VSTAContracts.vstaToken.unprotectedMint(treasurySig, supply)
     await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, coreContracts.stabilityPoolTemplate.address, ZERO_ADDRESS, ZERO_ADDRESS, supply, weeklyReward, 0, { from: treasurySig });
+
+    const spETH = await coreContracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS);
+    const spMockERC = await coreContracts.stabilityPoolManager.getAssetStabilityPool(coreContracts.erc20.address);
+
+    await VSTAContracts.communityIssuance.configStabilityPoolAndSend(spETH, VSTAContracts.vstaToken.address, weeklyReward, supply, { from: treasurySig });
+    await VSTAContracts.communityIssuance.configStabilityPoolAndSend(spMockERC, VSTAContracts.vstaToken.address, weeklyReward, supply, { from: treasurySig });
 
     if (!liquitySettings)
       return;

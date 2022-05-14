@@ -78,10 +78,8 @@ contract('VSTA community issuance arithmetic tests', async accounts => {
     stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
     stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
 
-    const supply = dec(32000000, 18);
-    await communityIssuanceTester.configStabilityPoolAndSend(stabilityPool.address, VSTAToken.address, ERC_WEEKLY, supply);
-    await communityIssuanceTester.configStabilityPool(stabilityPoolERC20.address, VSTAToken.address, ERC_WEEKLY);
-    await communityIssuanceTester.addFundToStabilityPool(stabilityPoolERC20.address, supply);
+    await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPool.address, ERC_WEEKLY);
+    await communityIssuanceTester.setWeeklyVstaDistribution(stabilityPoolERC20.address, ERC_WEEKLY);
   })
 
 

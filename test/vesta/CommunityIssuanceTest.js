@@ -166,8 +166,8 @@ contract('CommunityIssuance', async accounts => {
       await assertRevert(communityIssuance.setStabilityPoolAdmin(stabilityPool.address, user, true, { from: user }))
     })
 
-    it("setStabilityPoolAdmin: Called by owner, then update user status", async () => {
-      await communityIssuance.setStabilityPoolAdmin(stabilityPool.address, user, true, { from: owner })
+    it("setStabilityPoolAdmin: Called by owner(treasury), then update user status", async () => {
+      await communityIssuance.setStabilityPoolAdmin(stabilityPool.address, user, true, { from: treasury })
       assert.isTrue(await communityIssuance.isWalletAdminOfPool(stabilityPool.address, user));
     })
 
@@ -175,8 +175,8 @@ contract('CommunityIssuance', async accounts => {
       await assertRevert(communityIssuance.setProtocolAccessOf(user, true, { from: user }))
     })
 
-    it("setProtocolAccessOf: Called by owner, then update user status", async () => {
-      await communityIssuance.setProtocolAccessOf(user, true, { from: owner })
+    it("setProtocolAccessOf: Called by owner(treasury), then update user status", async () => {
+      await communityIssuance.setProtocolAccessOf(user, true, { from: treasury })
       assert.isTrue(await communityIssuance.protocolFullAccess(user));
     })
 

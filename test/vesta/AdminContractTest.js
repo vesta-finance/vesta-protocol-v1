@@ -65,8 +65,8 @@ contract('AdminContract', async accounts => {
 
       assert.notEqual((await contracts.vestaParameters.redemptionBlock(ZERO_ADDRESS)).toString(), 0);
       assert.notEqual(await stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS), ZERO_ADDRESS)
-      assert.equal((await vstaToken.balanceOf(VSTAContracts.communityIssuance.address)).toString(), dec(100, 18))
-      assert.notEqual((await VSTAContracts.communityIssuance.vstaDistributionsByPool), 0);
+      // assert.equal((await vstaToken.balanceOf(VSTAContracts.communityIssuance.address)).toString(), dec(100, 18))
+      // assert.notEqual((await VSTAContracts.communityIssuance.vstaDistributionsByPool), 0); - Disabled In latest version
     })
 
     it("UpgradeStabilityPool: As Owner - Upgrade stability pool to V2", async () => {
