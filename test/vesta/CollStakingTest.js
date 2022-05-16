@@ -85,7 +85,7 @@ contract('CollStakingManager', async accounts => {
       assert.equal(await collateral.balanceOf(user), dec(10, 18))
     })
 
-    it("ActivePool: sendAsset() called, if not-staked balance exists, then unstake shortage amount only", async () => {
+    it("ActivePool: sendAsset() called, if non-staked balance exists, then unstake shortage amount only", async () => {
       collateral.transfer(activePool.address, dec(20, 18))
 
       await collStakingManager.setSupportedTokens(collateral.address, false)
@@ -102,6 +102,42 @@ contract('CollStakingManager', async accounts => {
       assert.equal(await collateral.balanceOf(collStakingManager.address), dec(5, 18))
       assert.equal(await collateral.balanceOf(activePool.address), 0)
       assert.equal(await collateral.balanceOf(user), dec(15, 18))
+    })
+    
+    it("ActivePool: forceStake() can be called by admin only", async () => {
+      await assertRevert(activePool.forceStake(collateral.address, {from: user}))
+    })
+
+    it("ActivePool: forceStake() stakes all current balance", async () => {
+      collateral.transfer(activePool.address, dec(20, 18))
+
+      await collStakingManager.setSupportedTokens(collateral.address, false)
+      const recevivedERC20Data = th.getTransactionData('receivedERC20(address,uint256)', [collateral.address, dec(10, 18)])
+      await mockBorrowerOperations.forward(activePool.address, recevivedERC20Data)
+
+      await collStakingManager.setSupportedTokens(collateral.address, true)
+      await mockBorrowerOperations.forward(activePool.address, recevivedERC20Data)
+
+      await activePool.forceStake(collateral.address);
+      
+      assert.equal(await collateral.balanceOf(collStakingManager.address), dec(20, 18))
+      assert.equal(await collateral.balanceOf(activePool.address), 0)
+    })
+
+    it("ActivePool: forceUnstake() can be called by admin only", async () => {
+      await assertRevert(activePool.forceUnstake(collateral.address, {from: user}))
+    })
+
+    it("ActivePool: forceUnstake() unstakes all current staking", async () => {
+      collateral.transfer(activePool.address, dec(10, 18))
+
+      const recevivedERC20Data = th.getTransactionData('receivedERC20(address,uint256)', [collateral.address, dec(10, 18)])
+      await mockBorrowerOperations.forward(activePool.address, recevivedERC20Data)
+
+      await activePool.forceUnstake(collateral.address);
+      
+      assert.equal(await collateral.balanceOf(collStakingManager.address), 0)
+      assert.equal(await collateral.balanceOf(activePool.address), dec(10, 18))
     })
   })
 })

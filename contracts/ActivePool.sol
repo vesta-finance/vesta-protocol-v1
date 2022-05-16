@@ -48,9 +48,13 @@ contract ActivePool is
 	mapping(address => uint256) internal VSTDebts;
 	mapping(address => uint256) internal assetsStaked;
 
-	bool isStakingAdminInitialized;
 	address private stakingAdmin;
 	ICollStakingManager public collStakingManager;
+
+	modifier onlyStakingAdmin {
+		require(msg.sender == stakingAdmin, "ActivePool: not a staking admin");
+		_;
+	}
 
 	// --- Contract setters ---
 
@@ -87,14 +91,12 @@ contract ActivePool is
 	}
 
 	function setStakingAdminAddress(address _stakingAdminAddress) external {
-		require(!isStakingAdminInitialized, "ActivePool: staking admin already initialized");
+		require(stakingAdmin == address(0), "ActivePool: staking admin already initialized");
 
-		isStakingAdminInitialized = true;
 		stakingAdmin = _stakingAdminAddress;
 	}
 
-	function setCollStakingManagerAddress(address _collStakingManagerAddress) external {
-		require(msg.sender == stakingAdmin, "ActivePool: not a staking admin");
+	function setCollStakingManagerAddress(address _collStakingManagerAddress) external onlyStakingAdmin {
 		checkContract(_collStakingManagerAddress);
 
 		collStakingManager = ICollStakingManager(_collStakingManagerAddress);
@@ -137,10 +139,7 @@ contract ActivePool is
 		uint256 stakedBalance = assetsStaked[_asset];
 
 		if (stakedBalance > totalBalance) {
-			uint256 shortage = stakedBalance - totalBalance;
-			assetsStaked[_asset] = stakedBalance - shortage;
-
-			collStakingManager.unstakeCollaterals(_asset, shortage);
+			_unstakeCollateral(_asset, stakedBalance - totalBalance);
 		}
 
 		if (_asset != ETH_REF_ADDRESS) {
@@ -219,8 +218,22 @@ contract ActivePool is
 	{
 		assetsBalance[_asset] += _amount;
 
-		if (address(collStakingManager) != address(0) && collStakingManager.isSupportedAsset(_asset)) {
+		_stakeCollateral(_asset, _amount);
 
+		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
+	}
+
+	function forceStake(address _asset) external onlyStakingAdmin {
+		_stakeCollateral(_asset, IERC20Upgradeable(_asset).balanceOf(address(this)));
+	}
+
+	function forceUnstake(address _asset) external onlyStakingAdmin {
+		_unstakeCollateral(_asset, assetsStaked[_asset]);
+	}
+
+	function _stakeCollateral(address _asset, uint256 _amount) internal {
+		if (address(collStakingManager) != address(0) && collStakingManager.isSupportedAsset(_asset)) {
+			
 			if (IERC20Upgradeable(_asset).allowance(address(this), address(collStakingManager)) < _amount) {
 				IERC20Upgradeable(_asset).safeApprove(address(collStakingManager), type(uint256).max);
 			}
@@ -229,8 +242,13 @@ contract ActivePool is
 				assetsStaked[_asset] += _amount;
 			} catch {}
 		}
+	}
 
-		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
+	function _unstakeCollateral(address _asset, uint256 _amount) internal {
+		if (address(collStakingManager) != address(0)) {
+			assetsStaked[_asset] -= _amount;
+			collStakingManager.unstakeCollaterals(_asset, _amount);
+		}
 	}
 
 	// --- Fallback function ---
