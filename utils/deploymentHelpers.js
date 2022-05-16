@@ -342,6 +342,9 @@ class DeploymentHelper {
       VSTAContracts.vstaToken.address
     )
 
+    await coreContracts.activePool.setStakingAdminAddress(
+      await coreContracts.adminContract.owner()
+    )
     await coreContracts.activePool.setCollStakingManagerAddress(
       VSTAContracts.collStakingManager.address
     )

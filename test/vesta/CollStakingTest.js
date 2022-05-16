@@ -33,11 +33,21 @@ contract('CollStakingManager', async accounts => {
       let stabilityPoolManager = await StabilityPoolManager.new()
       const dumbContractAddress = (await NonPayable.new()).address
       await activePool.setAddresses(mockBorrowerOperations.address, dumbContractAddress, stabilityPoolManager.address, dumbContractAddress, collSurplusPool.address)
-      await activePool.setCollStakingManagerAddress(collStakingManager.address)
 
       collateral = await ERC20Mock.new("TestColl", "COLL", 18)
       await collateral.mint(owner, dec(100, 18))
       await collStakingManager.setSupportedTokens(collateral.address, true)
+
+      await activePool.setStakingAdminAddress(owner)
+      await activePool.setCollStakingManagerAddress(collStakingManager.address)
+    })
+
+    it("ActivePool: setStakingAdminAddress() can be called only once", async () => {
+      await assertRevert(activePool.setStakingAdminAddress(owner));
+    })
+    
+    it("ActivePool: setCollStakingManagerAddress() can be called by admin only", async () => {
+      await assertRevert(activePool.setCollStakingManagerAddress(collStakingManager.address, {from: user}));
     })
 
     it("ActivePool: receivedERC20() called for supported tokens, then stake collaterals to Staking Manager", async () => {

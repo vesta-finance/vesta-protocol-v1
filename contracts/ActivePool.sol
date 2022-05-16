@@ -48,6 +48,8 @@ contract ActivePool is
 	mapping(address => uint256) internal VSTDebts;
 	mapping(address => uint256) internal assetsStaked;
 
+	bool isStakingAdminInitialized;
+	address private stakingAdmin;
 	ICollStakingManager public collStakingManager;
 
 	// --- Contract setters ---
@@ -84,7 +86,15 @@ contract ActivePool is
 		renounceOwnership();
 	}
 
+	function setStakingAdminAddress(address _stakingAdminAddress) external {
+		require(!isStakingAdminInitialized, "ActivePool: staking admin already initialized");
+
+		isStakingAdminInitialized = true;
+		stakingAdmin = _stakingAdminAddress;
+	}
+
 	function setCollStakingManagerAddress(address _collStakingManagerAddress) external {
+		require(msg.sender == stakingAdmin, "ActivePool: not a staking admin");
 		checkContract(_collStakingManagerAddress);
 
 		collStakingManager = ICollStakingManager(_collStakingManagerAddress);
@@ -123,11 +133,12 @@ contract ActivePool is
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) return;
 
-		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
+		uint256 totalBalance = assetsBalance[_asset] -= _amount;
+		uint256 stakedBalance = assetsStaked[_asset];
 
-		if (assetsStaked[_asset] > assetsBalance[_asset]) {
-			uint256 shortage = assetsStaked[_asset] - assetsBalance[_asset];
-			assetsStaked[_asset] = assetsStaked[_asset].sub(shortage);
+		if (stakedBalance > totalBalance) {
+			uint256 shortage = stakedBalance - totalBalance;
+			assetsStaked[_asset] = stakedBalance - shortage;
 
 			collStakingManager.unstakeCollaterals(_asset, shortage);
 		}
