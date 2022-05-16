@@ -12,6 +12,7 @@ import "./Interfaces/IStabilityPoolManager.sol";
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IDeposit.sol";
+import "./Interfaces/ICollStakingManager.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
@@ -45,6 +46,9 @@ contract ActivePool is
 
 	mapping(address => uint256) internal assetsBalance;
 	mapping(address => uint256) internal VSTDebts;
+	mapping(address => uint256) internal assetsStaked;
+
+	ICollStakingManager public collStakingManager;
 
 	// --- Contract setters ---
 
@@ -80,6 +84,12 @@ contract ActivePool is
 		renounceOwnership();
 	}
 
+	function setCollStakingManagerAddress(address _collStakingManagerAddress) external {
+		checkContract(_collStakingManagerAddress);
+
+		collStakingManager = ICollStakingManager(_collStakingManagerAddress);
+	}
+
 	// --- Getters for public variables. Required by IPool interface ---
 
 	/*
@@ -89,6 +99,10 @@ contract ActivePool is
 	 */
 	function getAssetBalance(address _asset) external view override returns (uint256) {
 		return assetsBalance[_asset];
+	}
+
+	function getAssetStaked(address _asset) external view override returns (uint256) {
+		return assetsStaked[_asset];
 	}
 
 	function getVSTDebt(address _asset) external view override returns (uint256) {
@@ -110,6 +124,13 @@ contract ActivePool is
 		if (safetyTransferAmount == 0) return;
 
 		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
+
+		if (assetsStaked[_asset] > assetsBalance[_asset]) {
+			uint256 shortage = assetsStaked[_asset] - assetsBalance[_asset];
+			assetsStaked[_asset] = assetsStaked[_asset].sub(shortage);
+
+			collStakingManager.unstakeCollaterals(_asset, shortage);
+		}
 
 		if (_asset != ETH_REF_ADDRESS) {
 			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
@@ -186,6 +207,20 @@ contract ActivePool is
 		callerIsBorrowerOperationOrDefaultPool
 	{
 		assetsBalance[_asset] = assetsBalance[_asset].add(_amount);
+
+		if (address(collStakingManager) != address(0) && collStakingManager.isSupportedAsset(_asset)) {
+			bytes memory data = abi.encodeWithSignature("stakeCollaterals(address,uint256)", _asset, _amount);
+
+			if (IERC20Upgradeable(_asset).allowance(address(this), address(collStakingManager)) < _amount) {
+				IERC20Upgradeable(_asset).safeApprove(address(collStakingManager), type(uint256).max);
+			}
+
+			(bool bSuccess, ) = address(collStakingManager).call{value: 0}(data);
+			if (bSuccess) {
+				assetsStaked[_asset] = assetsStaked[_asset].add(_amount);
+			}
+		}
+
 		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
 	}
 

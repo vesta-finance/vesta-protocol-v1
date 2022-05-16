@@ -28,6 +28,7 @@ const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.s
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
 const VSTTokenTester = artifacts.require("./VSTTokenTester.sol")
 const ERC20Test = artifacts.require("./ERC20Test.sol")
+const CollStakingManagerMock = artifacts.require("./CollStakingManagerMock.sol")
 
 // Proxy scripts
 const BorrowerOperationsScript = artifacts.require('BorrowerOperationsScript')
@@ -181,11 +182,15 @@ class DeploymentHelper {
     const vstaToken = await VSTATokenTester.new(treasury)
     VSTATokenTester.setAsDeployed(vstaToken)
 
+    const collStakingManager = await CollStakingManagerMock.new();
+    CollStakingManagerMock.setAsDeployed(collStakingManager);
+
     const VSTAContracts = {
       vstaStaking,
       communityIssuance,
       vstaToken,
-      lockedVSTA
+      lockedVSTA,
+      collStakingManager
     }
     return VSTAContracts
   }
@@ -334,7 +339,12 @@ class DeploymentHelper {
     )
 
     await VSTAContracts.lockedVSTA.setAddresses(
-      VSTAContracts.vstaToken.address)
+      VSTAContracts.vstaToken.address
+    )
+
+    await coreContracts.activePool.setCollStakingManagerAddress(
+      VSTAContracts.collStakingManager.address
+    )
 
     if (skipPool) {
       return;
