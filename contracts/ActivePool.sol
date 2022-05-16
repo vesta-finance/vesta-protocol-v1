@@ -217,19 +217,17 @@ contract ActivePool is
 		override
 		callerIsBorrowerOperationOrDefaultPool
 	{
-		assetsBalance[_asset] = assetsBalance[_asset].add(_amount);
+		assetsBalance[_asset] += _amount;
 
 		if (address(collStakingManager) != address(0) && collStakingManager.isSupportedAsset(_asset)) {
-			bytes memory data = abi.encodeWithSignature("stakeCollaterals(address,uint256)", _asset, _amount);
 
 			if (IERC20Upgradeable(_asset).allowance(address(this), address(collStakingManager)) < _amount) {
 				IERC20Upgradeable(_asset).safeApprove(address(collStakingManager), type(uint256).max);
 			}
 
-			(bool bSuccess, ) = address(collStakingManager).call{value: 0}(data);
-			if (bSuccess) {
-				assetsStaked[_asset] = assetsStaked[_asset].add(_amount);
-			}
+			try collStakingManager.stakeCollaterals(_asset, _amount) {
+				assetsStaked[_asset] += _amount;
+			} catch {}
 		}
 
 		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
