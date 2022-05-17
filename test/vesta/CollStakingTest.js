@@ -42,8 +42,13 @@ contract('CollStakingManager', async accounts => {
       await activePool.setCollStakingManagerAddress(collStakingManager.address)
     })
 
-    it("ActivePool: setStakingAdminAddress() can be called only once", async () => {
-      await assertRevert(activePool.setStakingAdminAddress(owner));
+    it("ActivePool: setStakingAdminAddress(), other addresses can not call it once it is initialized", async () => {
+      await assertRevert(activePool.setStakingAdminAddress(owner, {from: user}));
+    })
+
+    it("ActivePool: setStakingAdminAddress(), staking admin can set new admin", async () => {
+      const tx = await activePool.setStakingAdminAddress(owner);
+      assert.isTrue(tx.receipt.status)
     })
     
     it("ActivePool: setCollStakingManagerAddress() can be called by admin only", async () => {
