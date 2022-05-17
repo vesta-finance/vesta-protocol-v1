@@ -12,6 +12,7 @@ import "./Interfaces/IStabilityPoolManager.sol";
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IDeposit.sol";
+import "./Interfaces/ICollStakingManager.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
@@ -45,6 +46,15 @@ contract ActivePool is
 
 	mapping(address => uint256) internal assetsBalance;
 	mapping(address => uint256) internal VSTDebts;
+	mapping(address => uint256) internal assetsStaked;
+
+	address private stakingAdmin;
+	ICollStakingManager public collStakingManager;
+
+	modifier onlyStakingAdmin {
+		require(msg.sender == stakingAdmin, "ActivePool: not a staking admin");
+		_;
+	}
 
 	// --- Contract setters ---
 
@@ -80,6 +90,19 @@ contract ActivePool is
 		renounceOwnership();
 	}
 
+	function setStakingAdminAddress(address _stakingAdminAddress) external {
+		require(stakingAdmin == address(0) || stakingAdmin == msg.sender, 
+			"ActivePool: staking admin already initialized and call is not an admin");
+
+		stakingAdmin = _stakingAdminAddress;
+	}
+
+	function setCollStakingManagerAddress(address _collStakingManagerAddress) external onlyStakingAdmin {
+		checkContract(_collStakingManagerAddress);
+
+		collStakingManager = ICollStakingManager(_collStakingManagerAddress);
+	}
+
 	// --- Getters for public variables. Required by IPool interface ---
 
 	/*
@@ -89,6 +112,10 @@ contract ActivePool is
 	 */
 	function getAssetBalance(address _asset) external view override returns (uint256) {
 		return assetsBalance[_asset];
+	}
+
+	function getAssetStaked(address _asset) external view override returns (uint256) {
+		return assetsStaked[_asset];
 	}
 
 	function getVSTDebt(address _asset) external view override returns (uint256) {
@@ -109,7 +136,12 @@ contract ActivePool is
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) return;
 
-		assetsBalance[_asset] = assetsBalance[_asset].sub(_amount);
+		uint256 totalBalance = assetsBalance[_asset] -= _amount;
+		uint256 stakedBalance = assetsStaked[_asset];
+
+		if (stakedBalance > totalBalance) {
+			_unstakeCollateral(_asset, stakedBalance - totalBalance);
+		}
 
 		if (_asset != ETH_REF_ADDRESS) {
 			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
@@ -185,8 +217,39 @@ contract ActivePool is
 		override
 		callerIsBorrowerOperationOrDefaultPool
 	{
-		assetsBalance[_asset] = assetsBalance[_asset].add(_amount);
+		assetsBalance[_asset] += _amount;
+
+		_stakeCollateral(_asset, _amount);
+
 		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
+	}
+
+	function forceStake(address _asset) external onlyStakingAdmin {
+		_stakeCollateral(_asset, IERC20Upgradeable(_asset).balanceOf(address(this)));
+	}
+
+	function forceUnstake(address _asset) external onlyStakingAdmin {
+		_unstakeCollateral(_asset, assetsStaked[_asset]);
+	}
+
+	function _stakeCollateral(address _asset, uint256 _amount) internal {
+		if (address(collStakingManager) != address(0) && collStakingManager.isSupportedAsset(_asset)) {
+			
+			if (IERC20Upgradeable(_asset).allowance(address(this), address(collStakingManager)) < _amount) {
+				IERC20Upgradeable(_asset).safeApprove(address(collStakingManager), type(uint256).max);
+			}
+
+			try collStakingManager.stakeCollaterals(_asset, _amount) {
+				assetsStaked[_asset] += _amount;
+			} catch {}
+		}
+	}
+
+	function _unstakeCollateral(address _asset, uint256 _amount) internal {
+		if (address(collStakingManager) != address(0)) {
+			assetsStaked[_asset] -= _amount;
+			collStakingManager.unstakeCollaterals(_asset, _amount);
+		}
 	}
 
 	// --- Fallback function ---
