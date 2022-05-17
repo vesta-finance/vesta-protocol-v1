@@ -91,7 +91,8 @@ contract ActivePool is
 	}
 
 	function setStakingAdminAddress(address _stakingAdminAddress) external {
-		require(stakingAdmin == address(0), "ActivePool: staking admin already initialized");
+		require(stakingAdmin == address(0) || stakingAdmin == msg.sender, 
+			"ActivePool: staking admin already initialized and call is not an admin");
 
 		stakingAdmin = _stakingAdminAddress;
 	}
