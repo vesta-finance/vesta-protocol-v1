@@ -182,11 +182,12 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			vars.netDebt = vars.netDebt.add(vars.VSTFee);
 		}
 		_requireAtLeastMinNetDebt(vars.asset, vars.netDebt);
-		_requireLowerOrEqualsToVSTLimit(vars.asset, vars.netDebt, true);
 
 		// ICR is based on the composite debt, i.e. the requested VST amount + VST borrowing fee + VST gas comp.
 		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
+
 		assert(vars.compositeDebt > 0);
+		_requireLowerOrEqualsToVSTLimit(vars.asset, vars.compositeDebt);
 
 		vars.ICR = VestaMath._computeCR(_tokenAmount, vars.compositeDebt, vars.price);
 		vars.NICR = VestaMath._computeNominalCR(_tokenAmount, vars.compositeDebt);
@@ -381,7 +382,9 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		LocalVariables_adjustTrove memory vars;
 		vars.asset = _asset;
 
-		_requireLowerOrEqualsToVSTLimit(vars.asset, _VSTChange, _isDebtIncrease);
+		if (_isDebtIncrease) {
+			_requireLowerOrEqualsToVSTLimit(vars.asset, _VSTChange);
+		}
 
 		require(
 			msg.value == 0 || msg.value == _assetSent,
@@ -883,15 +886,9 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		}
 	}
 
-	function _requireLowerOrEqualsToVSTLimit(
-		address _asset,
-		uint256 _vstChange,
-		bool _isIncreasing
-	) internal view {
+	function _requireLowerOrEqualsToVSTLimit(address _asset, uint256 _vstChange) internal view {
 		uint256 vstLimit = vestaParams.vstMintCap(_asset);
-		uint256 newDebt = _isIncreasing
-			? getEntireSystemDebt(_asset) + _vstChange
-			: getEntireSystemDebt(_asset) - _vstChange;
+		uint256 newDebt = getEntireSystemDebt(_asset) + _vstChange;
 
 		if (vstLimit != 0) {
 			require(vstLimit >= newDebt, "Reached the cap limit of vst.");
