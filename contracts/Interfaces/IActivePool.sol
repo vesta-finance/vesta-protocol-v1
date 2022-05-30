@@ -17,5 +17,9 @@ interface IActivePool is IPool {
 		uint256 _amount
 	) external;
 
-	function getAssetStaked(address _asset) external view returns (uint256);
+	function stake(
+		address _asset,
+		address _behalfOf,
+		uint256 _amount
+	) external;
 }

@@ -676,6 +676,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			);
 
 			_activePool.receivedERC20(_asset, _amount);
+			_activePool.stake(_asset, msg.sender, _amount);
 		}
 	}
 
