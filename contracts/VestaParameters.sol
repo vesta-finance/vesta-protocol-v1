@@ -15,6 +15,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 
 	uint256 public constant MCR_DEFAULT = 1100000000000000000; // 110%
 	uint256 public constant CCR_DEFAULT = 1500000000000000000; // 150%
+	uint256 public constant BONUS_DEFAULT = 100000000000000000; // 10%
 	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 0.5%
 
 	uint256 public constant BORROWING_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
@@ -28,6 +29,8 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 	mapping(address => uint256) public override MCR;
 	// Critical system collateral ratio. If the system's total collateral ratio (TCR) falls below the CCR, Recovery Mode is triggered.
 	mapping(address => uint256) public override CCR;
+	// Bonus for individual troves
+	mapping(address => uint256) public override BONUS;
 
 	mapping(address => uint256) public override VST_GAS_COMPENSATION; // Amount of VST to be locked in gas pool on opening troves
 	mapping(address => uint256) public override MIN_NET_DEBT; // Minimum amount of net VST debt a trove must have
@@ -116,6 +119,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 
 		MCR[_asset] = MCR_DEFAULT;
 		CCR[_asset] = CCR_DEFAULT;
+		BONUS[_asset] = BONUS_DEFAULT;
 		VST_GAS_COMPENSATION[_asset] = VST_GAS_COMPENSATION_DEFAULT;
 		MIN_NET_DEBT[_asset] = MIN_NET_DEBT_DEFAULT;
 		PERCENT_DIVISOR[_asset] = PERCENT_DIVISOR_DEFAULT;
@@ -128,6 +132,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		address _asset,
 		uint256 newMCR,
 		uint256 newCCR,
+		uint256 newBONUS,
 		uint256 gasCompensation,
 		uint256 minNetDebt,
 		uint256 precentDivisor,
@@ -139,6 +144,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 
 		setMCR(_asset, newMCR);
 		setCCR(_asset, newCCR);
+		setBONUS(_asset, newBONUS);
 		setVSTGasCompensation(_asset, gasCompensation);
 		setMinNetDebt(_asset, minNetDebt);
 		setPercentDivisor(_asset, precentDivisor);
@@ -169,6 +175,18 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		CCR[_asset] = newCCR;
 
 		emit CCRChanged(oldCCR, newCCR);
+	}
+
+	function setBONUS(address _asset, uint256 newBONUS)
+		public
+		override
+		onlyOwner
+		safeCheck("BONUS", _asset, newBONUS, 1, 10000000000000000000) /// 0% - MCR%
+	{
+		uint256 oldBONUS = BONUS[_asset];
+		BONUS[_asset] = newBONUS;
+
+		emit BONUSChanged(oldBONUS, newBONUS);
 	}
 
 	function setPercentDivisor(address _asset, uint256 precentDivisor)
@@ -277,4 +295,3 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		_;
 	}
 }
-
