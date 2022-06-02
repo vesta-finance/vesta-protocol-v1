@@ -10,7 +10,7 @@ const dec = th.dec
 const toBN = th.toBN
 
 contract('TroveManager', async accounts => {
-  const BONUS_5_PERCENT = '50000000000000000'
+  const BonusToSP_5_PERCENT = '50000000000000000'
   const ICR_103_PERCENT = '103000000000000000000'
   const ICR_107_PERCENT = '107000000000000000000'
   const ZERO_ADDRESS = th.ZERO_ADDRESS
@@ -81,7 +81,7 @@ contract('TroveManager', async accounts => {
     stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
   })
 
-  it('liquidate(): check borrower and pools when debt(2000) > SP(1000) and ICR(103%) <= 100 + BONUS(5%)', async () => {
+  it('liquidate(): when debt(2000) > SP(1000) and ICR(103%) <= 100 + BonusToSP(5%), send collateral to stability pool only', async () => {
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
     await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
@@ -90,9 +90,9 @@ contract('TroveManager', async accounts => {
     let collAlice = await troveManager.getTroveColl(ZERO_ADDRESS, alice)
     let debtAlice = await troveManager.getTroveDebt(ZERO_ADDRESS, alice)
 
-    // set BONUS to 5%
-    await vestaParameters.setBONUS(ZERO_ADDRESS, BONUS_5_PERCENT)
-    assert.equal((await vestaParameters.BONUS(ZERO_ADDRESS)).toString(), BONUS_5_PERCENT)
+    // set BonusToSP to 5%
+    await vestaParameters.setBonusToSP(ZERO_ADDRESS, BonusToSP_5_PERCENT)
+    assert.equal((await vestaParameters.BonusToSP(ZERO_ADDRESS)).toString(), BonusToSP_5_PERCENT)
 
     // price drops to 1ETH = 103VST, reducing Alice's ICR below MCR(103%)
     await priceFeed.setPrice(ICR_103_PERCENT);
@@ -104,9 +104,9 @@ contract('TroveManager', async accounts => {
     let totalDebtSP = await stabilityPool.getTotalVSTDeposits()
     assert.isTrue((debtAlice).gt(totalDebtSP))
 
-    let balanceAlice_Before = toBN(await web3.eth.getBalance(alice))
     let totalCollSP_Before = await stabilityPool.getAssetBalance()
     let totalCollDP_Before = await defaultPool.getAssetBalance(ZERO_ADDRESS)
+    let collAliceSurplusPool_Before = await collSurplusPool.getCollateral(alice, ZERO_ADDRESS)
 
     let gasCompensation = await troveManager.getCollGasCompensation(ZERO_ADDRESS, collAlice)
     let collToLiquidate = collAlice.sub(gasCompensation)
@@ -116,13 +116,13 @@ contract('TroveManager', async accounts => {
     // liquidate Trove
     await troveManager.liquidate(ZERO_ADDRESS, alice, { from: owner });
 
-    let balanceAlice_After = toBN(await web3.eth.getBalance(alice))
     let totalCollSP_After = await stabilityPool.getAssetBalance()
     let totalCollDP_After = await defaultPool.getAssetBalance(ZERO_ADDRESS)
+    let collAliceSurplusPool_After = await collSurplusPool.getCollateral(alice, ZERO_ADDRESS)
 
-    assert.equal(balanceAlice_After.toString(), balanceAlice_Before.toString())
     assert.equal(totalCollSP_After.sub(totalCollSP_Before).toString(), expectedCollToSP.toString())
     assert.equal(totalCollDP_After.sub(totalCollDP_Before).toString(), expectedCollToDP.toString())
+    assert.equal(collAliceSurplusPool_After.toString(), collAliceSurplusPool_Before.toString())
 
     // check the Trove is successfully closed, and removed from sortedList
     const status = (await troveManager.Troves(alice, ZERO_ADDRESS))[th.TROVE_STATUS_INDEX]
@@ -130,7 +130,7 @@ contract('TroveManager', async accounts => {
     assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, alice))
   })
 
-  it('liquidate(): check borrower and pools when debt(2000) > SP(1000) and ICR(107%) > 100 + BONUS(5%)', async () => {
+  it('liquidate(): when debt(2000) > SP(1000) and ICR(107%) > 100 + BonusToSP(5%), send collateral to surplus pool(for borrower) and stability pool', async () => {
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
     await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
@@ -139,9 +139,9 @@ contract('TroveManager', async accounts => {
     let collAlice = await troveManager.getTroveColl(ZERO_ADDRESS, alice)
     let debtAlice = await troveManager.getTroveDebt(ZERO_ADDRESS, alice)
 
-    // set bonus to 5%
-    await vestaParameters.setBONUS(ZERO_ADDRESS, BONUS_5_PERCENT)
-    assert.equal((await vestaParameters.BONUS(ZERO_ADDRESS)).toString(), BONUS_5_PERCENT)
+    // set BonusToSP to 5%
+    await vestaParameters.setBonusToSP(ZERO_ADDRESS, BonusToSP_5_PERCENT)
+    assert.equal((await vestaParameters.BonusToSP(ZERO_ADDRESS)).toString(), BonusToSP_5_PERCENT)
 
     // price drops to 1ETH:107VST, reducing Alice's ICR below MCR(107%)
     await priceFeed.setPrice(ICR_107_PERCENT);
@@ -155,28 +155,28 @@ contract('TroveManager', async accounts => {
 
     let price = await priceFeed.getPrice()
     let ICR = await troveManager.getCurrentICR(ZERO_ADDRESS, alice, price)
-    let BONUS = await vestaParameters.BONUS(ZERO_ADDRESS);
+    let BonusToSP = await vestaParameters.BonusToSP(ZERO_ADDRESS);
 
-    let balanceAlice_Before = toBN(await web3.eth.getBalance(alice))
     let totalCollSP_Before = await stabilityPool.getAssetBalance()
     let totalCollDP_Before = await defaultPool.getAssetBalance(ZERO_ADDRESS)
+    let collAliceSurplusPool_Before = await collSurplusPool.getCollateral(ZERO_ADDRESS, alice)
 
     let gasCompensation = await troveManager.getCollGasCompensation(ZERO_ADDRESS, collAlice)
     let collToLiquidate = collAlice.sub(gasCompensation)
-    let expectedCollToBorrower = collToLiquidate.mul(ICR.sub(toBN('1000000000000000000')).sub(BONUS)).div(ICR);
-    let expectedCollToSP = collToLiquidate.sub(expectedCollToBorrower).mul(totalDebtSP).div(debtAlice)
-    let expectedCollToDP = collToLiquidate.sub(expectedCollToBorrower).sub(expectedCollToSP)
+    let expectedCollToSurplusPool = collToLiquidate.mul(ICR.sub(toBN('1000000000000000000')).sub(BonusToSP)).div(ICR);
+    let expectedCollToSP = collToLiquidate.sub(expectedCollToSurplusPool).mul(totalDebtSP).div(debtAlice)
+    let expectedCollToDP = collToLiquidate.sub(expectedCollToSurplusPool).sub(expectedCollToSP)
 
     // liquidate Trove
     await troveManager.liquidate(ZERO_ADDRESS, alice, { from: owner });
 
-    let balanceAlice_After = toBN(await web3.eth.getBalance(alice))
     let totalCollSP_After = await stabilityPool.getAssetBalance()
     let totalCollDP_After = await defaultPool.getAssetBalance(ZERO_ADDRESS)
+    let collAliceSurplusPool_After = await collSurplusPool.getCollateral(ZERO_ADDRESS, alice)
 
-    assert.equal(balanceAlice_After.sub(balanceAlice_Before).toString(), expectedCollToBorrower.toString())
     assert.equal(totalCollSP_After.sub(totalCollSP_Before).toString(), expectedCollToSP.toString())
     assert.equal(totalCollDP_After.sub(totalCollDP_Before).toString(), expectedCollToDP.toString())
+    assert.equal(collAliceSurplusPool_After.sub(collAliceSurplusPool_Before).toString(), expectedCollToSurplusPool.toString())
 
     // check the Trove is successfully closed, and removed from sortedList
     const status = (await troveManager.Troves(alice, ZERO_ADDRESS))[th.TROVE_STATUS_INDEX]
@@ -184,15 +184,15 @@ contract('TroveManager', async accounts => {
     assert.isFalse(await sortedTroves.contains(ZERO_ADDRESS, alice))
   })
 
-  it('liquidate(): check default pool when debt(2000) <= SP(3000), any ICR(107%) and BONUS(5%)', async () => {
+  it('liquidate(): when debt(2000) <= SP(3000), any ICR(107%) and BonusToSP(5%), send nothing to default pool because debts in SP is enough to cover vault debt', async () => {
     await openTrove({ ICR: toBN(dec(20, 18)), extraVSTAmount: dec(1, 24), extraParams: { from: whale } })
     await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
     await stabilityPool.provideToSP(dec(3000, 18), { from: whale })
 
-    // set bonus to 5%
-    await vestaParameters.setBONUS(ZERO_ADDRESS, BONUS_5_PERCENT)
-    assert.equal((await vestaParameters.BONUS(ZERO_ADDRESS)).toString(), BONUS_5_PERCENT)
+    // set BonusToSP to 5%
+    await vestaParameters.setBonusToSP(ZERO_ADDRESS, BonusToSP_5_PERCENT)
+    assert.equal((await vestaParameters.BonusToSP(ZERO_ADDRESS)).toString(), BonusToSP_5_PERCENT)
 
     // price drops to 1ETH:107VST, reducing Alice's ICR below MCR(107%)
     await priceFeed.setPrice(ICR_107_PERCENT);

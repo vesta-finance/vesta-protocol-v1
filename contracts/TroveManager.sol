@@ -215,22 +215,13 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		);
 
 		uint256 ICR = getCurrentICR(_asset, _borrower, vestaParams.priceFeed().fetchPrice(_asset));
+		uint256 collPercToSP = 1e18 + vestaParams.BonusToSP(_asset);
 
-		if (ICR > 1e18 + vestaParams.BONUS(_asset)) {
-			uint256 collToBorrower = collToLiquidate
-				.mul(ICR - (1e18 + vestaParams.BONUS(_asset)))
-				.div(ICR);
+		if (ICR > collPercToSP) {
+			uint256 collToBorrower = collToLiquidate.mul(ICR - collPercToSP).div(ICR);
 
-			ContractsCache memory contractsCache = ContractsCache(
-				vestaParams.activePool(),
-				vestaParams.defaultPool(),
-				vstToken,
-				vstaStaking,
-				sortedTroves,
-				collSurplusPool,
-				gasPoolAddress
-			);
-			contractsCache.activePool.sendAsset(_asset, _borrower, collToBorrower);
+			collSurplusPool.accountSurplus(_asset, _borrower, collToBorrower);
+			vestaParams.activePool().sendAsset(_asset, address(collSurplusPool), collToBorrower);
 
 			collToLiquidate = collToLiquidate.sub(collToBorrower);
 		}
