@@ -185,7 +185,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		IActivePool _activePool,
 		IDefaultPool _defaultPool,
 		address _borrower,
-		uint256 _VSTInStabPool
+		uint256 _VSTInStabPool,
+		uint256 _ICR
 	) internal returns (LiquidationValues memory singleLiquidation) {
 		LocalVariables_InnerSingleLiquidateFunction memory vars;
 
@@ -214,14 +215,13 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			singleLiquidation.collGasCompensation
 		);
 
-		uint256 ICR = getCurrentICR(_asset, _borrower, vestaParams.priceFeed().fetchPrice(_asset));
 		uint256 collPercToSP = 1e18 + vestaParams.BonusToSP(_asset);
 
-		if (ICR > collPercToSP) {
-			uint256 collToBorrower = collToLiquidate.mul(ICR - collPercToSP).div(ICR);
+		if (_ICR > collPercToSP) {
+			uint256 collToBorrower = collToLiquidate.mul(_ICR - collPercToSP).div(_ICR);
 
 			collSurplusPool.accountSurplus(_asset, _borrower, collToBorrower);
-			vestaParams.activePool().sendAsset(_asset, address(collSurplusPool), collToBorrower);
+			singleLiquidation.collSurplus = collToBorrower;
 
 			collToLiquidate = collToLiquidate.sub(collToBorrower);
 		}
@@ -648,7 +648,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 					_contractsCache.activePool,
 					_contractsCache.defaultPool,
 					vars.user,
-					vars.remainingVSTInStabPool
+					vars.remainingVSTInStabPool,
+					vars.ICR
 				);
 
 				vars.remainingVSTInStabPool = vars.remainingVSTInStabPool.sub(
@@ -687,7 +688,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 					_activePool,
 					_defaultPool,
 					vars.user,
-					vars.remainingVSTInStabPool
+					vars.remainingVSTInStabPool,
+					vars.ICR
 				);
 
 				vars.remainingVSTInStabPool = vars.remainingVSTInStabPool.sub(
@@ -862,7 +864,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 					_activePool,
 					_defaultPool,
 					vars.user,
-					vars.remainingVSTInStabPool
+					vars.remainingVSTInStabPool,
+					vars.ICR
 				);
 				vars.remainingVSTInStabPool = vars.remainingVSTInStabPool.sub(
 					singleLiquidation.debtToOffset
@@ -897,7 +900,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 					_activePool,
 					_defaultPool,
 					vars.user,
-					vars.remainingVSTInStabPool
+					vars.remainingVSTInStabPool,
+					vars.ICR
 				);
 				vars.remainingVSTInStabPool = vars.remainingVSTInStabPool.sub(
 					singleLiquidation.debtToOffset
