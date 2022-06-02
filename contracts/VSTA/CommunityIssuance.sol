@@ -11,6 +11,7 @@ import "../Interfaces/ICommunityIssuance.sol";
 import "../Dependencies/BaseMath.sol";
 import "../Dependencies/VestaMath.sol";
 import "../Dependencies/CheckContract.sol";
+import "../Dependencies/IVestaWrapper.sol";
 
 contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContract, BaseMath {
 	using SafeMathUpgradeable for uint256;
@@ -318,21 +319,19 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, CheckContr
 		);
 	}
 
-	function updateStabilityPoolTokenRewards(address _pool, address _token) external onlyOwner {
+	function wrapRewardsToken(address _pool, IVestaWrapper _vestaWrappedToken)
+		external
+		onlyOwner
+	{
 		DistributionRewards storage distribution = stabilityPoolRewards[_pool];
-		address currentToken = distribution.rewardToken;
+		IERC20Upgradeable currentToken = IERC20Upgradeable(distribution.rewardToken);
 
-		if (currentToken != address(0)) {
-			IERC20Upgradeable(currentToken).safeTransfer(
-				msg.sender,
-				this.getRewardsLeftInStabilityPool(_pool)
-			);
-		}
+		require(address(currentToken) != address(_vestaWrappedToken), "Already wrapped");
 
-		distribution.rewardToken = _token;
-		distribution.lastUpdateTime = 0;
-		distribution.totalRewardSupply = 0;
-		distribution.totalRewardIssued = 0;
+		currentToken.approve(address(_vestaWrappedToken), type(uint256).max);
+		_vestaWrappedToken.wrap(currentToken.balanceOf(address(this)));
+
+		distribution.rewardToken = address(_vestaWrappedToken);
 	}
 
 	function getRewardsLeftInStabilityPool(address _pool) external view returns (uint256) {
