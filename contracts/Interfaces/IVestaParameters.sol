@@ -15,6 +15,7 @@ interface IVestaParameters {
 
 	event MCRChanged(uint256 oldMCR, uint256 newMCR);
 	event CCRChanged(uint256 oldCCR, uint256 newCCR);
+	event BonusToSPChanged(uint256 oldBonusToSP, uint256 newBonusToSP);
 	event GasCompensationChanged(uint256 oldGasComp, uint256 newGasComp);
 	event MinNetDebtChanged(uint256 oldMinNet, uint256 newMinNet);
 	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
@@ -37,6 +38,9 @@ interface IVestaParameters {
 
 	// Critical system collateral ratio. If the system's total collateral ratio (TCR) falls below the CCR, Recovery Mode is triggered.
 	function CCR(address _collateral) external view returns (uint256);
+
+	// Bonus for SP on liquidation
+	function BonusToSP(address _collateral) external view returns (uint256);
 
 	function VST_GAS_COMPENSATION(address _collateral) external view returns (uint256);
 
@@ -72,6 +76,8 @@ interface IVestaParameters {
 	function setMCR(address _asset, uint256 newMCR) external;
 
 	function setCCR(address _asset, uint256 newCCR) external;
+
+	function setBonusToSP(address _asset, uint256 newBonusToSP) external;
 
 	function sanitizeParameters(address _asset) external;
 
