@@ -81,7 +81,7 @@ contract('TroveManager', async accounts => {
     stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
   })
 
-  it('liquidate(): when debt(2000) > SP(1000) and ICR(103%) <= 100 + BonusToSP(5%), send collateral to stability pool only', async () => {
+  it('liquidate(): when debt(2000) > SP(1000) and ICR(103%) <= 100 + BonusToSP(5%), send collateral to stability pool and Default Pool only', async () => {
     await openTrove({ ICR: toBN(dec(20, 18)), extraParams: { from: whale } })
     await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
