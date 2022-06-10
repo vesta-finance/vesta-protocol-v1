@@ -15,7 +15,6 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 
 	uint256 public constant MCR_DEFAULT = 1100000000000000000; // 110%
 	uint256 public constant CCR_DEFAULT = 1500000000000000000; // 150%
-	uint256 public constant BonusToSP_DEFAULT = 100000000000000000; // 10%
 	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 0.5%
 
 	uint256 public constant BORROWING_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
@@ -29,8 +28,6 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 	mapping(address => uint256) public override MCR;
 	// Critical system collateral ratio. If the system's total collateral ratio (TCR) falls below the CCR, Recovery Mode is triggered.
 	mapping(address => uint256) public override CCR;
-	// Bonus for individual troves
-	mapping(address => uint256) public override BonusToSP;
 
 	mapping(address => uint256) public override VST_GAS_COMPENSATION; // Amount of VST to be locked in gas pool on opening troves
 	mapping(address => uint256) public override MIN_NET_DEBT; // Minimum amount of net VST debt a trove must have
@@ -50,6 +47,10 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 	bool public isInitialized;
 
 	mapping(address => uint256) public override vstMintCap;
+	uint256 public constant BonusToSP_DEFAULT = 100000000000000000; // 10%
+
+	// Bonus for individual troves
+	mapping(address => uint256) public override BonusToSP;
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permissions");
