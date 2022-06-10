@@ -47,6 +47,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 	bool public isInitialized;
 
 	mapping(address => uint256) public override vstMintCap;
+
 	uint256 public constant BonusToSP_DEFAULT = 100000000000000000; // 10%
 
 	// Bonus for individual troves
