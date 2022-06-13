@@ -567,6 +567,14 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		collSurplusPool.claimColl(_asset, msg.sender);
 	}
 
+	function claimCollaterals(address[] calldata _assets) external override {
+		uint256 length = _assets.length;
+
+		for (uint256 i = 0; i < length; ++i) {
+			collSurplusPool.claimColl(_assets[i], msg.sender);
+		}
+	}
+
 	// --- Helper functions ---
 
 	function _triggerBorrowingFee(
