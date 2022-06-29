@@ -62,6 +62,8 @@ async function mainnetDeploy(configParams) {
         }
 
         mdh.saveDeployment(deploymentState)
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
 
@@ -91,7 +93,6 @@ async function mainnetDeploy(configParams) {
   // Connect all core contracts up
   console.log("Connect Core Contracts up");
 
-
   await mdh.connectCoreContractsMainnet(
     vestaCore,
     VSTAContracts,
@@ -117,7 +118,7 @@ async function mainnetDeploy(configParams) {
   await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
   await mdh.logContractObjects(VSTAContracts)
 
-  await giveContractsOwnerships();
+  // await giveContractsOwnerships();
 }
 
 async function addETHCollaterals() {
@@ -132,7 +133,7 @@ async function addETHCollaterals() {
           config.externalAddrs.CHAINLINK_ETHUSD_PROXY,
           ZERO_ADDRESS,
           dec(100_000, 18),
-          toBN(dec(100_000, 18)).div(toBN(4)),
+          toBN(dec(1000, 18)),
           config.REDEMPTION_SAFETY), {
         gasPrice,
       })
@@ -165,7 +166,7 @@ async function addBTCCollaterals() {
           config.externalAddrs.CHAINLINK_BTCUSD_PROXY,
           ZERO_ADDRESS,
           dec(30_000, 18),
-          toBN(dec(30_000, 18)).div(toBN(4)),
+          toBN(dec(500, 18)),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolRenBTC"] = {
@@ -197,7 +198,7 @@ async function addGOHMCollaterals() {
           config.externalAddrs.CHAINLINK_OHM_PROXY,
           config.IsMainnet ? config.externalAddrs.CHAINLINK_OHM_INDEX_PROXY : ZERO_ADDRESS,
           dec(30_000, 18),
-          toBN(dec(30_000, 18)).div(toBN(4)),
+          toBN(dec(500, 18)),
           config.REDEMPTION_SAFETY))
 
     deploymentState["ProxyStabilityPoolOHM"] = {

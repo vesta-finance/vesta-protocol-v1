@@ -76,6 +76,7 @@ contract LockedVSTA is Ownable, CheckContract {
 			"Total Supply goes lower or equal than the claimed total."
 		);
 
+		assignedVSTATokens = assignedVSTATokens.sub(vestingRule.totalSupply.sub(newTotalSupply));
 		vestingRule.totalSupply = newTotalSupply;
 	}
 
