@@ -45,6 +45,9 @@ module.exports = {
           }
         }
       },
+      {
+        version: "0.8.2",
+      }
     ],
   },
   networks: {
@@ -69,13 +72,16 @@ module.exports = {
       ]
     },
     rinkeby: {
-      url: alchemyUrlRinkeby(),
+      url: "https://rinkeby.arbitrum.io/rpc",
       gas: 10000000,  // tx gas limit
       accounts: [getSecret('RINKEBY_DEPLOYER_PRIVATEKEY', '0x0')]
     },
   },
   etherscan: {
-    apiKey: getSecret("ETHERSCAN_API_KEY")
+    apiKey: {
+      arbitrumOne: getSecret("ETHERSCAN_API_KEY"),
+      arbitrumTestnet: getSecret("ETHERSCAN_API_KEY"),
+    }
   },
   mocha: { timeout: 12000000 },
   rpc: {

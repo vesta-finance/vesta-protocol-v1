@@ -78,11 +78,8 @@ contract AdminContract is ProxyAdmin {
 		vestaParameters.priceFeed().addOracle(_asset, _chainlinkOracle, _chainlinkIndex);
 		vestaParameters.setAsDefaultWithRemptionBlock(_asset, redemptionLockInDay);
 
-		address clonedStabilityPool = ClonesUpgradeable.clone(_stabilityPoolImplementation);
-		require(clonedStabilityPool != address(0), "Failed to clone contract");
-
 		TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-			clonedStabilityPool,
+			_stabilityPoolImplementation,
 			address(this),
 			abi.encodeWithSignature(
 				"setAddresses(address,address,address,address,address,address,address)",
