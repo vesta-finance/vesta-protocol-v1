@@ -120,7 +120,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		hasCollateralConfigured[_asset] = true;
 
 		MCR[_asset] = MCR_DEFAULT;
-		CCR[_asset] = CCR_DEFAULT;
+		CCR[_asset] = 0;
 		BonusToSP[_asset] = BonusToSP_DEFAULT;
 		VST_GAS_COMPENSATION[_asset] = VST_GAS_COMPENSATION_DEFAULT;
 		MIN_NET_DEBT[_asset] = MIN_NET_DEBT_DEFAULT;
@@ -171,7 +171,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		public
 		override
 		onlyOwner
-		safeCheck("CCR", _asset, newCCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
+		safeCheck("CCR", _asset, newCCR, 0, 10000000000000000000) /// 0% - 1000%
 	{
 		uint256 oldCCR = CCR[_asset];
 		CCR[_asset] = newCCR;
