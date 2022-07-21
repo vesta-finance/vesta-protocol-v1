@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Interfaces/IDefaultPool.sol";
+import "./Interfaces/IActivePool.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
@@ -86,6 +87,7 @@ contract DefaultPool is OwnableUpgradeable, CheckContract, IDefaultPool {
 		if (_asset != ETH_REF_ADDRESS) {
 			IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
 			IDeposit(activePool).receivedERC20(_asset, _amount);
+			IActivePool(activePool).stake(_asset, msg.sender, _amount);
 		} else {
 			(bool success, ) = activePool.call{ value: _amount }("");
 			require(success, "DefaultPool: sending ETH failed");
