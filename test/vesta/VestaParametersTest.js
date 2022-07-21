@@ -31,7 +31,7 @@ contract('VestaParameters', async accounts => {
   const MCR_SAFETY_MIN = toBN(dec(101, 18)).div(toBN(100));
 
   const CCR_SAFETY_MAX = toBN(dec(1000, 18)).div(toBN(100));
-  const CCR_SAFETY_MIN = toBN(dec(101, 18)).div(toBN(100));
+  const CCR_SAFETY_MIN = toBN(0);
 
   const BonusToSP_SAFETY_MAX = toBN(dec(1000, 18)).div(toBN(100));
   const BonusToSP_SAFETY_MIN = toBN(0);
@@ -233,7 +233,6 @@ contract('VestaParameters', async accounts => {
     it("setCCR: Owner change parameter - Failing SafeCheck", async () => {
       await vestaParameters.sanitizeParameters(ZERO_ADDRESS)
 
-      await assertRevert(vestaParameters.setCCR(ZERO_ADDRESS, CCR_SAFETY_MIN.sub(toBN(1))))
       await assertRevert(vestaParameters.setCCR(ZERO_ADDRESS, CCR_SAFETY_MAX.add(toBN(1))))
     })
 
