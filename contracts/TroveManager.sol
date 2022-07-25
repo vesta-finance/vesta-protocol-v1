@@ -86,7 +86,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 	bool public isInitialized;
 
-	mapping(address => bool) public redemptionWhitelist;
+	mapping(address => bool) public redemptionDisabled;
 	bool public isRedemptionWhitelisted;
 
 	modifier onlyBorrowerOperations() {
@@ -1118,16 +1118,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			getCurrentICR(_asset, nextTrove, _price) < vestaParams.MCR(_asset);
 	}
 
-	function setRedemptionWhitelistStatus(bool _status) external onlyOwner {
-		isRedemptionWhitelisted = _status;
-	}
-
-	function addUserToWhitelistRedemption(address _user) external onlyOwner {
-		redemptionWhitelist[_user] = true;
-	}
-
-	function removeUserFromWhitelistRedemption(address _user) external onlyOwner {
-		delete redemptionWhitelist[_user];
+	function setRedemptionStatusFor(address _asset, bool _disabled) external onlyOwner {
+		redemptionDisabled[_asset] = _disabled;
 	}
 
 	/* Send _VSTamount VST to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
@@ -1161,9 +1153,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _maxIterations,
 		uint256 _maxFeePercentage
 	) external override {
-		if (isRedemptionWhitelisted) {
-			require(redemptionWhitelist[msg.sender], "You are not allowed to use Redemption");
-		}
+		require(!redemptionDisabled[_asset], "Redemption is disabled for this Collateral.");
 
 		require(
 			block.timestamp >= vestaParams.redemptionBlock(_asset),
