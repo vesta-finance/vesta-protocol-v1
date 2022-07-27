@@ -110,9 +110,8 @@
 		"txHash": "0x6a91ca809fda8698aded342fc735c541cc7b992daef94a52435283874d19eec8"
 	},
 	"multiTroveGetter": {
-		"address": "0xfc557427f2df157Cd203ad3d4a5e02EC01107D2b",
-		"txHash": "0x155ba98dac143f691c8150236335e7b38f56e9a894f15b45a081059cc8aac0d4",
-		"verification": "https://rinkeby-explorer.arbitrum.io/address/0xfc557427f2df157Cd203ad3d4a5e02EC01107D2b#code"
+		"address": "0x7aBa52E6A751a6B52C2C331ac0356E02B32f9796",
+		"verification": "https://rinkeby-explorer.arbitrum.io/address/0x7aBa52E6A751a6B52C2C331ac0356E02B32f9796#code"
 	},
 	"AdminProxy": {
 		"address": "0x4408E22454b057B83501feF5CeA25B888470673f"
