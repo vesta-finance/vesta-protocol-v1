@@ -94,9 +94,8 @@
 		"txHash": "0x6d075259e0759d2b265867b6388e42c2b9bb18e7af49c3259f19813956b6c31b"
 	},
 	"multiTroveGetter": {
-		"address": "0x135043Dd73C851787eE6bb257C8e8DB471bef5f7",
-		"txHash": "0x5b9a478f2712c66e88f2423ffe0f4835d99081adfc3227a2a072a4b3ccd97557",
-		"verification": "https://arbiscan.io/address/0x135043Dd73C851787eE6bb257C8e8DB471bef5f7#code"
+		"address": "0x65C44cD0C5bB58A20CD1130687F529Ef0a99CB50",
+		"verification": "https://arbiscan.io/address/0x65C44cD0C5bB58A20CD1130687F529Ef0a99CB50#code"
 	},
 	"ProxyStabilityPoolETH": {
 		"address": "0x64cA46508ad4559E1fD94B3cf48f3164B4a77E42"
