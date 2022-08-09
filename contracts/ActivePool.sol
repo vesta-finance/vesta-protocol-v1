@@ -51,6 +51,9 @@ contract ActivePool is
 	address public constant GMX_TOKEN = 0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a;
 	IVestaGMXStaking public vestaGMXStaking;
 
+	address public constant SGLP = 0x4277f8F2c384827B5273592FF7CeBd9f2C1ac258;
+	IVestaGMXStaking public vestaGLPStaking;
+
 	modifier callerIsBorrowerOperationOrDefaultPool() {
 		require(
 			msg.sender == borrowerOperationsAddress || msg.sender == address(defaultPool),
@@ -119,7 +122,24 @@ contract ActivePool is
 
 	function setVestaGMXStaking(address _vestaGMXStaking) external onlyOwner {
 		checkContract(_vestaGMXStaking);
+
+		if (address(vestaGMXStaking) != address(0)) {
+			IERC20Upgradeable(GMX_TOKEN).safeApprove(address(vestaGMXStaking), 0);
+		}
+
 		vestaGMXStaking = IVestaGMXStaking(_vestaGMXStaking);
+		IERC20Upgradeable(GMX_TOKEN).safeApprove(_vestaGMXStaking, type(uint256).max);
+	}
+
+	function setVestaGLPStaking(address _vestaGLPStaking) external onlyOwner {
+		checkContract(_vestaGLPStaking);
+
+		if (address(vestaGLPStaking) != address(0)) {
+			IERC20Upgradeable(SGLP).safeApprove(address(vestaGLPStaking), 0);
+		}
+
+		vestaGLPStaking = IVestaGMXStaking(_vestaGLPStaking);
+		IERC20Upgradeable(SGLP).safeApprove(_vestaGLPStaking, type(uint256).max);
 	}
 
 	function getAssetBalance(address _asset) external view override returns (uint256) {
@@ -221,19 +241,14 @@ contract ActivePool is
 		address _behalfOf,
 		uint256 _amount
 	) external callerIsBorrowerOperationOrDefaultPool {
-		address vestaGMXStakingAddress = address(vestaGMXStaking);
+		(bool isGMX, bool isGLP) = _isYieldSupported(_asset);
+		IERC20Upgradeable erc20Asset = IERC20Upgradeable(_asset);
 
-		if (vestaGMXStakingAddress == address(0) || _asset != GMX_TOKEN) {
+		if (!isGMX && !isGLP) {
 			return;
 		}
 
-		IERC20Upgradeable erc20Asset = IERC20Upgradeable(_asset);
-
-		if (erc20Asset.allowance(address(this), vestaGMXStakingAddress) < _amount) {
-			erc20Asset.safeApprove(vestaGMXStakingAddress, type(uint256).max);
-		}
-
-		try vestaGMXStaking.stake(_behalfOf, _amount) {} catch {}
+		_yieldWithGMXProtocol(isGMX ? vestaGMXStaking : vestaGLPStaking, _behalfOf, _amount, true);
 	}
 
 	function _unstake(
@@ -241,15 +256,48 @@ contract ActivePool is
 		address _behalfOf,
 		uint256 _amount
 	) internal {
-		if (
-			address(vestaGMXStaking) == address(0) ||
-			vestaGMXStaking.getVaultStake(_behalfOf) == 0 ||
-			_asset != GMX_TOKEN
-		) {
+		(bool isGMX, bool isGLP) = _isYieldSupported(_asset);
+		uint256 totalStaked = 0;
+
+		if (!isGMX && !isGLP) {
 			return;
 		}
 
-		vestaGMXStaking.unstake(_behalfOf, _amount);
+		_yieldWithGMXProtocol(
+			isGMX ? vestaGMXStaking : vestaGLPStaking,
+			_behalfOf,
+			_amount,
+			false
+		);
+	}
+
+	function _isYieldSupported(address _asset) internal view returns (bool isGMX_, bool isGLP_) {
+		isGMX_ = address(vestaGMXStaking) != address(0) && _asset == GMX_TOKEN;
+		isGLP_ = address(vestaGLPStaking) != address(0) && _asset == SGLP;
+
+		return (isGMX_, isGLP_);
+	}
+
+	function _yieldWithGMXProtocol(
+		IVestaGMXStaking _stakingModule,
+		address _behalfOf,
+		uint256 _amount,
+		bool _staking
+	) internal {
+		if (_staking) {
+			try _stakingModule.stake(_behalfOf, _amount) {} catch {}
+			return;
+		}
+
+		uint256 totalStaked = _stakingModule.getVaultStake(_behalfOf);
+
+		if (totalStaked == 0) return;
+
+		if (_amount > totalStaked) {
+			_amount = totalStaked;
+		}
+
+		_stakingModule.unstake(_behalfOf, _amount);
 	}
 
 	receive() external payable callerIsBorrowerOperationOrDefaultPool {
