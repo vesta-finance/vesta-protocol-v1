@@ -89,6 +89,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	mapping(address => bool) public redemptionDisabled;
 	bool public isRedemptionWhitelisted;
 
+	string private constant NITRO_REVERT_MSG = "Safeguard: Nitro Upgrade";
+	bool public nitroSafeguard;
+
 	modifier onlyBorrowerOperations() {
 		require(
 			msg.sender == borrowerOperationsAddress,
@@ -172,6 +175,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		override
 		troveIsActive(_asset, _borrower)
 	{
+		require(!nitroSafeguard, NITRO_REVERT_MSG);
+
 		address[] memory borrowers = new address[](1);
 		borrowers[0] = _borrower;
 		batchLiquidateTroves(_asset, borrowers);
@@ -478,6 +483,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	 * starting from the one with the lowest collateral ratio in the system, and moving upwards
 	 */
 	function liquidateTroves(address _asset, uint256 _n) external override {
+		require(!nitroSafeguard, NITRO_REVERT_MSG);
+
 		ContractsCache memory contractsCache = ContractsCache(
 			vestaParams.activePool(),
 			vestaParams.defaultPool(),
@@ -706,6 +713,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	 * Attempt to liquidate a custom list of troves provided by the caller.
 	 */
 	function batchLiquidateTroves(address _asset, address[] memory _troveArray) public override {
+		require(!nitroSafeguard, NITRO_REVERT_MSG);
 		require(_troveArray.length != 0, "TroveManager: Calldata address array must not be empty");
 
 		IActivePool activePoolCached = vestaParams.activePool();
@@ -1153,6 +1161,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _maxIterations,
 		uint256 _maxFeePercentage
 	) external override {
+		require(!nitroSafeguard, NITRO_REVERT_MSG);
 		require(!redemptionDisabled[_asset], "Redemption is disabled for this Collateral.");
 
 		require(
@@ -1967,6 +1976,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		address _borrower,
 		uint256 _debtIncrease
 	) external override onlyBorrowerOperations returns (uint256) {
+		require(!nitroSafeguard, NITRO_REVERT_MSG);
+
 		uint256 newDebt = Troves[_borrower][_asset].debt.add(_debtIncrease);
 		Troves[_borrower][_asset].debt = newDebt;
 		return newDebt;
@@ -1980,5 +1991,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 newDebt = Troves[_borrower][_asset].debt.sub(_debtDecrease);
 		Troves[_borrower][_asset].debt = newDebt;
 		return newDebt;
+	}
+
+	function setNitroSafeGuard(bool _status) external onlyOwner {
+		nitroSafeguard = _status;
 	}
 }
