@@ -1,0 +1,791 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xedc3bE991a29D094CA802B1C92AE6b7f74B53a19"
+  },
+  "proxies": [
+    {
+      "address": "0x100EC08129e0FD59959df93a8b914944A3BbD5df",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "15d05398ad9b10f7f7450b5198ec9e598c4825de7c2f5b5c4af552b343681117": {
+      "address": "0xE53431F4B8d8f66c7F99230c17EB4C203CD764D3",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:39"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:44"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:31"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:82"
+          },
+          {
+            "label": "vestaParams",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IVestaParameters)12385",
+            "contract": "VestaBase",
+            "src": "contracts\\Dependencies\\VestaBase.sol:21"
+          },
+          {
+            "label": "borrowerOperationsAddress",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:15"
+          },
+          {
+            "label": "stabilityPoolManager",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_contract(IStabilityPoolManager)11136",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:17"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:19"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_contract(ICollSurplusPool)10495",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:21"
+          },
+          {
+            "label": "vstToken",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_contract(IVSTToken)12046",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:23"
+          },
+          {
+            "label": "vstaStaking",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_contract(IVSTAStaking)11980",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:25"
+          },
+          {
+            "label": "sortedTroves",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_contract(ISortedTroves)10902",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:28"
+          },
+          {
+            "label": "baseRate",
+            "offset": 0,
+            "slot": "109",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:45"
+          },
+          {
+            "label": "lastFeeOperationTime",
+            "offset": 0,
+            "slot": "110",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:48"
+          },
+          {
+            "label": "Troves",
+            "offset": 0,
+            "slot": "111",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Trove)11183_storage))",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:50"
+          },
+          {
+            "label": "totalStakes",
+            "offset": 0,
+            "slot": "112",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:52"
+          },
+          {
+            "label": "totalStakesSnapshot",
+            "offset": 0,
+            "slot": "113",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:55"
+          },
+          {
+            "label": "totalCollateralSnapshot",
+            "offset": 0,
+            "slot": "114",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:58"
+          },
+          {
+            "label": "L_ASSETS",
+            "offset": 0,
+            "slot": "115",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:68"
+          },
+          {
+            "label": "L_VSTDebts",
+            "offset": 0,
+            "slot": "116",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:69"
+          },
+          {
+            "label": "rewardSnapshots",
+            "offset": 0,
+            "slot": "117",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)20652_storage))",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:72"
+          },
+          {
+            "label": "TroveOwners",
+            "offset": 0,
+            "slot": "118",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:81"
+          },
+          {
+            "label": "lastETHError_Redistribution",
+            "offset": 0,
+            "slot": "119",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:84"
+          },
+          {
+            "label": "lastVSTDebtError_Redistribution",
+            "offset": 0,
+            "slot": "120",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:85"
+          },
+          {
+            "label": "isInitialized",
+            "offset": 0,
+            "slot": "121",
+            "type": "t_bool",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:87"
+          },
+          {
+            "label": "redemptionDisabled",
+            "offset": 0,
+            "slot": "122",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:89"
+          },
+          {
+            "label": "isRedemptionWhitelisted",
+            "offset": 0,
+            "slot": "123",
+            "type": "t_bool",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:90"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(ICollSurplusPool)10495": {
+            "label": "contract ICollSurplusPool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISortedTroves)10902": {
+            "label": "contract ISortedTroves",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IStabilityPoolManager)11136": {
+            "label": "contract IStabilityPoolManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVSTAStaking)11980": {
+            "label": "contract IVSTAStaking",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVSTToken)12046": {
+            "label": "contract IVSTToken",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVestaParameters)12385": {
+            "label": "contract IVestaParameters",
+            "numberOfBytes": "20"
+          },
+          "t_enum(Status)11169": {
+            "label": "enum ITroveManager.Status",
+            "members": [
+              "nonExistent",
+              "active",
+              "closedByOwner",
+              "closedByLiquidation",
+              "closedByRedemption"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)20652_storage))": {
+            "label": "mapping(address => mapping(address => struct TroveManager.RewardSnapshot))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Trove)11183_storage))": {
+            "label": "mapping(address => mapping(address => struct ITroveManager.Trove))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(RewardSnapshot)20652_storage)": {
+            "label": "mapping(address => struct TroveManager.RewardSnapshot)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Trove)11183_storage)": {
+            "label": "mapping(address => struct ITroveManager.Trove)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(RewardSnapshot)20652_storage": {
+            "label": "struct TroveManager.RewardSnapshot",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "VSTDebt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Trove)11183_storage": {
+            "label": "struct ITroveManager.Trove",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "debt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "coll",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "stake",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(Status)11169",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "arrayIndex",
+                "type": "t_uint128",
+                "offset": 1,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        }
+      }
+    },
+    "383e0d9f68a3b80bd6e52864e722dd1122b704b4fd9bacf63d23119e66282b19": {
+      "address": "0x523BB40F609f49E8Eab0199Fc09802A1a994D812",
+      "txHash": "0xd2613b389079586cfc0250d0225849b58d109dbfc622c89a974f49f42fcdf99d",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:39"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:44"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:31"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:82"
+          },
+          {
+            "label": "vestaParams",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IVestaParameters)12385",
+            "contract": "VestaBase",
+            "src": "contracts\\Dependencies\\VestaBase.sol:21"
+          },
+          {
+            "label": "borrowerOperationsAddress",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:15"
+          },
+          {
+            "label": "stabilityPoolManager",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_contract(IStabilityPoolManager)11136",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:17"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:19"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_contract(ICollSurplusPool)10495",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:21"
+          },
+          {
+            "label": "vstToken",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_contract(IVSTToken)12046",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:23"
+          },
+          {
+            "label": "vstaStaking",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_contract(IVSTAStaking)11980",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:25"
+          },
+          {
+            "label": "sortedTroves",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_contract(ISortedTroves)10902",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:28"
+          },
+          {
+            "label": "baseRate",
+            "offset": 0,
+            "slot": "109",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:45"
+          },
+          {
+            "label": "lastFeeOperationTime",
+            "offset": 0,
+            "slot": "110",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:48"
+          },
+          {
+            "label": "Troves",
+            "offset": 0,
+            "slot": "111",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Trove)11183_storage))",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:50"
+          },
+          {
+            "label": "totalStakes",
+            "offset": 0,
+            "slot": "112",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:52"
+          },
+          {
+            "label": "totalStakesSnapshot",
+            "offset": 0,
+            "slot": "113",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:55"
+          },
+          {
+            "label": "totalCollateralSnapshot",
+            "offset": 0,
+            "slot": "114",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:58"
+          },
+          {
+            "label": "L_ASSETS",
+            "offset": 0,
+            "slot": "115",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:68"
+          },
+          {
+            "label": "L_VSTDebts",
+            "offset": 0,
+            "slot": "116",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:69"
+          },
+          {
+            "label": "rewardSnapshots",
+            "offset": 0,
+            "slot": "117",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)20652_storage))",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:72"
+          },
+          {
+            "label": "TroveOwners",
+            "offset": 0,
+            "slot": "118",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:81"
+          },
+          {
+            "label": "lastETHError_Redistribution",
+            "offset": 0,
+            "slot": "119",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:84"
+          },
+          {
+            "label": "lastVSTDebtError_Redistribution",
+            "offset": 0,
+            "slot": "120",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:85"
+          },
+          {
+            "label": "isInitialized",
+            "offset": 0,
+            "slot": "121",
+            "type": "t_bool",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:87"
+          },
+          {
+            "label": "redemptionDisabled",
+            "offset": 0,
+            "slot": "122",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:89"
+          },
+          {
+            "label": "isRedemptionWhitelisted",
+            "offset": 0,
+            "slot": "123",
+            "type": "t_bool",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:90"
+          },
+          {
+            "label": "nitroSafeguard",
+            "offset": 1,
+            "slot": "123",
+            "type": "t_bool",
+            "contract": "TroveManager",
+            "src": "contracts\\TroveManager.sol:93"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(ICollSurplusPool)10495": {
+            "label": "contract ICollSurplusPool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISortedTroves)10902": {
+            "label": "contract ISortedTroves",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IStabilityPoolManager)11136": {
+            "label": "contract IStabilityPoolManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVSTAStaking)11980": {
+            "label": "contract IVSTAStaking",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVSTToken)12046": {
+            "label": "contract IVSTToken",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVestaParameters)12385": {
+            "label": "contract IVestaParameters",
+            "numberOfBytes": "20"
+          },
+          "t_enum(Status)11169": {
+            "label": "enum ITroveManager.Status",
+            "members": [
+              "nonExistent",
+              "active",
+              "closedByOwner",
+              "closedByLiquidation",
+              "closedByRedemption"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)20652_storage))": {
+            "label": "mapping(address => mapping(address => struct TroveManager.RewardSnapshot))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Trove)11183_storage))": {
+            "label": "mapping(address => mapping(address => struct ITroveManager.Trove))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(RewardSnapshot)20652_storage)": {
+            "label": "mapping(address => struct TroveManager.RewardSnapshot)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Trove)11183_storage)": {
+            "label": "mapping(address => struct ITroveManager.Trove)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(RewardSnapshot)20652_storage": {
+            "label": "struct TroveManager.RewardSnapshot",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "VSTDebt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Trove)11183_storage": {
+            "label": "struct ITroveManager.Trove",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "debt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "coll",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "stake",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(Status)11169",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "arrayIndex",
+                "type": "t_uint128",
+                "offset": 1,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        }
+      }
+    }
+  }
+}
