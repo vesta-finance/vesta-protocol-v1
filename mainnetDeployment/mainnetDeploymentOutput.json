@@ -109,6 +109,9 @@
 	"ProxyStabilityPoolDPX": {
 		"address": "0x0B1Be49dcB62D6cbc27e510361E910a8A30f37A9"
 	},
+	"ProxyStabilityPoolGLP": {
+		"address": "0x2a8b4700e6aa7ea523c3307fe8b57f0fc8fc5e82"
+	},
 	"ProxyAdmin": {
 		"address": "0xedc3bE991a29D094CA802B1C92AE6b7f74B53a19"
 	}
