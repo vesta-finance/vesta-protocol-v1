@@ -51,7 +51,7 @@ contract ActivePool is
 	address public constant GMX_TOKEN = 0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a;
 	IVestaGMXStaking public vestaGMXStaking;
 
-	address public constant SGLP = 0x4277f8F2c384827B5273592FF7CeBd9f2C1ac258;
+	address public constant SGLP = 0x2F546AD4eDD93B956C8999Be404cdCAFde3E89AE;
 	IVestaGMXStaking public vestaGLPStaking;
 
 	modifier callerIsBorrowerOperationOrDefaultPool() {
@@ -242,7 +242,6 @@ contract ActivePool is
 		uint256 _amount
 	) external callerIsBorrowerOperationOrDefaultPool {
 		(bool isGMX, bool isGLP) = _isYieldSupported(_asset);
-		IERC20Upgradeable erc20Asset = IERC20Upgradeable(_asset);
 
 		if (!isGMX && !isGLP) {
 			return;
@@ -257,7 +256,6 @@ contract ActivePool is
 		uint256 _amount
 	) internal {
 		(bool isGMX, bool isGLP) = _isYieldSupported(_asset);
-		uint256 totalStaked = 0;
 
 		if (!isGMX && !isGLP) {
 			return;
@@ -293,6 +291,8 @@ contract ActivePool is
 
 		if (totalStaked == 0) return;
 
+		//This should never happens
+		//The reason we do not revert is to avoid locking someone from closing a vault, making things worst.
 		if (_amount > totalStaked) {
 			_amount = totalStaked;
 		}
