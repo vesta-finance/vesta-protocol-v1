@@ -13,6 +13,7 @@ import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IDeposit.sol";
 import "./Interfaces/IVestaGMXStaking.sol";
+import "./Interfaces/ITroveManager.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
@@ -269,6 +270,42 @@ contract ActivePool is
 		);
 	}
 
+	function retryStake(address _token, address _vaultOwner) external {
+		(bool isGMX, bool isGLP) = _isYieldSupported(_token);
+
+		if (!isGMX && !isGLP) revert("Token cannot be staked");
+
+		(, uint256 coll, , ) = ITroveManager(troveManagerAddress).getEntireDebtAndColl(
+			_token,
+			_vaultOwner
+		);
+
+		IVestaGMXStaking yieldProtocol = isGMX ? vestaGMXStaking : vestaGLPStaking;
+
+		uint256 totalVaultStaked = yieldProtocol.getVaultStake(_vaultOwner);
+
+		if (totalVaultStaked >= coll) {
+			revert("All collateral are staked");
+		}
+
+		_yieldWithGMXProtocol(yieldProtocol, _vaultOwner, coll - totalVaultStaked, true);
+	}
+
+	function isStaked(address _token, address _vaultOwner) external view returns (bool) {
+		(bool isGMX, bool isGLP) = _isYieldSupported(_token);
+
+		if (!isGMX && !isGLP) revert("Token cannot be staked");
+
+		(, uint256 coll, , ) = ITroveManager(troveManagerAddress).getEntireDebtAndColl(
+			_token,
+			_vaultOwner
+		);
+
+		IVestaGMXStaking yieldProtocol = isGMX ? vestaGMXStaking : vestaGLPStaking;
+
+		return (yieldProtocol.getVaultStake(_vaultOwner) >= coll);
+	}
+
 	function _isYieldSupported(address _asset) internal view returns (bool isGMX_, bool isGLP_) {
 		isGMX_ = address(vestaGMXStaking) != address(0) && _asset == GMX_TOKEN;
 		isGLP_ = address(vestaGLPStaking) != address(0) && _asset == SGLP;
@@ -287,14 +324,12 @@ contract ActivePool is
 			return;
 		}
 
-		uint256 totalStaked = _stakingModule.getVaultStake(_behalfOf);
+		uint256 totalVaultStaked = _stakingModule.getVaultStake(_behalfOf);
 
-		if (totalStaked == 0) return;
+		if (totalVaultStaked == 0) return;
 
-		//This should never happens
-		//The reason we do not revert is to avoid locking someone from closing a vault, making things worst.
-		if (_amount > totalStaked) {
-			_amount = totalStaked;
+		if (_amount > totalVaultStaked) {
+			_amount = totalVaultStaked;
 		}
 
 		_stakingModule.unstake(_behalfOf, _amount);
