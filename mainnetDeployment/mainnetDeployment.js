@@ -4,6 +4,7 @@ const { dec } = th
 
 const MainnetDeploymentHelper = require("../utils/mainnetDeploymentHelpers.js")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const { ethers } = require("hardhat")
 const toBN = ethers.BigNumber.from
 
 
@@ -82,7 +83,7 @@ async function mainnetDeploy(configParams) {
   // Deploy core logic contracts
   vestaCore = await mdh.deployLiquityCoreMainnet(deploymentState, ADMIN_WALLET)
 
-  await mdh.logContractObjects(vestaCore)
+  // await mdh.logContractObjects(vestaCore)
 
   // Deploy VSTA Contracts
   VSTAContracts = await mdh.deployVSTAContractsMainnet(
@@ -90,36 +91,95 @@ async function mainnetDeploy(configParams) {
     deploymentState,
   )
 
-  // Connect all core contracts up
-  console.log("Connect Core Contracts up");
+  const eth = "0x0000000000000000000000000000000000000000";
+  const gohm = "0x8d9ba570d6cb60c7e3e0f31343efe75ab8e65fb1";
+  const user = "0xab9e8f7dcf82e40cbe183784dcf3e223f2bf130f";
+  
+  const filter = vestaCore.borrowerOperations.filters.TroveUpdated(gohm, user);
+  const events = await vestaCore.borrowerOperations.queryFilter(filter);
 
-  await mdh.connectCoreContractsMainnet(
-    vestaCore,
-    VSTAContracts,
-    config.externalAddrs.CHAINLINK_FLAG_HEALTH,
-  )
+  // const logs = await getEthersLog(vestaCore.troveManager, filter);
+  
 
-  console.log("Connect VSTA Contract to Core");
-  await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
+  console.log(events.sort(sortByBlock()));
+
+  throw "ENDED";
+
+  // // Connect all core contracts up
+  // console.log("Connect Core Contracts up");
+
+  // await mdh.connectCoreContractsMainnet(
+  //   vestaCore,
+  //   VSTAContracts,
+  //   config.externalAddrs.CHAINLINK_FLAG_HEALTH,
+  // )
+
+  // console.log("Connect VSTA Contract to Core");
+  // await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
 
 
-  console.log("Adding Collaterals");
-  const allowance = (await VSTAContracts.VSTAToken.allowance(deployerWallet.address, VSTAContracts.communityIssuance.address));
-  if (allowance == 0)
-    await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
+  // console.log("Adding Collaterals");
+  // const allowance = (await VSTAContracts.VSTAToken.allowance(deployerWallet.address, VSTAContracts.communityIssuance.address));
+  // if (allowance == 0)
+  //   await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
 
 
-  await addETHCollaterals();
-  await addBTCCollaterals();
-  await addGOHMCollaterals();
+  // await addETHCollaterals();
+  // await addBTCCollaterals();
+  // await addGOHMCollaterals();
 
-  mdh.saveDeployment(deploymentState)
+  // mdh.saveDeployment(deploymentState)
 
-  await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
-  await mdh.logContractObjects(VSTAContracts)
+  // await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
+  // await mdh.logContractObjects(VSTAContracts)
 
-  // await giveContractsOwnerships();
+  // // await giveContractsOwnerships();
 }
+
+function sortByBlock(order = 'asc') {
+    return function innerSort(a, b) {
+    const varA = a["blockNumber"];
+    const varB = b["blockNumber"];
+
+    let comparison = 0;
+    if (varA > varB) {
+      comparison = 1;
+    } else if (varA < varB) {
+      comparison = -1;
+    }
+    return (
+      (order === 'desc') ? (comparison * -1) : comparison
+    );
+  };
+}
+
+
+const parseEtherjsLog = (parsed) => {
+    let parsedEvent = {}
+    for (let i = 0; i < parsed.args.length; i++) {
+        const input = parsed.eventFragment.inputs[i]
+        const arg = parsed.args[i]
+        const newObj = {...input, ...{"value": arg}}
+        parsedEvent[input["name"]] = newObj
+    }
+    return parsedEvent
+}
+
+const getEthersLog = async (contract, filter) => {
+    if (contract === undefined || filter === undefined ) return
+    const events = await contract.queryFilter(filter)
+    if (events.length === 0) return
+    let parsedEvents = []
+    for (let event of events) {
+        const ethersParsed = contract.interface.parseLog(event)
+        const customParsed = parseEtherjsLog(ethersParsed)
+        parsedEvents.push(customParsed)
+    }
+    return parsedEvents
+}
+
+
+
 
 async function addETHCollaterals() {
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS)) == ZERO_ADDRESS) {
