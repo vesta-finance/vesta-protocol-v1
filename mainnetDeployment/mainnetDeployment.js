@@ -80,10 +80,15 @@ async function mainnetDeploy(configParams) {
     return;
   }
 
+
+  await mdh.loadOrDeploy(ethers.getContractFactory("DefaultPool"), "DP2", deploymentState, false);
+  await mdh.loadOrDeploy(ethers.getContractFactory("TroveManager"), "TM2", deploymentState, false);
+  await mdh.loadOrDeploy(ethers.getContractFactory("TroveRedemptor"), "TroveRdemp", deploymentState, true);
+
   // Deploy core logic contracts
   vestaCore = await mdh.deployLiquityCoreMainnet(deploymentState, ADMIN_WALLET)
 
-  // await mdh.logContractObjects(vestaCore)
+  await mdh.logContractObjects(vestaCore)
 
   // Deploy VSTA Contracts
   VSTAContracts = await mdh.deployVSTAContractsMainnet(
@@ -91,49 +96,35 @@ async function mainnetDeploy(configParams) {
     deploymentState,
   )
 
-  const eth = "0x0000000000000000000000000000000000000000";
-  const gohm = "0x8d9ba570d6cb60c7e3e0f31343efe75ab8e65fb1";
-  const user = "0xab9e8f7dcf82e40cbe183784dcf3e223f2bf130f";
-  
-  const filter = vestaCore.borrowerOperations.filters.TroveUpdated(gohm, user);
-  const events = await vestaCore.borrowerOperations.queryFilter(filter);
+  // Connect all core contracts up
+  console.log("Connect Core Contracts up");
 
-  // const logs = await getEthersLog(vestaCore.troveManager, filter);
-  
+  await mdh.connectCoreContractsMainnet(
+    vestaCore,
+    VSTAContracts,
+    config.externalAddrs.CHAINLINK_FLAG_HEALTH,
+  )
 
-  console.log(events.sort(sortByBlock()));
-
-  throw "ENDED";
-
-  // // Connect all core contracts up
-  // console.log("Connect Core Contracts up");
-
-  // await mdh.connectCoreContractsMainnet(
-  //   vestaCore,
-  //   VSTAContracts,
-  //   config.externalAddrs.CHAINLINK_FLAG_HEALTH,
-  // )
-
-  // console.log("Connect VSTA Contract to Core");
-  // await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
+  console.log("Connect VSTA Contract to Core");
+  await mdh.connectVSTAContractsToCoreMainnet(VSTAContracts, vestaCore, TREASURY_WALLET)
 
 
-  // console.log("Adding Collaterals");
-  // const allowance = (await VSTAContracts.VSTAToken.allowance(deployerWallet.address, VSTAContracts.communityIssuance.address));
-  // if (allowance == 0)
-  //   await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
+  console.log("Adding Collaterals");
+  const allowance = (await VSTAContracts.VSTAToken.allowance(deployerWallet.address, VSTAContracts.communityIssuance.address));
+  if (allowance == 0)
+    await VSTAContracts.VSTAToken.approve(VSTAContracts.communityIssuance.address, ethers.constants.MaxUint256)
 
 
-  // await addETHCollaterals();
-  // await addBTCCollaterals();
-  // await addGOHMCollaterals();
+  await addETHCollaterals();
+  await addBTCCollaterals();
+  await addGOHMCollaterals();
 
-  // mdh.saveDeployment(deploymentState)
+  mdh.saveDeployment(deploymentState)
 
-  // await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
-  // await mdh.logContractObjects(VSTAContracts)
+  await mdh.deployMultiTroveGetterMainnet(vestaCore, deploymentState)
+  await mdh.logContractObjects(VSTAContracts)
 
-  // // await giveContractsOwnerships();
+  // await giveContractsOwnerships();
 }
 
 function sortByBlock(order = 'asc') {
