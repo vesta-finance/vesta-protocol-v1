@@ -655,6 +655,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		if (_isCollIncrease) {
 			_activePoolAddColl(_asset, _activePool, _collChange);
 		} else {
+			_activePool.unstake(_asset, _borrower, _collChange);
 			_activePool.sendAsset(_asset, _borrower, _collChange);
 		}
 	}
