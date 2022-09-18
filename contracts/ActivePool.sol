@@ -151,6 +151,14 @@ contract ActivePool is
 		return VSTDebts[_asset];
 	}
 
+	function unstake(
+		address _asset,
+		address _account,
+		uint256 _amount
+	) external callerIsBOorTroveMorSP {
+		_unstake(_asset, _account, _amount);
+	}
+
 	function sendAsset(
 		address _asset,
 		address _account,
@@ -164,8 +172,6 @@ contract ActivePool is
 		if (safetyTransferAmount == 0) return;
 
 		assetsBalance[_asset] -= _amount;
-
-		_unstake(_asset, _account, _amount);
 
 		if (_asset != ETH_REF_ADDRESS) {
 			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);

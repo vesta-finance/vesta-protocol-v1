@@ -56,7 +56,7 @@ contract TroveManagerTester is TroveManager {
 		view
 		returns (uint256)
 	{
-		return _getRedemptionFee(_asset, _ETHDrawn);
+		// return _getRedemptionFee(_asset, _ETHDrawn);
 	}
 
 	function getActualDebtFromComposite(address _asset, uint256 _debtVal)

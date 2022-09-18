@@ -22,4 +22,10 @@ interface IActivePool is IPool {
 		address _behalfOf,
 		uint256 _amount
 	) external;
+
+	function unstake(
+		address _asset,
+		address _account,
+		uint256 _amount
+	) external;
 }

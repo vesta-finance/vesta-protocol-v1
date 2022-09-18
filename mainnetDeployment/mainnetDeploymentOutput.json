@@ -118,5 +118,9 @@
   "StabilityPoolReader": {
     "address": "0x1Ce60E3950468bCF65cd71a8db7810d93Ff615dC",
     "txHash": "0x165bc2312f64ba5da5babf203dfc99fcde1ec8eff689fc35db2eabd827cbc3ad"
+  },
+  "TroveRedemption": {
+    "address": "0x3F2B806932740497D4e2cAE31000b2eE8B1A4a72",
+    "txHash": "0x70fb9b4dcf1a1fc95ef26b215cc8ac8f979904db01b11042f6e2e93ad03d1a4e"
   }
 }

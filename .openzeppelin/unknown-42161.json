@@ -11,6 +11,11 @@
     {
       "address": "0xBE3dE7fB9Aa09B3Fa931868Fb49d5BA5fEe2eBb1",
       "kind": "transparent"
+    },
+    {
+      "address": "0x3F2B806932740497D4e2cAE31000b2eE8B1A4a72",
+      "txHash": "0x70fb9b4dcf1a1fc95ef26b215cc8ac8f979904db01b11042f6e2e93ad03d1a4e",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1160,6 +1165,129 @@
           "t_mapping(t_address,t_uint256)": {
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "04bec9d61b580e25b569363839339a3250ae785bc02606c796bd6b191596221a": {
+      "address": "0x1c6488CA2823dBC35C53ec89eCea2AFC0863fcF6",
+      "txHash": "0x1818032072625231089280f6f5848de3e69468a216ef14864993c22e12e57e40",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "vestaParams",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IVestaParameters)4961",
+            "contract": "VestaBase",
+            "src": "contracts/Dependencies/VestaBase.sol:21"
+          },
+          {
+            "label": "troveManager",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_contract(TroveManager)10702",
+            "contract": "TroveRedemptor",
+            "src": "contracts/TroveRedemptor.sol:15"
+          },
+          {
+            "label": "sortedTroves",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_contract(ISortedTroves)3538",
+            "contract": "TroveRedemptor",
+            "src": "contracts/TroveRedemptor.sol:16"
+          },
+          {
+            "label": "vstToken",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_contract(IVSTToken)4649",
+            "contract": "TroveRedemptor",
+            "src": "contracts/TroveRedemptor.sol:17"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(ISortedTroves)3538": {
+            "label": "contract ISortedTroves",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVSTToken)4649": {
+            "label": "contract IVSTToken",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVestaParameters)4961": {
+            "label": "contract IVestaParameters",
+            "numberOfBytes": "20"
+          },
+          "t_contract(TroveManager)10702": {
+            "label": "contract TroveManager",
+            "numberOfBytes": "20"
           },
           "t_uint256": {
             "label": "uint256",

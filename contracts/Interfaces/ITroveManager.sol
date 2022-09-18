@@ -196,17 +196,6 @@ interface ITroveManager is IVestaBase {
 
 	// --- Functions ---
 
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _stabilityPoolAddress,
-		address _gasPoolAddress,
-		address _collSurplusPoolAddress,
-		address _vstTokenAddress,
-		address _sortedTrovesAddress,
-		address _VSTAStakingAddress,
-		address _vestaParamsAddress
-	) external;
-
 	function stabilityPoolManager() external view returns (IStabilityPoolManager);
 
 	function vstToken() external view returns (IVSTToken);
