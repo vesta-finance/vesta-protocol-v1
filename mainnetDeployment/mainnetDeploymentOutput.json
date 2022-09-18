@@ -118,5 +118,25 @@
   "StabilityPoolReader": {
     "address": "0x1Ce60E3950468bCF65cd71a8db7810d93Ff615dC",
     "txHash": "0x165bc2312f64ba5da5babf203dfc99fcde1ec8eff689fc35db2eabd827cbc3ad"
+  },
+  "DP2": {
+    "address": "0xF85283226d70C03b552CbEeb9b6b9eF39F745190",
+    "txHash": "0xdc58a5130bdab64bd2c783d80a35cc0ac82bcbe6c2ca130bb73a2c95910d7446"
+  },
+  "TroveRedemption": {
+    "address": "0x3F2B806932740497D4e2cAE31000b2eE8B1A4a72",
+    "txHash": "0x70fb9b4dcf1a1fc95ef26b215cc8ac8f979904db01b11042f6e2e93ad03d1a4e"
+  },
+  "TM2": {
+    "address": "0xF1E952ce4EDba250E6Fe801DF93fDa101e3422bE",
+    "txHash": "0x16807bca9170cf39175796f30650c2a24ddb01929e6f3b89ed4cd19801d1e013"
+  },
+  "AC2": {
+    "address": "0xe26d07AA650c6fBc7A859d15064f2Cb14bd732F2",
+    "txHash": "0x5403358bd468815b583ca43a818acf3df4b714745f19b61a1de586871f342ccb"
+  },
+  "BOs2": {
+    "address": "0x207eCc97E7a5f51F7E59FC042e913A4c4F67b364",
+    "txHash": "0x27ae4bb20cb9c227928f1b34f847c47d7d39946e00dab9655d19aa4a28fee42f"
   }
 }

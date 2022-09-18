@@ -30,48 +30,6 @@ contract BorrowerOperationsScript is CheckContract {
 		);
 	}
 
-	function addColl(
-		address _asset,
-		uint256 _assetAmountSent,
-		address _upperHint,
-		address _lowerHint
-	) external payable {
-		borrowerOperations.addColl{ value: getValueOrArg(_asset, _assetAmountSent) }(
-			_asset,
-			_assetAmountSent,
-			_upperHint,
-			_lowerHint
-		);
-	}
-
-	function withdrawColl(
-		address _asset,
-		uint256 _amount,
-		address _upperHint,
-		address _lowerHint
-	) external {
-		borrowerOperations.withdrawColl(_asset, _amount, _upperHint, _lowerHint);
-	}
-
-	function withdrawVST(
-		address _asset,
-		uint256 _maxFee,
-		uint256 _amount,
-		address _upperHint,
-		address _lowerHint
-	) external {
-		borrowerOperations.withdrawVST(_asset, _maxFee, _amount, _upperHint, _lowerHint);
-	}
-
-	function repayVST(
-		address _asset,
-		uint256 _amount,
-		address _upperHint,
-		address _lowerHint
-	) external {
-		borrowerOperations.repayVST(_asset, _amount, _upperHint, _lowerHint);
-	}
-
 	function closeTrove(address _asset) external {
 		borrowerOperations.closeTrove(_asset);
 	}

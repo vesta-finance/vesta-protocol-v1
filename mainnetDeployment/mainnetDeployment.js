@@ -80,11 +80,6 @@ async function mainnetDeploy(configParams) {
     return;
   }
 
-
-  await mdh.loadOrDeploy(ethers.getContractFactory("DefaultPool"), "DP2", deploymentState, false);
-  await mdh.loadOrDeploy(ethers.getContractFactory("TroveManager"), "TM2", deploymentState, false);
-  await mdh.loadOrDeploy(ethers.getContractFactory("TroveRedemptor"), "TroveRdemp", deploymentState, true);
-
   // Deploy core logic contracts
   vestaCore = await mdh.deployLiquityCoreMainnet(deploymentState, ADMIN_WALLET)
 
@@ -126,51 +121,6 @@ async function mainnetDeploy(configParams) {
 
   // await giveContractsOwnerships();
 }
-
-function sortByBlock(order = 'asc') {
-    return function innerSort(a, b) {
-    const varA = a["blockNumber"];
-    const varB = b["blockNumber"];
-
-    let comparison = 0;
-    if (varA > varB) {
-      comparison = 1;
-    } else if (varA < varB) {
-      comparison = -1;
-    }
-    return (
-      (order === 'desc') ? (comparison * -1) : comparison
-    );
-  };
-}
-
-
-const parseEtherjsLog = (parsed) => {
-    let parsedEvent = {}
-    for (let i = 0; i < parsed.args.length; i++) {
-        const input = parsed.eventFragment.inputs[i]
-        const arg = parsed.args[i]
-        const newObj = {...input, ...{"value": arg}}
-        parsedEvent[input["name"]] = newObj
-    }
-    return parsedEvent
-}
-
-const getEthersLog = async (contract, filter) => {
-    if (contract === undefined || filter === undefined ) return
-    const events = await contract.queryFilter(filter)
-    if (events.length === 0) return
-    let parsedEvents = []
-    for (let event of events) {
-        const ethersParsed = contract.interface.parseLog(event)
-        const customParsed = parseEtherjsLog(ethersParsed)
-        parsedEvents.push(customParsed)
-    }
-    return parsedEvents
-}
-
-
-
 
 async function addETHCollaterals() {
   if ((await vestaCore.stabilityPoolManager.unsafeGetAssetStabilityPool(ZERO_ADDRESS)) == ZERO_ADDRESS) {

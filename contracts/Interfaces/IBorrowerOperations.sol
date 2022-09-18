@@ -4,7 +4,49 @@ pragma solidity ^0.8.10;
 
 // Common interface for the Trove Manager.
 interface IBorrowerOperations {
-	// --- Events ---
+	struct LocalVariables_adjustTrove {
+		address asset;
+		uint256 price;
+		uint256 collChange;
+		uint256 netDebtChange;
+		bool isCollIncrease;
+		uint256 debt;
+		uint256 coll;
+		uint256 oldICR;
+		uint256 newICR;
+		uint256 newTCR;
+		uint256 VSTFee;
+		uint256 newDebt;
+		uint256 newColl;
+		uint256 stake;
+	}
+
+	struct LocalVariables_openTrove {
+		address asset;
+		uint256 price;
+		uint256 VSTFee;
+		uint256 netDebt;
+		uint256 compositeDebt;
+		uint256 ICR;
+		uint256 NICR;
+		uint256 stake;
+		uint256 arrayIndex;
+	}
+
+	enum BorrowerOperation {
+		openTrove,
+		closeTrove,
+		adjustTrove
+	}
+
+	event TroveUpdated(
+		address indexed _asset,
+		address indexed _borrower,
+		uint256 _debt,
+		uint256 _coll,
+		uint256 stake,
+		BorrowerOperation operation
+	);
 
 	event TroveManagerAddressChanged(address _newTroveManagerAddress);
 	event StabilityPoolAddressChanged(address _stabilityPoolAddress);
@@ -29,31 +71,11 @@ interface IBorrowerOperations {
 		uint256 _VSTFee
 	);
 
-	// --- Functions ---
-
-	function setAddresses(
-		address _troveManagerAddress,
-		address _stabilityPoolAddress,
-		address _gasPoolAddress,
-		address _collSurplusPoolAddress,
-		address _sortedTrovesAddress,
-		address _vstTokenAddress,
-		address _VSTAStakingAddress,
-		address _vestaParamsAddress
-	) external;
-
 	function openTrove(
 		address _asset,
 		uint256 _tokenAmount,
 		uint256 _maxFee,
 		uint256 _VSTAmount,
-		address _upperHint,
-		address _lowerHint
-	) external payable;
-
-	function addColl(
-		address _asset,
-		uint256 _assetSent,
 		address _upperHint,
 		address _lowerHint
 	) external payable;
@@ -65,28 +87,6 @@ interface IBorrowerOperations {
 		address _upperHint,
 		address _lowerHint
 	) external payable;
-
-	function withdrawColl(
-		address _asset,
-		uint256 _amount,
-		address _upperHint,
-		address _lowerHint
-	) external;
-
-	function withdrawVST(
-		address _asset,
-		uint256 _maxFee,
-		uint256 _amount,
-		address _upperHint,
-		address _lowerHint
-	) external;
-
-	function repayVST(
-		address _asset,
-		uint256 _amount,
-		address _upperHint,
-		address _lowerHint
-	) external;
 
 	function closeTrove(address _asset) external;
 

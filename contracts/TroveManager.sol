@@ -585,6 +585,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 	// --- Redemption functions ---
 
+	function setRedemptionContract(address _redemption) external onlyOwner {
+		redemptor = IRedemption(_redemption);
+	}
+
 	function redeemCollateral(
 		address _asset,
 		uint256 _VSTamount,

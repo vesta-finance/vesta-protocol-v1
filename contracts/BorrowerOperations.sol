@@ -41,104 +41,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	bool public isInitialized;
 
-	/* --- Variable container structs  ---
-
-    Used to hold, return and assign variables inside a function, in order to avoid the error:
-    "CompilerError: Stack too deep". */
-
-	struct LocalVariables_adjustTrove {
-		address asset;
-		uint256 price;
-		uint256 collChange;
-		uint256 netDebtChange;
-		bool isCollIncrease;
-		uint256 debt;
-		uint256 coll;
-		uint256 oldICR;
-		uint256 newICR;
-		uint256 newTCR;
-		uint256 VSTFee;
-		uint256 newDebt;
-		uint256 newColl;
-		uint256 stake;
-	}
-
-	struct LocalVariables_openTrove {
-		address asset;
-		uint256 price;
-		uint256 VSTFee;
-		uint256 netDebt;
-		uint256 compositeDebt;
-		uint256 ICR;
-		uint256 NICR;
-		uint256 stake;
-		uint256 arrayIndex;
-	}
-
 	struct ContractsCache {
 		ITroveManager troveManager;
 		IActivePool activePool;
 		IVSTToken VSTToken;
-	}
-
-	enum BorrowerOperation {
-		openTrove,
-		closeTrove,
-		adjustTrove
-	}
-
-	event TroveUpdated(
-		address indexed _asset,
-		address indexed _borrower,
-		uint256 _debt,
-		uint256 _coll,
-		uint256 stake,
-		BorrowerOperation operation
-	);
-
-	// --- Dependency setters ---
-
-	function setAddresses(
-		address _troveManagerAddress,
-		address _stabilityPoolManagerAddress,
-		address _gasPoolAddress,
-		address _collSurplusPoolAddress,
-		address _sortedTrovesAddress,
-		address _vstTokenAddress,
-		address _VSTAStakingAddress,
-		address _vestaParamsAddress
-	) external override initializer {
-		require(!isInitialized, "Already initialized");
-		checkContract(_troveManagerAddress);
-		checkContract(_stabilityPoolManagerAddress);
-		checkContract(_gasPoolAddress);
-		checkContract(_collSurplusPoolAddress);
-		checkContract(_sortedTrovesAddress);
-		checkContract(_vstTokenAddress);
-		checkContract(_VSTAStakingAddress);
-		checkContract(_vestaParamsAddress);
-		isInitialized = true;
-
-		__Ownable_init();
-
-		troveManager = ITroveManager(_troveManagerAddress);
-		stabilityPoolManager = IStabilityPoolManager(_stabilityPoolManagerAddress);
-		gasPoolAddress = _gasPoolAddress;
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		sortedTroves = ISortedTroves(_sortedTrovesAddress);
-		VSTToken = IVSTToken(_vstTokenAddress);
-		VSTAStakingAddress = _VSTAStakingAddress;
-		VSTAStaking = IVSTAStaking(_VSTAStakingAddress);
-
-		setVestaParameters(_vestaParamsAddress);
-
-		emit TroveManagerAddressChanged(_troveManagerAddress);
-		emit StabilityPoolAddressChanged(_stabilityPoolManagerAddress);
-		emit GasPoolAddressChanged(_gasPoolAddress);
-		emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
-		emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-		emit VSTTokenAddressChanged(_vstTokenAddress);
-		emit VSTAStakingAddressChanged(_VSTAStakingAddress);
 	}
 
 	// --- Borrower Trove Operations ---
@@ -163,24 +69,21 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 		_tokenAmount = getMethodValue(vars.asset, _tokenAmount, false);
 		vars.price = vestaParams.priceFeed().fetchPrice(vars.asset);
-		bool isRecoveryMode = _checkRecoveryMode(vars.asset, vars.price);
 
-		_requireValidMaxFeePercentage(vars.asset, _maxFeePercentage, isRecoveryMode);
+		_requireValidMaxFeePercentage(vars.asset, _maxFeePercentage);
 		_requireTroveisNotActive(vars.asset, contractsCache.troveManager, msg.sender);
 
 		vars.VSTFee;
 		vars.netDebt = _VSTAmount;
 
-		if (!isRecoveryMode) {
-			vars.VSTFee = _triggerBorrowingFee(
-				vars.asset,
-				contractsCache.troveManager,
-				contractsCache.VSTToken,
-				_VSTAmount,
-				_maxFeePercentage
-			);
-			vars.netDebt = vars.netDebt.add(vars.VSTFee);
-		}
+		vars.VSTFee = _triggerBorrowingFee(
+			vars.asset,
+			contractsCache.troveManager,
+			contractsCache.VSTToken,
+			_VSTAmount,
+			_maxFeePercentage
+		);
+		vars.netDebt = vars.netDebt.add(vars.VSTFee);
 		_requireAtLeastMinNetDebt(vars.asset, vars.netDebt);
 
 		// ICR is based on the composite debt, i.e. the requested VST amount + VST borrowing fee + VST gas comp.
@@ -192,20 +95,16 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.ICR = VestaMath._computeCR(_tokenAmount, vars.compositeDebt, vars.price);
 		vars.NICR = VestaMath._computeNominalCR(_tokenAmount, vars.compositeDebt);
 
-		if (isRecoveryMode) {
-			_requireICRisAboveCCR(vars.asset, vars.ICR);
-		} else {
-			_requireICRisAboveMCR(vars.asset, vars.ICR);
-			uint256 newTCR = _getNewTCRFromTroveChange(
-				vars.asset,
-				_tokenAmount,
-				true,
-				vars.compositeDebt,
-				true,
-				vars.price
-			); // bools: coll increase, debt increase
-			_requireNewTCRisAboveCCR(vars.asset, newTCR);
-		}
+		_requireICRisAboveMCR(vars.asset, vars.ICR);
+		uint256 newTCR = _getNewTCRFromTroveChange(
+			vars.asset,
+			_tokenAmount,
+			true,
+			vars.compositeDebt,
+			true,
+			vars.price
+		); // bools: coll increase, debt increase
+		_requireNewTCRisAboveCCR(vars.asset, newTCR);
 
 		// Set the trove struct's properties
 		contractsCache.troveManager.setTroveStatus(vars.asset, msg.sender, 1);
@@ -250,26 +149,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		emit VSTBorrowingFeePaid(vars.asset, msg.sender, vars.VSTFee);
 	}
 
-	// Send ETH as collateral to a trove
-	function addColl(
-		address _asset,
-		uint256 _assetSent,
-		address _upperHint,
-		address _lowerHint
-	) external payable override {
-		_adjustTrove(
-			_asset,
-			getMethodValue(_asset, _assetSent, false),
-			msg.sender,
-			0,
-			0,
-			false,
-			_upperHint,
-			_lowerHint,
-			0
-		);
-	}
-
 	// Send ETH as collateral to a trove. Called by only the Stability Pool.
 	function moveETHGainToTrove(
 		address _asset,
@@ -278,7 +157,11 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		address _upperHint,
 		address _lowerHint
 	) external payable override {
-		_requireCallerIsStabilityPool();
+		require(
+			stabilityPoolManager.isStabilityPool(msg.sender),
+			"BorrowerOps: Caller is not Stability Pool"
+		);
+
 		_adjustTrove(
 			_asset,
 			getMethodValue(_asset, _amountMoved, false),
@@ -290,47 +173,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			_lowerHint,
 			0
 		);
-	}
-
-	// Withdraw ETH collateral from a trove
-	function withdrawColl(
-		address _asset,
-		uint256 _collWithdrawal,
-		address _upperHint,
-		address _lowerHint
-	) external override {
-		_adjustTrove(_asset, 0, msg.sender, _collWithdrawal, 0, false, _upperHint, _lowerHint, 0);
-	}
-
-	// Withdraw VST tokens from a trove: mint new VST tokens to the owner, and increase the trove's debt accordingly
-	function withdrawVST(
-		address _asset,
-		uint256 _maxFeePercentage,
-		uint256 _VSTAmount,
-		address _upperHint,
-		address _lowerHint
-	) external override {
-		_adjustTrove(
-			_asset,
-			0,
-			msg.sender,
-			0,
-			_VSTAmount,
-			true,
-			_upperHint,
-			_lowerHint,
-			_maxFeePercentage
-		);
-	}
-
-	// Repay VST tokens to a Trove: Burn the repaid VST tokens, and reduce the trove's debt accordingly
-	function repayVST(
-		address _asset,
-		uint256 _VSTAmount,
-		address _upperHint,
-		address _lowerHint
-	) external override {
-		_adjustTrove(_asset, 0, msg.sender, 0, _VSTAmount, false, _upperHint, _lowerHint, 0);
 	}
 
 	function adjustTrove(
@@ -392,13 +234,16 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 
 		vars.price = vestaParams.priceFeed().fetchPrice(vars.asset);
-		bool isRecoveryMode = _checkRecoveryMode(vars.asset, vars.price);
 
 		if (_isDebtIncrease) {
-			_requireValidMaxFeePercentage(vars.asset, _maxFeePercentage, isRecoveryMode);
+			_requireValidMaxFeePercentage(vars.asset, _maxFeePercentage);
 			_requireNonZeroDebtChange(_VSTChange);
 		}
-		_requireSingularCollChange(_collWithdrawal, _assetSent);
+		require(
+			_collWithdrawal == 0 || _assetSent == 0,
+			"BorrowerOperations: Cannot withdraw and add coll"
+		);
+
 		_requireNonZeroAdjustment(_collWithdrawal, _VSTChange, _assetSent);
 		_requireTroveisActive(vars.asset, contractsCache.troveManager, _borrower);
 
@@ -416,7 +261,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.netDebtChange = _VSTChange;
 
 		// If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
-		if (_isDebtIncrease && !isRecoveryMode) {
+		if (_isDebtIncrease) {
 			vars.VSTFee = _triggerBorrowingFee(
 				vars.asset,
 				contractsCache.troveManager,
@@ -447,13 +292,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 
 		// Check the adjustment satisfies all conditions for the current system mode
-		_requireValidAdjustmentInCurrentMode(
-			vars.asset,
-			isRecoveryMode,
-			_collWithdrawal,
-			_isDebtIncrease,
-			vars
-		);
+		_requireValidAdjustmentInCurrentMode(vars.asset, _isDebtIncrease, vars);
 
 		// When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough VST
 		if (!_isDebtIncrease && _VSTChange > 0) {
@@ -461,7 +300,12 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 				vars.asset,
 				_getNetDebt(vars.asset, vars.debt).sub(vars.netDebtChange)
 			);
-			_requireValidVSTRepayment(vars.asset, vars.debt, vars.netDebtChange);
+
+			require(
+				vars.netDebtChange <= vars.debt.sub(vestaParams.VST_GAS_COMPENSATION(vars.asset)),
+				"BorrowerOps: Amount repaid must not be larger than the Trove's debt"
+			);
+
 			_requireSufficientVSTBalance(contractsCache.VSTToken, _borrower, vars.netDebtChange);
 		}
 
@@ -708,16 +552,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	// --- 'Require' wrapper functions ---
 
-	function _requireSingularCollChange(uint256 _collWithdrawal, uint256 _amountSent)
-		internal
-		view
-	{
-		require(
-			_collWithdrawal == 0 || _amountSent == 0,
-			"BorrowerOperations: Cannot withdraw and add coll"
-		);
-	}
-
 	function _requireCallerIsBorrower(address _borrower) internal view {
 		require(
 			msg.sender == _borrower,
@@ -774,63 +608,30 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	function _requireValidAdjustmentInCurrentMode(
 		address _asset,
-		bool _isRecoveryMode,
-		uint256 _collWithdrawal,
 		bool _isDebtIncrease,
 		LocalVariables_adjustTrove memory _vars
 	) internal view {
 		/*
-		 *In Recovery Mode, only allow:
-		 *
-		 * - Pure collateral top-up
-		 * - Pure debt repayment
-		 * - Collateral top-up with debt repayment
-		 * - A debt increase combined with a collateral top-up which makes the ICR >= 150% and improves the ICR (and by extension improves the TCR).
-		 *
-		 * In Normal Mode, ensure:
-		 *
 		 * - The new ICR is above MCR
 		 * - The adjustment won't pull the TCR below CCR
 		 */
-		if (_isRecoveryMode) {
-			_requireNoCollWithdrawal(_collWithdrawal);
-			if (_isDebtIncrease) {
-				_requireICRisAboveCCR(_asset, _vars.newICR);
-				_requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
-			}
-		} else {
-			// if Normal Mode
-			_requireICRisAboveMCR(_asset, _vars.newICR);
-			_vars.newTCR = _getNewTCRFromTroveChange(
-				_asset,
-				_vars.collChange,
-				_vars.isCollIncrease,
-				_vars.netDebtChange,
-				_isDebtIncrease,
-				_vars.price
-			);
-			_requireNewTCRisAboveCCR(_asset, _vars.newTCR);
-		}
+
+		_requireICRisAboveMCR(_asset, _vars.newICR);
+		_vars.newTCR = _getNewTCRFromTroveChange(
+			_asset,
+			_vars.collChange,
+			_vars.isCollIncrease,
+			_vars.netDebtChange,
+			_isDebtIncrease,
+			_vars.price
+		);
+		_requireNewTCRisAboveCCR(_asset, _vars.newTCR);
 	}
 
 	function _requireICRisAboveMCR(address _asset, uint256 _newICR) internal view {
 		require(
 			_newICR >= vestaParams.MCR(_asset),
 			"BorrowerOps: An operation that would result in ICR < MCR is not permitted"
-		);
-	}
-
-	function _requireICRisAboveCCR(address _asset, uint256 _newICR) internal view {
-		require(
-			_newICR >= vestaParams.CCR(_asset),
-			"BorrowerOps: Operation must leave trove with ICR >= CCR"
-		);
-	}
-
-	function _requireNewICRisAboveOldICR(uint256 _newICR, uint256 _oldICR) internal pure {
-		require(
-			_newICR >= _oldICR,
-			"BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode"
 		);
 	}
 
@@ -848,24 +649,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 	}
 
-	function _requireValidVSTRepayment(
-		address _asset,
-		uint256 _currentDebt,
-		uint256 _debtRepayment
-	) internal view {
-		require(
-			_debtRepayment <= _currentDebt.sub(vestaParams.VST_GAS_COMPENSATION(_asset)),
-			"BorrowerOps: Amount repaid must not be larger than the Trove's debt"
-		);
-	}
-
-	function _requireCallerIsStabilityPool() internal view {
-		require(
-			stabilityPoolManager.isStabilityPool(msg.sender),
-			"BorrowerOps: Caller is not Stability Pool"
-		);
-	}
-
 	function _requireSufficientVSTBalance(
 		IVSTToken _VSTToken,
 		address _borrower,
@@ -877,23 +660,15 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 	}
 
-	function _requireValidMaxFeePercentage(
-		address _asset,
-		uint256 _maxFeePercentage,
-		bool _isRecoveryMode
-	) internal view {
-		if (_isRecoveryMode) {
-			require(
+	function _requireValidMaxFeePercentage(address _asset, uint256 _maxFeePercentage)
+		internal
+		view
+	{
+		require(
+			_maxFeePercentage >= vestaParams.BORROWING_FEE_FLOOR(_asset) &&
 				_maxFeePercentage <= vestaParams.DECIMAL_PRECISION(),
-				"Max fee percentage must less than or equal to 100%"
-			);
-		} else {
-			require(
-				_maxFeePercentage >= vestaParams.BORROWING_FEE_FLOOR(_asset) &&
-					_maxFeePercentage <= vestaParams.DECIMAL_PRECISION(),
-				"Max fee percentage must be between 0.5% and 100%"
-			);
-		}
+			"Max fee percentage must be between 0.5% and 100%"
+		);
 	}
 
 	function _requireLowerOrEqualsToVSTLimit(address _asset, uint256 _vstChange) internal view {
