@@ -37,7 +37,21 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.15",
+        version: "0.8.10",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.8.2",
+      },
+    ],
+    overrides: {
+      "contracts/TroveRedemptor.sol": {
+        version: "0.8.17",
         settings: {
           optimizer: {
             enabled: true,
@@ -45,14 +59,8 @@ module.exports = {
           },
           viaIR: true,
         }
-      },
-      {
-        version: "0.8.2",
-      },
-      {
-        version: "0.8.10",
       }
-    ],
+    }
   },
   networks: {
     hardhat: {
