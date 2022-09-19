@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.10;
 
 import "./Interfaces/IVSTToken.sol";
 import "./Dependencies/VestaBase.sol";
@@ -146,7 +146,9 @@ contract TroveRedemptor is VestaBase, IRedemption {
 		LocalVariables_AssetBorrowerPrice memory vars = LocalVariables_AssetBorrowerPrice(
 			_asset,
 			_borrower,
-			_price
+			_price,
+			_upperPartialRedemptionHint,
+			_lowerPartialRedemptionHint
 		);
 
 		uint256 vaultDebt = troveManager.getTroveDebt(vars._asset, vars._borrower);
@@ -192,8 +194,8 @@ contract TroveRedemptor is VestaBase, IRedemption {
 				newDebt,
 				newColl,
 				newNICR,
-				_upperPartialRedemptionHint,
-				_lowerPartialRedemptionHint
+				vars._upper,
+				vars._lower
 			);
 		}
 

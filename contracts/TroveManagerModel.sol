@@ -1,3 +1,5 @@
+pragma solidity >=0.8.0;
+
 enum Status {
 	nonExistent,
 	active,
@@ -51,6 +53,8 @@ struct LocalVariables_AssetBorrowerPrice {
 	address _asset;
 	address _borrower;
 	uint256 _price;
+	address _upper;
+	address _lower;
 }
 
 struct LiquidationValues {
