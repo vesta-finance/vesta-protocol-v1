@@ -25,6 +25,7 @@ interface IVestaParameters {
 		uint256 oldRedemptionFeeFloor,
 		uint256 newRedemptionFeeFloor
 	);
+	event RedemptionFeeMaxChanged(uint256 oldRedemptionFee, uint256 newRedemptionFee);
 	event RedemptionBlockRemoved(address _asset);
 	event PriceFeedChanged(address indexed addr);
 	event VstMintCapChanged(address indexed _asset, uint256 _newCap);
@@ -51,6 +52,8 @@ interface IVestaParameters {
 	function BORROWING_FEE_FLOOR(address _collateral) external view returns (uint256);
 
 	function REDEMPTION_FEE_FLOOR(address _collateral) external view returns (uint256);
+
+	function REDEMPTION_MAX_FEE(address _collateral) external view returns (uint256);
 
 	function MAX_BORROWING_FEE(address _collateral) external view returns (uint256);
 

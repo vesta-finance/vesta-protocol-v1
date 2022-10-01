@@ -53,6 +53,9 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 	// Bonus for individual troves
 	mapping(address => uint256) public override BonusToSP;
 
+	uint256 public constant REDEMPTION_MAX_FEE_DEFAULT = (DECIMAL_PRECISION / 1000) * 100; // 10%
+	mapping(address => uint256) public override REDEMPTION_MAX_FEE;
+
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permissions");
 		_;
@@ -128,6 +131,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		BORROWING_FEE_FLOOR[_asset] = BORROWING_FEE_FLOOR_DEFAULT;
 		MAX_BORROWING_FEE[_asset] = MAX_BORROWING_FEE_DEFAULT;
 		REDEMPTION_FEE_FLOOR[_asset] = REDEMPTION_FEE_FLOOR_DEFAULT;
+		REDEMPTION_MAX_FEE[_asset] = REDEMPTION_MAX_FEE_DEFAULT;
 	}
 
 	function setCollateralParameters(
@@ -258,13 +262,25 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		public
 		override
 		onlyOwner
-		safeCheck("Redemption Fee Floor", _asset, redemptionFeeFloor, 10, 1000) /// 0.10% - 10%
+		safeCheck("Redemption Fee Floor", _asset, redemptionFeeFloor, 0, 1000) /// 0% - 10%
 	{
 		uint256 oldRedemptionFeeFloor = REDEMPTION_FEE_FLOOR[_asset];
 		uint256 newRedemptionFeeFloor = (DECIMAL_PRECISION / 10000) * redemptionFeeFloor;
 
 		REDEMPTION_FEE_FLOOR[_asset] = newRedemptionFeeFloor;
 		emit RedemptionFeeFloorChanged(oldRedemptionFeeFloor, newRedemptionFeeFloor);
+	}
+
+	function setRedemptionFeeMax(address _asset, uint256 redemptionFeeFloor)
+		public
+		onlyOwner
+		safeCheck("Max Redemption Fee", _asset, redemptionFeeFloor, 0, 1000) /// 0% - 10%
+	{
+		uint256 oldRedemptionFee = REDEMPTION_MAX_FEE[_asset];
+		uint256 newRedemptionFee = (DECIMAL_PRECISION / 10000) * redemptionFeeFloor;
+
+		REDEMPTION_MAX_FEE[_asset] = newRedemptionFee;
+		emit RedemptionFeeMaxChanged(oldRedemptionFee, newRedemptionFee);
 	}
 
 	function removeRedemptionBlock(address _asset) external override onlyOwner {

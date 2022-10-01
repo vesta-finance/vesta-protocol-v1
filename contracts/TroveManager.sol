@@ -561,9 +561,11 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _VST,
 		uint256 _ETH
 	) internal {
-		if (_VST > 0) {
-			vstToken.returnFromPool(gasPoolAddress, _liquidator, _VST);
-		}
+		vstToken.burn(gasPoolAddress, _VST);
+		// removed since arbitrum is cheap enough.
+		// if (_VST > 0) {
+		// 	vstToken.returnFromPool(gasPoolAddress, _liquidator, _VST);
+		// }
 
 		if (_ETH > 0) {
 			_activePool.sendAsset(_asset, _liquidator, _ETH);
@@ -1164,7 +1166,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return
 			VestaMath._min(
 				vestaParams.REDEMPTION_FEE_FLOOR(_asset).add(_baseRate),
-				DECIMAL_PRECISION
+				vestaParams.REDEMPTION_MAX_FEE(_asset)
 			);
 	}
 
