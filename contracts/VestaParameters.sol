@@ -280,7 +280,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		uint256 newRedemptionFee = (DECIMAL_PRECISION / 10000) * redemptionFeeFloor;
 
 		REDEMPTION_MAX_FEE[_asset] = newRedemptionFee;
-		emit RedemptionFeeFloorChanged(oldRedemptionFee, newRedemptionFee);
+		emit RedemptionFeeMaxChanged(oldRedemptionFee, newRedemptionFee);
 	}
 
 	function removeRedemptionBlock(address _asset) external override onlyOwner {
