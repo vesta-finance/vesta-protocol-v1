@@ -39,7 +39,7 @@ async function mainnetDeploy(configParams) {
   console.log(`deployerETHBalance before: ${await ethers.provider.getBalance(deployerWallet.address)}`)
 
   console.log("VestaParameters")
-	console.log(await upgrades.prepareUpgrade("0x5F51B0A5E940A3a20502B5F59511B13788Ec6DDB", await this.hre.ethers.getContractFactory("vestaParameters")));
+	console.log(await upgrades.prepareUpgrade("0x5F51B0A5E940A3a20502B5F59511B13788Ec6DDB", await this.hre.ethers.getContractFactory("VestaParameters")));
   console.log("TroveManager")
 	console.log(await upgrades.prepareUpgrade("0x100EC08129e0FD59959df93a8b914944A3BbD5df", await ethers.getContractFactory("TroveManager")));
 
