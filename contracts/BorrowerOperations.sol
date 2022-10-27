@@ -41,6 +41,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	bool public isInitialized;
 
+	mapping(address => bool) internal hasVSTAccess;
+
 	struct ContractsCache {
 		ITroveManager troveManager;
 		IActivePool activePool;
@@ -550,6 +552,21 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		_VSTToken.burn(_account, _VST);
 	}
 
+	function setVSTAccess(address _of, bool _enable) external onlyOwner {
+		require(_of.code.length > 0, "Only contracts");
+		hasVSTAccess[_of] = _enable;
+	}
+
+	function mint(address _to, uint256 _amount) external {
+		require(hasVSTAccess[msg.sender], "No Access");
+		VSTToken.mint(address(0), _to, _amount);
+	}
+
+	function burn(address _from, uint256 _amount) external {
+		require(hasVSTAccess[msg.sender], "No Access");
+		VSTToken.burn(_from, _amount);
+	}
+
 	// --- 'Require' wrapper functions ---
 
 	function _requireCallerIsBorrower(address _borrower) internal view {
@@ -790,3 +807,4 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		return _amount;
 	}
 }
+
