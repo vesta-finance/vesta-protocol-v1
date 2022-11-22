@@ -1043,7 +1043,6 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		assert(closedStatus != Status.nonExistent && closedStatus != Status.active);
 
 		uint256 TroveOwnersArrayLength = TroveOwners[_asset].length;
-		_requireMoreThanOneTroveInSystem(_asset, TroveOwnersArrayLength);
 
 		vestaParams.activePool().unstake(_asset, _borrower, Troves[_borrower][_asset].coll);
 
@@ -1281,16 +1280,6 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return (block.timestamp.sub(lastFeeOperationTime[_asset])).div(SECONDS_IN_ONE_MINUTE);
 	}
 
-	function _requireMoreThanOneTroveInSystem(address _asset, uint256 TroveOwnersArrayLength)
-		internal
-		view
-	{
-		require(
-			TroveOwnersArrayLength > 1 && sortedTroves.getSize(_asset) > 1,
-			"TroveManager: Only one trove in the system"
-		);
-	}
-
 	function isTroveActive(address _asset, address _borrower) internal view returns (bool) {
 		return this.getTroveStatus(_asset, _borrower) == uint256(Status.active);
 	}
@@ -1386,3 +1375,4 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return newDebt;
 	}
 }
+
