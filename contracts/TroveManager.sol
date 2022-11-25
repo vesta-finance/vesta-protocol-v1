@@ -143,6 +143,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		return TroveOwners[_asset][_index];
 	}
 
+	function setInterestManager(address _interestManager) external onlyOwner {
+		interestManager = IInterestManager(_interestManager);
+	}
+
 	// --- Trove Liquidation functions ---
 
 	// Single liquidation function. Closes the trove if its ICR is lower than the minimum collateral ratio.

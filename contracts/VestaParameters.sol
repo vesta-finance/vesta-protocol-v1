@@ -238,7 +238,7 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		public
 		override
 		onlyOwner
-		safeCheck("Gas Compensation", _asset, gasCompensation, 1 ether, 400 ether)
+		safeCheck("Gas Compensation", _asset, gasCompensation, 0, 400 ether)
 	{
 		uint256 oldGasComp = VST_GAS_COMPENSATION[_asset];
 		VST_GAS_COMPENSATION[_asset] = gasCompensation;
@@ -313,3 +313,4 @@ contract VestaParameters is IVestaParameters, OwnableUpgradeable, CheckContract 
 		_;
 	}
 }
+
