@@ -284,6 +284,9 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.debt = contractsCache.troveManager.getTroveDebt(vars.asset, _borrower);
 		vars.coll = contractsCache.troveManager.getTroveColl(vars.asset, _borrower);
 
+		(, uint256 incomingFee) = interestManager.getUserDebt(_asset, _borrower);
+		vars.debt += incomingFee;
+
 		// Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
 		vars.oldICR = VestaMath._computeCR(vars.coll, vars.debt, vars.price);
 		vars.newICR = _getNewICRFromTroveChange(
@@ -400,21 +403,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		emit TroveUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeTrove);
 
 		// Burn the repaid VST from the user's balance and the gas compensation from the Gas Pool
-		_repayVST(
-			_asset,
-			activePoolCached,
-			VSTTokenCached,
-			msg.sender,
-			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
-		);
-
-		_repayVST(
-			_asset,
-			activePoolCached,
-			VSTTokenCached,
-			gasPoolAddress,
-			vestaParams.VST_GAS_COMPENSATION(_asset)
-		);
+		_repayVST(_asset, activePoolCached, VSTTokenCached, msg.sender, debt);
 
 		// Send the collateral back to the user
 		activePoolCached.sendAsset(_asset, msg.sender, coll);
@@ -706,9 +695,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	function _requireLowerOrEqualsToVSTLimit(address _asset, uint256 _vstChange) internal view {
 		uint256 vstLimit = vestaParams.vstMintCap(_asset);
 		uint256 newDebt = getEntireSystemDebt(_asset) + _vstChange;
+		uint256 unpaidInterest = troveManager.getSystemTotalUnpaidInterest(_asset);
 
 		if (vstLimit != 0) {
-			require(vstLimit >= newDebt, "Reached the cap limit of vst.");
+			require(vstLimit >= (newDebt - unpaidInterest), "Reached the cap limit of vst.");
 		}
 	}
 

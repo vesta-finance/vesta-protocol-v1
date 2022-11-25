@@ -98,6 +98,14 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 	IInterestManager public interestManager;
 
+	bool private gasIndicatorFixed;
+
+	//user => asset => uint256
+	mapping(address => mapping(address => uint256)) private userUnpaidInterest;
+
+	//asset => uint256;
+	mapping(address => uint256) private unpaidInterest;
+
 	modifier onlyBorrowerOperations() {
 		require(
 			msg.sender == borrowerOperationsAddress,
@@ -675,11 +683,20 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 pendingAssetReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingVSTDebtReward = getPendingVSTDebtReward(_asset, _borrower);
 
+		uint256 interest = interestManager.increaseDebt(_asset, _borrower, pendingVSTDebtReward);
+		emit VaultUnpaidInterestUpdated(
+			_asset,
+			_borrower,
+			userUnpaidInterest[_borrower][_asset] += interest
+		);
+
+		emit SystemUnpaidInterestUpdated(_asset, unpaidInterest[_asset] += interest);
+
 		// Apply pending rewards to trove's state
 		troveData.coll += pendingAssetReward;
-		troveData.debt +=
-			pendingVSTDebtReward +
-			interestManager.increaseDebt(_asset, _borrower, pendingVSTDebtReward);
+		troveData.debt += pendingVSTDebtReward + interest;
+
+		vestaParams.activePool().increaseVSTDebt(_asset, interest);
 
 		_updateTroveRewardSnapshots(_asset, _borrower);
 
@@ -919,6 +936,14 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 TroveOwnersArrayLength = TroveOwners[_asset].length;
 
 		interestManager.exit(_asset, _borrower);
+
+		uint256 totalInterest = userUnpaidInterest[_borrower][_asset];
+
+		emit VaultUnpaidInterestUpdated(_asset, _borrower, 0);
+		emit SystemUnpaidInterestUpdated(_asset, unpaidInterest[_asset] -= totalInterest);
+
+		delete userUnpaidInterest[_borrower][_asset];
+
 		vestaParams.activePool().unstake(_asset, _borrower, Troves[_borrower][_asset].coll);
 
 		Troves[_borrower][_asset].status = closedStatus;
@@ -1235,10 +1260,18 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	) external override onlyBorrowerOperations returns (uint256) {
 		require(!nitroSafeguard, NITRO_REVERT_MSG);
 
-		return
-			Troves[_borrower][_asset].debt +=
-				_debtIncrease +
-				interestManager.increaseDebt(_asset, _borrower, _debtIncrease);
+		uint256 interest = interestManager.increaseDebt(_asset, _borrower, _debtIncrease);
+		vestaParams.activePool().increaseVSTDebt(_asset, interest);
+
+		emit VaultUnpaidInterestUpdated(
+			_asset,
+			_borrower,
+			userUnpaidInterest[_borrower][_asset] += interest
+		);
+
+		emit SystemUnpaidInterestUpdated(_asset, unpaidInterest[_asset] += interest);
+
+		return Troves[_borrower][_asset].debt += _debtIncrease + interest;
 	}
 
 	function decreaseTroveDebt(
@@ -1248,7 +1281,27 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	) external override onlyBorrowerOperations returns (uint256) {
 		Trove storage troveData = Troves[_borrower][_asset];
 
-		troveData.debt += interestManager.decreaseDebt(_asset, _borrower, _debtDecrease);
+		uint256 interest = interestManager.decreaseDebt(_asset, _borrower, _debtDecrease);
+		vestaParams.activePool().increaseVSTDebt(_asset, interest);
+
+		uint256 totalInterest = userUnpaidInterest[_borrower][_asset] += interest;
+		unpaidInterest[_asset] += interest;
+
+		uint256 newUnpaidUser;
+		uint256 newUnpaidSystem;
+
+		if (totalInterest > _debtDecrease) {
+			newUnpaidUser = userUnpaidInterest[_borrower][_asset] -= _debtDecrease;
+			newUnpaidSystem = unpaidInterest[_asset] -= _debtDecrease;
+		} else {
+			newUnpaidUser = userUnpaidInterest[_borrower][_asset] -= totalInterest;
+			newUnpaidSystem = unpaidInterest[_asset] -= totalInterest;
+		}
+
+		emit VaultUnpaidInterestUpdated(_asset, _borrower, newUnpaidUser);
+		emit SystemUnpaidInterestUpdated(_asset, newUnpaidSystem);
+
+		troveData.debt += interest;
 		troveData.debt -= _debtDecrease;
 		return troveData.debt;
 	}
@@ -1260,6 +1313,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	}
 
 	function migrateToInterestRate(address _asset) external onlyOwner {
+		IActivePool activePool = vestaParams.activePool();
 		address[] memory owners = TroveOwners[_asset];
 
 		uint256 length = owners.length;
@@ -1280,6 +1334,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 			//Step 1: Offically remove Liquidation Reserve
 			newDebt = troveData.debt -= 30e18;
+			activePool.decreaseVSTDebt(_asset, 30e18);
 
 			//Step 2: Migrate to Interest Rate
 			interestManager.increaseDebt(_asset, vaultAddress, newDebt);
@@ -1312,6 +1367,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		//Step 1: Offically remove Liquidation Reserve
 		uint256 newDebt = troveData.debt -= 30e18;
+		vestaParams.activePool().decreaseVSTDebt(_asset, 30e18);
 
 		//Step 2: Migrate to Interest Rate
 		interestManager.increaseDebt(_asset, _vaultOwner, newDebt);
@@ -1324,6 +1380,33 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			troveData.stake,
 			TroveManagerOperation.systemUpdate
 		);
+	}
+
+	function removeGasReservationOfETH() external onlyOwner {
+		require(!gasIndicatorFixed);
+
+		address asset = address(0);
+		vestaParams.activePool().decreaseVSTDebt(asset, TroveOwners[asset].length * 30e18);
+
+		gasIndicatorFixed = true;
+	}
+
+	function getSystemTotalUnpaidInterest(address _asset)
+		external
+		view
+		override
+		returns (uint256)
+	{
+		return unpaidInterest[_asset];
+	}
+
+	function getUnpaidInterestOfUser(address _asset, address _user)
+		external
+		view
+		override
+		returns (uint256)
+	{
+		return userUnpaidInterest[_user][_asset];
 	}
 }
 

@@ -94,18 +94,6 @@ async function mainnetDeploy(configParams) {
 	// Deploy core logic contracts
 	vestaCore = await mdh.deployLiquityCoreMainnet(deploymentState, ADMIN_WALLET)
 
-	const troveManager = await (await mdh.getFactory("TroveManager")).deploy()
-	const borrowerManager = await (await mdh.getFactory("BorrowerOperations")).deploy()
-	const parameters = await (await mdh.getFactory("VestaParameters")).deploy()
-
-	console.log(`TroveManager: ${troveManager}`)
-	console.log(``)
-	console.log(`BorrowerOperations: ${borrowerManager}`)
-	console.log(``)
-	console.log(`VestaParameters: ${parameters}`)
-
-	return
-
 	await mdh.logContractObjects(vestaCore)
 
 	// Deploy VSTA Contracts
