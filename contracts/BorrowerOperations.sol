@@ -14,6 +14,7 @@ import "./Interfaces/IStabilityPoolManager.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
+import "./Interfaces/IInterestManager.sol";
 
 contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	using SafeMathUpgradeable for uint256;
@@ -42,6 +43,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	bool public isInitialized;
 
 	mapping(address => bool) internal hasVSTAccess;
+
+	IInterestManager public interestManager;
 
 	struct ContractsCache {
 		ITroveManager troveManager;
@@ -149,6 +152,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			BorrowerOperation.openTrove
 		);
 		emit VSTBorrowingFeePaid(vars.asset, msg.sender, vars.VSTFee);
+	}
+
+	function setInterestManager(address _interestManager) external onlyOwner {
+		interestManager = IInterestManager(_interestManager);
 	}
 
 	// Send ETH as collateral to a trove. Called by only the Stability Pool.
@@ -277,6 +284,9 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.debt = contractsCache.troveManager.getTroveDebt(vars.asset, _borrower);
 		vars.coll = contractsCache.troveManager.getTroveColl(vars.asset, _borrower);
 
+		(, uint256 incomingFee) = interestManager.getUserDebt(_asset, _borrower);
+		vars.debt += incomingFee;
+
 		// Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
 		vars.oldICR = VestaMath._computeCR(vars.coll, vars.debt, vars.price);
 		vars.newICR = _getNewICRFromTroveChange(
@@ -363,13 +373,13 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		IVSTToken VSTTokenCached = VSTToken;
 
 		_requireTroveisActive(_asset, troveManagerCached, msg.sender);
-		uint256 price = vestaParams.priceFeed().fetchPrice(_asset);
-		_requireNotInRecoveryMode(_asset, price);
 
 		troveManagerCached.applyPendingRewards(_asset, msg.sender);
-
 		uint256 coll = troveManagerCached.getTroveColl(_asset, msg.sender);
 		uint256 debt = troveManagerCached.getTroveDebt(_asset, msg.sender);
+
+		(, uint256 incomingFee) = interestManager.getUserDebt(_asset, msg.sender);
+		debt += incomingFee;
 
 		_requireSufficientVSTBalance(
 			VSTTokenCached,
@@ -377,7 +387,14 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
 		);
 
-		uint256 newTCR = _getNewTCRFromTroveChange(_asset, coll, false, debt, false, price);
+		uint256 newTCR = _getNewTCRFromTroveChange(
+			_asset,
+			coll,
+			false,
+			debt,
+			false,
+			vestaParams.priceFeed().fetchPrice(_asset)
+		);
 		_requireNewTCRisAboveCCR(_asset, newTCR);
 
 		troveManagerCached.removeStake(_asset, msg.sender);
@@ -386,20 +403,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		emit TroveUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeTrove);
 
 		// Burn the repaid VST from the user's balance and the gas compensation from the Gas Pool
-		_repayVST(
-			_asset,
-			activePoolCached,
-			VSTTokenCached,
-			msg.sender,
-			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
-		);
-		_repayVST(
-			_asset,
-			activePoolCached,
-			VSTTokenCached,
-			gasPoolAddress,
-			vestaParams.VST_GAS_COMPENSATION(_asset)
-		);
+		_repayVST(_asset, activePoolCached, VSTTokenCached, msg.sender, debt);
 
 		// Send the collateral back to the user
 		activePoolCached.sendAsset(_asset, msg.sender, coll);
@@ -691,9 +695,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	function _requireLowerOrEqualsToVSTLimit(address _asset, uint256 _vstChange) internal view {
 		uint256 vstLimit = vestaParams.vstMintCap(_asset);
 		uint256 newDebt = getEntireSystemDebt(_asset) + _vstChange;
+		uint256 unpaidInterest = troveManager.getSystemTotalUnpaidInterest(_asset);
 
 		if (vstLimit != 0) {
-			require(vstLimit >= newDebt, "Reached the cap limit of vst.");
+			require(vstLimit >= (newDebt - unpaidInterest), "Reached the cap limit of vst.");
 		}
 	}
 

@@ -187,11 +187,19 @@ interface ITroveManager is IVestaBase {
 		TroveManagerOperation _operation
 	);
 
+	event SystemUnpaidInterestUpdated(address indexed _asset, uint256 unpaidInterest);
+	event VaultUnpaidInterestUpdated(
+		address indexed _asset,
+		address indexed _vault,
+		uint256 unpaidInterest
+	);
+
 	enum TroveManagerOperation {
 		applyPendingRewards,
 		liquidateInNormalMode,
 		liquidateInRecoveryMode,
-		redeemCollateral
+		redeemCollateral,
+		systemUpdate
 	}
 
 	// --- Functions ---
@@ -223,16 +231,16 @@ interface ITroveManager is IVestaBase {
 
 	function batchLiquidateTroves(address _asset, address[] memory _troveArray) external;
 
-	function redeemCollateral(
-		address _asset,
-		uint256 _VSTAmount,
-		address _firstRedemptionHint,
-		address _upperPartialRedemptionHint,
-		address _lowerPartialRedemptionHint,
-		uint256 _partialRedemptionHintNICR,
-		uint256 _maxIterations,
-		uint256 _maxFee
-	) external;
+	// function redeemCollateral(
+	// 	address _asset,
+	// 	uint256 _VSTAmount,
+	// 	address _firstRedemptionHint,
+	// 	address _upperPartialRedemptionHint,
+	// 	address _lowerPartialRedemptionHint,
+	// 	uint256 _partialRedemptionHintNICR,
+	// 	uint256 _maxIterations,
+	// 	uint256 _maxFee
+	// ) external;
 
 	function updateStakeAndTotalStakes(address _asset, address _borrower)
 		external
@@ -335,4 +343,12 @@ interface ITroveManager is IVestaBase {
 	function getTCR(address _asset, uint256 _price) external view returns (uint256);
 
 	function checkRecoveryMode(address _asset, uint256 _price) external returns (bool);
+
+	function getSystemTotalUnpaidInterest(address _asset) external view returns (uint256);
+
+	function getUnpaidInterestOfUser(address _asset, address _user)
+		external
+		view
+		returns (uint256);
 }
+

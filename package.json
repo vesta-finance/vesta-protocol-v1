@@ -18,7 +18,7 @@
 	"license": "ISC",
 	"dependencies": {
 		"@chainlink/contracts": "^0.2.3",
-		"@openzeppelin/contracts-upgradeable": "^4.7.3",
+		"@openzeppelin/contracts-upgradeable": "^4.8.0",
 		"decimal.js": "^10.4.1",
 		"eth-mutants": "^0.1.1",
 		"ethereumjs-util": "^7.1.5",
