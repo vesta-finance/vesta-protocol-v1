@@ -678,10 +678,10 @@
     "find-up" "^4.1.0"
     "fs-extra" "^8.1.0"
 
-"@openzeppelin/contracts-upgradeable@^4.7.3":
-  "integrity" "sha512-+wuegAMaLcZnLCJIvrVUDzA9z/Wp93f0Dla/4jJvIhijRrPabjQbZe6fWiECLaJyfn5ci9fqf9vTw3xpQOad2A=="
-  "resolved" "https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.7.3.tgz"
-  "version" "4.7.3"
+"@openzeppelin/contracts-upgradeable@^4.8.0":
+  "integrity" "sha512-5GeFgqMiDlqGT8EdORadp1ntGF0qzWZLmEY7Wbp/yVhN7/B3NNzCxujuI77ktlyG81N3CUZP8cZe3ZAQ/cW10w=="
+  "resolved" "https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.8.0.tgz"
+  "version" "4.8.0"
 
 "@openzeppelin/contracts@^4.7.3":
   "integrity" "sha512-dGRS0agJzu8ybo44pCIf3xBaPQN/65AIXNgK8+4gzKd5kbvlqyxryUYVLJv7fK98Seyd2hDZzVEHSWAh0Bt1Yw=="

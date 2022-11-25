@@ -6,6 +6,7 @@ import "./Interfaces/ITroveManager.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Interfaces/IRedemption.sol";
+import "./Interfaces/IInterestManager.sol";
 
 contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	using SafeMathUpgradeable for uint256;
@@ -94,6 +95,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	bool public nitroSafeguard;
 
 	IRedemption public redemptor;
+
+	IInterestManager public interestManager;
 
 	modifier onlyBorrowerOperations() {
 		require(
@@ -561,8 +564,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		uint256 _VST,
 		uint256 _ETH
 	) internal {
-		vstToken.burn(gasPoolAddress, _VST);
 		// removed since arbitrum is cheap enough.
+		// vstToken.burn(gasPoolAddress, _VST);
 		// if (_VST > 0) {
 		// 	vstToken.returnFromPool(gasPoolAddress, _liquidator, _VST);
 		// }
@@ -591,140 +594,144 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		redemptor = IRedemption(_redemption);
 	}
 
-	function redeemCollateral(
-		address _asset,
-		uint256 _VSTamount,
-		address _firstRedemptionHint,
-		address _upperPartialRedemptionHint,
-		address _lowerPartialRedemptionHint,
-		uint256 _partialRedemptionHintNICR,
-		uint256 _maxIterations,
-		uint256 _maxFeePercentage
-	) external override {
-		require(!nitroSafeguard, NITRO_REVERT_MSG);
-		require(!redemptionDisabled[_asset], "Redemption is disabled for this Collateral.");
+	// Removed since Interest Rate
+	// function redeemCollateral(
+	// 	address _asset,
+	// 	uint256 _VSTamount,
+	// 	address _firstRedemptionHint,
+	// 	address _upperPartialRedemptionHint,
+	// 	address _lowerPartialRedemptionHint,
+	// 	uint256 _partialRedemptionHintNICR,
+	// 	uint256 _maxIterations,
+	// 	uint256 _maxFeePercentage
+	// ) external override {
+	// 	require(!nitroSafeguard, NITRO_REVERT_MSG);
+	// 	require(!redemptionDisabled[_asset], "Redemption is disabled for this Collateral.");
 
-		require(
-			block.timestamp >= vestaParams.redemptionBlock(_asset),
-			"TroveManager: Redemption is blocked"
-		);
+	// 	require(
+	// 		block.timestamp >= vestaParams.redemptionBlock(_asset),
+	// 		"TroveManager: Redemption is blocked"
+	// 	);
 
-		redemptor.redeemCollateral(
-			_asset,
-			msg.sender,
-			_VSTamount,
-			_firstRedemptionHint,
-			_upperPartialRedemptionHint,
-			_lowerPartialRedemptionHint,
-			_partialRedemptionHintNICR,
-			_maxIterations,
-			_maxFeePercentage
-		);
-	}
+	// 	redemptor.redeemCollateral(
+	// 		_asset,
+	// 		msg.sender,
+	// 		_VSTamount,
+	// 		_firstRedemptionHint,
+	// 		_upperPartialRedemptionHint,
+	// 		_lowerPartialRedemptionHint,
+	// 		_partialRedemptionHintNICR,
+	// 		_maxIterations,
+	// 		_maxFeePercentage
+	// 	);
+	// }
 
-	function executeFullRedemption(
-		address _asset,
-		address _borrower,
-		uint256 _newColl
-	) external onlyRedemption {
-		_removeStake(_asset, _borrower);
-		_closeTrove(_asset, _borrower, Status.closedByRedemption);
-		_redeemCloseTrove(_asset, _borrower, vestaParams.VST_GAS_COMPENSATION(_asset), _newColl);
-		emit TroveUpdated(_asset, _borrower, 0, 0, 0, TroveManagerOperation.redeemCollateral);
-	}
+	// Removed Since Interest Rate
+	// function executeFullRedemption(
+	// 	address _asset,
+	// 	address _borrower,
+	// 	uint256 _newColl
+	// ) external onlyRedemption {
+	// 	_removeStake(_asset, _borrower);
+	// 	_closeTrove(_asset, _borrower, Status.closedByRedemption);
+	// 	_redeemCloseTrove(_asset, _borrower, vestaParams.VST_GAS_COMPENSATION(_asset), _newColl);
+	// 	emit TroveUpdated(_asset, _borrower, 0, 0, 0, TroveManagerOperation.redeemCollateral);
+	// }
 
-	function executePartialRedemption(
-		address _asset,
-		address _borrower,
-		uint256 _assetLot,
-		uint256 _newDebt,
-		uint256 _newColl,
-		uint256 _newNICR,
-		address _upperHint,
-		address _lowerHint
-	) external onlyRedemption {
-		sortedTroves.reInsert(_asset, _borrower, _newNICR, _upperHint, _lowerHint);
+	// Removed Since Interest Rate
+	// function executePartialRedemption(
+	// 	address _asset,
+	// 	address _borrower,
+	// 	uint256 _assetLot,
+	// 	uint256 _newDebt,
+	// 	uint256 _newColl,
+	// 	uint256 _newNICR,
+	// 	address _upperHint,
+	// 	address _lowerHint
+	// ) external onlyRedemption {
+	// 	sortedTroves.reInsert(_asset, _borrower, _newNICR, _upperHint, _lowerHint);
 
-		vestaParams.activePool().unstake(_asset, _borrower, _assetLot);
+	// 	vestaParams.activePool().unstake(_asset, _borrower, _assetLot);
 
-		Troves[_borrower][_asset].debt = _newDebt;
-		Troves[_borrower][_asset].coll = _newColl;
-		_updateStakeAndTotalStakes(_asset, _borrower);
+	// 	Troves[_borrower][_asset].debt = _newDebt;
+	// 	Troves[_borrower][_asset].coll = _newColl;
+	// 	_updateStakeAndTotalStakes(_asset, _borrower);
 
-		emit TroveUpdated(
-			_asset,
-			_borrower,
-			_newDebt,
-			_newColl,
-			Troves[_borrower][_asset].stake,
-			TroveManagerOperation.redeemCollateral
-		);
-	}
+	// 	emit TroveUpdated(
+	// 		_asset,
+	// 		_borrower,
+	// 		_newDebt,
+	// 		_newColl,
+	// 		Troves[_borrower][_asset].stake,
+	// 		TroveManagerOperation.redeemCollateral
+	// 	);
+	// }
 
-	function finalizeRedemption(
-		address _asset,
-		address _receiver,
-		uint256 _vstAmount,
-		uint256 _vstToRedeem,
-		uint256 _fee,
-		uint256 _totalRedemptionRewards
-	) external onlyRedemption {
-		IActivePool activePool = vestaParams.activePool();
+	// function finalizeRedemption(
+	// 	address _asset,
+	// 	address _receiver,
+	// 	uint256 _vstAmount,
+	// 	uint256 _vstToRedeem,
+	// 	uint256 _fee,
+	// 	uint256 _totalRedemptionRewards
+	// ) external onlyRedemption {
+	// 	IActivePool activePool = vestaParams.activePool();
 
-		// Send the ETH fee to the VSTA staking contract
-		activePool.sendAsset(_asset, address(vstaStaking), _fee);
-		vstaStaking.increaseF_Asset(_asset, _fee);
+	// 	// Send the ETH fee to the VSTA staking contract
+	// 	activePool.sendAsset(_asset, address(vstaStaking), _fee);
+	// 	vstaStaking.increaseF_Asset(_asset, _fee);
 
-		uint256 ETHToSendToRedeemer = _totalRedemptionRewards.sub(_fee);
+	// 	uint256 ETHToSendToRedeemer = _totalRedemptionRewards.sub(_fee);
 
-		emit Redemption(_asset, _vstAmount, _vstToRedeem, _totalRedemptionRewards, _fee);
+	// 	emit Redemption(_asset, _vstAmount, _vstToRedeem, _totalRedemptionRewards, _fee);
 
-		// Burn the total VST that is cancelled with debt, and send the redeemed ETH to msg.sender
-		vstToken.burn(_receiver, _vstToRedeem);
-		// Update Active Pool VST, and send ETH to account
-		activePool.decreaseVSTDebt(_asset, _vstToRedeem);
-		activePool.sendAsset(_asset, _receiver, ETHToSendToRedeemer);
-	}
+	// 	// Burn the total VST that is cancelled with debt, and send the redeemed ETH to msg.sender
+	// 	vstToken.burn(_receiver, _vstToRedeem);
+	// 	// Update Active Pool VST, and send ETH to account
+	// 	activePool.decreaseVSTDebt(_asset, _vstToRedeem);
+	// 	activePool.sendAsset(_asset, _receiver, ETHToSendToRedeemer);
+	// }
 
-	function _redeemCloseTrove(
-		address _asset,
-		address _borrower,
-		uint256 _VST,
-		uint256 _ETH
-	) internal {
-		IActivePool activePool = vestaParams.activePool();
+	// function _redeemCloseTrove(
+	// 	address _asset,
+	// 	address _borrower,
+	// 	uint256 _VST,
+	// 	uint256 _ETH
+	// ) internal {
+	// 	IActivePool activePool = vestaParams.activePool();
 
-		vstToken.burn(gasPoolAddress, _VST);
-		// Update Active Pool VST, and send ETH to account
-		activePool.decreaseVSTDebt(_asset, _VST);
+	// 	vstToken.burn(gasPoolAddress, _VST);
+	// 	// Update Active Pool VST, and send ETH to account
+	// 	activePool.decreaseVSTDebt(_asset, _VST);
 
-		// send ETH from Active Pool to CollSurplus Pool
-		collSurplusPool.accountSurplus(_asset, _borrower, _ETH);
-		activePool.sendAsset(_asset, address(collSurplusPool), _ETH);
-	}
+	// 	// send ETH from Active Pool to CollSurplus Pool
+	// 	collSurplusPool.accountSurplus(_asset, _borrower, _ETH);
+	// 	activePool.sendAsset(_asset, address(collSurplusPool), _ETH);
+	// }
 
 	function setRedemptionStatusFor(address _asset, bool _disabled) external onlyOwner {
 		redemptionDisabled[_asset] = _disabled;
 	}
 
-	function isValidFirstRedemptionHint(
-		address _asset,
-		address _firstRedemptionHint,
-		uint256 _price
-	) external view returns (bool) {
-		if (
-			_firstRedemptionHint == address(0) ||
-			!sortedTroves.contains(_asset, _firstRedemptionHint) ||
-			getCurrentICR(_asset, _firstRedemptionHint, _price) < vestaParams.MCR(_asset)
-		) {
-			return false;
-		}
+	// Removed Since Interest Rate
+	// function isValidFirstRedemptionHint(
+	// 	address _asset,
+	// 	address _firstRedemptionHint,
+	// 	uint256 _price
+	// ) external view returns (bool) {
+	// 	if (
+	// 		_firstRedemptionHint == address(0) ||
+	// 		!sortedTroves.contains(_asset, _firstRedemptionHint) ||
+	// 		getCurrentICR(_asset, _firstRedemptionHint, _price) < vestaParams.MCR(_asset)
+	// 	) {
+	// 		return false;
+	// 	}
 
-		address nextTrove = sortedTroves.getNext(_asset, _firstRedemptionHint);
-		return
-			nextTrove == address(0) ||
-			getCurrentICR(_asset, nextTrove, _price) < vestaParams.MCR(_asset);
-	}
+	// 	address nextTrove = sortedTroves.getNext(_asset, _firstRedemptionHint);
+	// 	return
+	// 		nextTrove == address(0) ||
+	// 		getCurrentICR(_asset, nextTrove, _price) < vestaParams.MCR(_asset);
+	// }
 
 	// --- Helper functions ---
 
@@ -764,11 +771,14 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		view
 		returns (uint256, uint256)
 	{
+		Trove memory troveData = Troves[_borrower][_asset];
 		uint256 pendingAssetReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingVSTDebtReward = getPendingVSTDebtReward(_asset, _borrower);
 
-		uint256 currentAsset = Troves[_borrower][_asset].coll.add(pendingAssetReward);
-		uint256 currentVSTDebt = Troves[_borrower][_asset].debt.add(pendingVSTDebtReward);
+		(, uint256 interestRate) = interestManager.getUserDebt(_asset, _borrower);
+
+		uint256 currentAsset = troveData.coll.add(pendingAssetReward);
+		uint256 currentVSTDebt = troveData.debt.add(pendingVSTDebtReward) + interestRate;
 
 		return (currentAsset, currentVSTDebt);
 	}
@@ -1044,6 +1054,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		uint256 TroveOwnersArrayLength = TroveOwners[_asset].length;
 
+		interestManager.exit(_asset, _borrower);
 		vestaParams.activePool().unstake(_asset, _borrower, Troves[_borrower][_asset].coll);
 
 		Troves[_borrower][_asset].status = closedStatus;
@@ -1360,9 +1371,10 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	) external override onlyBorrowerOperations returns (uint256) {
 		require(!nitroSafeguard, NITRO_REVERT_MSG);
 
-		uint256 newDebt = Troves[_borrower][_asset].debt.add(_debtIncrease);
-		Troves[_borrower][_asset].debt = newDebt;
-		return newDebt;
+		return
+			Troves[_borrower][_asset].debt +=
+				_debtIncrease +
+				interestManager.increaseDebt(_asset, _borrower, _debtIncrease);
 	}
 
 	function decreaseTroveDebt(
@@ -1370,9 +1382,84 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		address _borrower,
 		uint256 _debtDecrease
 	) external override onlyBorrowerOperations returns (uint256) {
-		uint256 newDebt = Troves[_borrower][_asset].debt.sub(_debtDecrease);
-		Troves[_borrower][_asset].debt = newDebt;
-		return newDebt;
+		Trove storage troveData = Troves[_borrower][_asset];
+
+		troveData.debt += interestManager.decreaseDebt(_asset, _borrower, _debtDecrease);
+		troveData.debt -= _debtDecrease;
+		return troveData.debt;
+	}
+
+	//We use our Aribtrum Nitro Migration Flag
+	//Since it will do exactly what the lock system would be doing
+	function setLockSystem(bool _enabled) external onlyOwner {
+		nitroSafeguard = _enabled;
+	}
+
+	function migrateToInterestRate(address _asset) external onlyOwner {
+		address[] memory owners = TroveOwners[_asset];
+
+		uint256 length = owners.length;
+		address vaultAddress;
+		uint256 newDebt;
+
+		uint256 debtInInterestRate;
+		Trove storage troveData;
+		for (uint256 i = 0; i < length; ++i) {
+			vaultAddress = owners[i];
+			troveData = Troves[vaultAddress][_asset];
+
+			(debtInInterestRate, ) = interestManager.getUserDebt(_asset, vaultAddress);
+
+			if (debtInInterestRate != 0 || interestManager.getInterestModule(_asset) == address(0)) {
+				continue;
+			}
+
+			//Step 1: Offically remove Liquidation Reserve
+			newDebt = troveData.debt -= 30e18;
+
+			//Step 2: Migrate to Interest Rate
+			interestManager.increaseDebt(_asset, vaultAddress, newDebt);
+
+			emit TroveUpdated(
+				_asset,
+				vaultAddress,
+				troveData.debt,
+				troveData.coll,
+				troveData.stake,
+				TroveManagerOperation.systemUpdate
+			);
+		}
+
+		//Step 3: Empty Gas Pool
+		vstToken.burn(gasPoolAddress, vstToken.balanceOf(gasPoolAddress));
+	}
+
+	function manuallyMoveVaultToInterestRate(address _asset, address _vaultOwner)
+		external
+		onlyOwner
+	{
+		(uint256 debtInInterestRate, ) = interestManager.getUserDebt(_asset, _vaultOwner);
+		require(
+			debtInInterestRate == 0 && interestManager.getInterestModule(_asset) != address(0),
+			"Vault is already migrated"
+		);
+
+		Trove storage troveData = Troves[_vaultOwner][_asset];
+
+		//Step 1: Offically remove Liquidation Reserve
+		uint256 newDebt = troveData.debt -= 30e18;
+
+		//Step 2: Migrate to Interest Rate
+		interestManager.increaseDebt(_asset, _vaultOwner, newDebt);
+
+		emit TroveUpdated(
+			_asset,
+			_vaultOwner,
+			troveData.debt,
+			troveData.coll,
+			troveData.stake,
+			TroveManagerOperation.systemUpdate
+		);
 	}
 }
 

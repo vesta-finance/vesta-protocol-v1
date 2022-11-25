@@ -14,6 +14,7 @@ import "./Interfaces/IStabilityPoolManager.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
+import "./Interfaces/IInterestManager.sol";
 
 contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	using SafeMathUpgradeable for uint256;
@@ -42,6 +43,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	bool public isInitialized;
 
 	mapping(address => bool) internal hasVSTAccess;
+
+	IInterestManager public interestManager;
 
 	struct ContractsCache {
 		ITroveManager troveManager;
@@ -149,6 +152,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			BorrowerOperation.openTrove
 		);
 		emit VSTBorrowingFeePaid(vars.asset, msg.sender, vars.VSTFee);
+	}
+
+	function setInterestManager(address _interestManager) external onlyOwner {
+		interestManager = IInterestManager(_interestManager);
 	}
 
 	// Send ETH as collateral to a trove. Called by only the Stability Pool.
@@ -363,13 +370,13 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		IVSTToken VSTTokenCached = VSTToken;
 
 		_requireTroveisActive(_asset, troveManagerCached, msg.sender);
-		uint256 price = vestaParams.priceFeed().fetchPrice(_asset);
-		_requireNotInRecoveryMode(_asset, price);
 
 		troveManagerCached.applyPendingRewards(_asset, msg.sender);
-
 		uint256 coll = troveManagerCached.getTroveColl(_asset, msg.sender);
 		uint256 debt = troveManagerCached.getTroveDebt(_asset, msg.sender);
+
+		(, uint256 incomingFee) = interestManager.getUserDebt(_asset, msg.sender);
+		debt += incomingFee;
 
 		_requireSufficientVSTBalance(
 			VSTTokenCached,
@@ -377,7 +384,14 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
 		);
 
-		uint256 newTCR = _getNewTCRFromTroveChange(_asset, coll, false, debt, false, price);
+		uint256 newTCR = _getNewTCRFromTroveChange(
+			_asset,
+			coll,
+			false,
+			debt,
+			false,
+			vestaParams.priceFeed().fetchPrice(_asset)
+		);
 		_requireNewTCRisAboveCCR(_asset, newTCR);
 
 		troveManagerCached.removeStake(_asset, msg.sender);
@@ -393,6 +407,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			msg.sender,
 			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
 		);
+
 		_repayVST(
 			_asset,
 			activePoolCached,
