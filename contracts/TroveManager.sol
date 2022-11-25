@@ -669,13 +669,17 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		assert(isTroveActive(_asset, _borrower));
 
+		Trove storage troveData = Troves[_borrower][_asset];
+
 		// Compute pending rewards
 		uint256 pendingAssetReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingVSTDebtReward = getPendingVSTDebtReward(_asset, _borrower);
 
 		// Apply pending rewards to trove's state
-		Troves[_borrower][_asset].coll = Troves[_borrower][_asset].coll.add(pendingAssetReward);
-		Troves[_borrower][_asset].debt = Troves[_borrower][_asset].debt.add(pendingVSTDebtReward);
+		troveData.coll += pendingAssetReward;
+		troveData.debt +=
+			pendingVSTDebtReward +
+			interestManager.increaseDebt(_asset, _borrower, pendingVSTDebtReward);
 
 		_updateTroveRewardSnapshots(_asset, _borrower);
 
@@ -691,9 +695,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		emit TroveUpdated(
 			_asset,
 			_borrower,
-			Troves[_borrower][_asset].debt,
-			Troves[_borrower][_asset].coll,
-			Troves[_borrower][_asset].stake,
+			troveData.debt,
+			troveData.coll,
+			troveData.stake,
 			TroveManagerOperation.applyPendingRewards
 		);
 	}
@@ -779,14 +783,15 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			uint256 pendingAssetReward
 		)
 	{
-		debt = Troves[_borrower][_asset].debt;
-		coll = Troves[_borrower][_asset].coll;
+		Trove memory troveData = Troves[_borrower][_asset];
 
 		pendingVSTDebtReward = getPendingVSTDebtReward(_asset, _borrower);
 		pendingAssetReward = getPendingAssetReward(_asset, _borrower);
 
-		debt = debt.add(pendingVSTDebtReward);
-		coll = coll.add(pendingAssetReward);
+		(, uint256 interest) = interestManager.getUserDebt(_asset, _borrower);
+
+		debt = troveData.debt + pendingVSTDebtReward + interest;
+		coll = troveData.coll + pendingAssetReward;
 	}
 
 	function removeStake(address _asset, address _borrower)
