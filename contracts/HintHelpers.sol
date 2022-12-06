@@ -210,11 +210,15 @@ contract HintHelpers is VestaBase, CheckContract {
 		}
 	}
 
-	/* getLiquidatableAmount(address _asset) - returns total amount of VST liquidatable from an asset.
-    
-    This function goes thru vault from most at risk to least and counts the amount of VST liquidatable until it hits a vault
-	that is not liquidatable.
-    */
+	/**
+	@notice getLiquidatableAmount(address _asset) - returns total amount of VST liquidatable from an asset.
+	    This function goes thru vault from most at risk to least and counts the amount of VST liquidatable until it hits a vault
+		that is not liquidatable.
+	@param _asset address of the asset, ZERO_ADDRESS for ETH
+	@param _assetPrice the price of the asset in 1e18 format.
+	@return result_ total amount of VST liquidatable from an asset
+	@dev if `_assetPrice` is zero, it will uses PriceFeed's pricing
+	*/
 	function getLiquidatableAmount(address _asset, uint256 _assetPrice)
 		external
 		view
