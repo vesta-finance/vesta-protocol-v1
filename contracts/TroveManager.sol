@@ -1210,7 +1210,9 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		override
 		returns (uint256)
 	{
-		return Troves[_borrower][_asset].debt;
+		(, uint256 interest) = interestManager.getUserDebt(_asset, _borrower);
+
+		return Troves[_borrower][_asset].debt + interest;
 	}
 
 	function getTroveColl(address _asset, address _borrower)

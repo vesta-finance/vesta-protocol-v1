@@ -15,6 +15,7 @@ import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IInterestManager.sol";
+import "./Interfaces/IVestaDexTrader.sol";
 
 contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	using SafeMathUpgradeable for uint256;
@@ -45,6 +46,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	mapping(address => bool) internal hasVSTAccess;
 
 	IInterestManager public interestManager;
+
+	IVestaDexTrader public dexTrader;
 
 	struct ContractsCache {
 		ITroveManager troveManager;
@@ -101,15 +104,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.NICR = VestaMath._computeNominalCR(_tokenAmount, vars.compositeDebt);
 
 		_requireICRisAboveMCR(vars.asset, vars.ICR);
-		uint256 newTCR = _getNewTCRFromTroveChange(
-			vars.asset,
-			_tokenAmount,
-			true,
-			vars.compositeDebt,
-			true,
-			vars.price
-		); // bools: coll increase, debt increase
-		_requireNewTCRisAboveCCR(vars.asset, newTCR);
 
 		// Set the trove struct's properties
 		contractsCache.troveManager.setTroveStatus(vars.asset, msg.sender, 1);
@@ -156,6 +150,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	function setInterestManager(address _interestManager) external onlyOwner {
 		interestManager = IInterestManager(_interestManager);
+	}
+
+	function setDexTrader(address _dexTrader) external onlyOwner {
+		dexTrader = IVestaDexTrader(_dexTrader);
 	}
 
 	// Send ETH as collateral to a trove. Called by only the Stability Pool.
@@ -284,9 +282,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		vars.debt = contractsCache.troveManager.getTroveDebt(vars.asset, _borrower);
 		vars.coll = contractsCache.troveManager.getTroveColl(vars.asset, _borrower);
 
-		(, uint256 incomingFee) = interestManager.getUserDebt(_asset, _borrower);
-		vars.debt += incomingFee;
-
 		// Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
 		vars.oldICR = VestaMath._computeCR(vars.coll, vars.debt, vars.price);
 		vars.newICR = _getNewICRFromTroveChange(
@@ -304,7 +299,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 
 		// Check the adjustment satisfies all conditions for the current system mode
-		_requireValidAdjustmentInCurrentMode(vars.asset, _isDebtIncrease, vars);
+		_requireICRisAboveMCR(_asset, vars.newICR);
 
 		// When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough VST
 		if (!_isDebtIncrease && _VSTChange > 0) {
@@ -367,6 +362,64 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 	}
 
+	function closeTroveWithDexTrader(
+		address _asset,
+		uint256 _amountIn,
+		IVestaDexTrader.ManualExchange[] calldata _manualExchange
+	) external {
+		ITroveManager troveManagerCached = troveManager;
+		IActivePool activePoolCached = vestaParams.activePool();
+		IVSTToken VSTTokenCached = VSTToken;
+
+		_requireTroveisActive(_asset, troveManagerCached, msg.sender);
+
+		troveManagerCached.applyPendingRewards(_asset, msg.sender);
+		uint256 coll = troveManagerCached.getTroveColl(_asset, msg.sender);
+		uint256 debt = troveManagerCached.getTroveDebt(_asset, msg.sender);
+
+		uint256 userVST = VSTTokenCached.balanceOf(msg.sender);
+
+		if (userVST < debt) {
+			uint256 amountNeeded = debt - userVST;
+
+			require(_manualExchange.length > 0, "Manual Exchange is empty");
+
+			if (_amountIn == 0) {
+				_amountIn = dexTrader.getAmountIn(amountNeeded, _manualExchange);
+			}
+
+			activePoolCached.unstake(_asset, msg.sender, _amountIn);
+			activePoolCached.sendAsset(_asset, address(this), _amountIn);
+			troveManagerCached.decreaseTroveColl(_asset, msg.sender, _amountIn);
+
+			IERC20Upgradeable(_asset).safeApprove(address(dexTrader), _amountIn);
+
+			dexTrader.exchange(msg.sender, _asset, _amountIn, _manualExchange);
+
+			require(
+				VSTTokenCached.balanceOf(msg.sender) < debt,
+				"AutoSwapping Failed, Try increasing slippage inside ManualExchange"
+			);
+		}
+
+		_requireSufficientVSTBalance(
+			VSTTokenCached,
+			msg.sender,
+			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
+		);
+
+		troveManagerCached.removeStake(_asset, msg.sender);
+		troveManagerCached.closeTrove(_asset, msg.sender);
+
+		emit TroveUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeTrove);
+
+		// Burn the repaid VST from the user's balance and the gas compensation from the Gas Pool
+		_repayVST(_asset, activePoolCached, VSTTokenCached, msg.sender, debt);
+
+		// Send the collateral back to the user
+		activePoolCached.sendAsset(_asset, msg.sender, coll);
+	}
+
 	function closeTrove(address _asset) external override {
 		ITroveManager troveManagerCached = troveManager;
 		IActivePool activePoolCached = vestaParams.activePool();
@@ -378,24 +431,11 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		uint256 coll = troveManagerCached.getTroveColl(_asset, msg.sender);
 		uint256 debt = troveManagerCached.getTroveDebt(_asset, msg.sender);
 
-		(, uint256 incomingFee) = interestManager.getUserDebt(_asset, msg.sender);
-		debt += incomingFee;
-
 		_requireSufficientVSTBalance(
 			VSTTokenCached,
 			msg.sender,
 			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
 		);
-
-		uint256 newTCR = _getNewTCRFromTroveChange(
-			_asset,
-			coll,
-			false,
-			debt,
-			false,
-			vestaParams.priceFeed().fetchPrice(_asset)
-		);
-		_requireNewTCRisAboveCCR(_asset, newTCR);
 
 		troveManagerCached.removeStake(_asset, msg.sender);
 		troveManagerCached.closeTrove(_asset, msg.sender);
@@ -474,13 +514,18 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		bool _isCollIncrease,
 		uint256 _debtChange,
 		bool _isDebtIncrease
-	) internal returns (uint256, uint256) {
-		uint256 newColl = (_isCollIncrease)
-			? _troveManager.increaseTroveColl(_asset, _borrower, _collChange)
-			: _troveManager.decreaseTroveColl(_asset, _borrower, _collChange);
-		uint256 newDebt = (_isDebtIncrease)
-			? _troveManager.increaseTroveDebt(_asset, _borrower, _debtChange)
-			: _troveManager.decreaseTroveDebt(_asset, _borrower, _debtChange);
+	) internal returns (uint256 newColl, uint256 newDebt) {
+		if (_collChange != 0) {
+			newColl = (_isCollIncrease)
+				? _troveManager.increaseTroveColl(_asset, _borrower, _collChange)
+				: _troveManager.decreaseTroveColl(_asset, _borrower, _collChange);
+		}
+
+		if (_debtChange != 0) {
+			newDebt = (_isDebtIncrease)
+				? _troveManager.increaseTroveDebt(_asset, _borrower, _debtChange)
+				: _troveManager.decreaseTroveDebt(_asset, _borrower, _debtChange);
+		}
 
 		return (newColl, newDebt);
 	}
@@ -627,39 +672,10 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		);
 	}
 
-	function _requireValidAdjustmentInCurrentMode(
-		address _asset,
-		bool _isDebtIncrease,
-		LocalVariables_adjustTrove memory _vars
-	) internal view {
-		/*
-		 * - The new ICR is above MCR
-		 * - The adjustment won't pull the TCR below CCR
-		 */
-
-		_requireICRisAboveMCR(_asset, _vars.newICR);
-		_vars.newTCR = _getNewTCRFromTroveChange(
-			_asset,
-			_vars.collChange,
-			_vars.isCollIncrease,
-			_vars.netDebtChange,
-			_isDebtIncrease,
-			_vars.price
-		);
-		_requireNewTCRisAboveCCR(_asset, _vars.newTCR);
-	}
-
 	function _requireICRisAboveMCR(address _asset, uint256 _newICR) internal view {
 		require(
 			_newICR >= vestaParams.MCR(_asset),
 			"BorrowerOps: An operation that would result in ICR < MCR is not permitted"
-		);
-	}
-
-	function _requireNewTCRisAboveCCR(address _asset, uint256 _newTCR) internal view {
-		require(
-			_newTCR >= vestaParams.CCR(_asset),
-			"BorrowerOps: An operation that would result in TCR < CCR is not permitted"
 		);
 	}
 
@@ -764,24 +780,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		newDebt = _isDebtIncrease ? _debt.add(_debtChange) : _debt.sub(_debtChange);
 
 		return (newColl, newDebt);
-	}
-
-	function _getNewTCRFromTroveChange(
-		address _asset,
-		uint256 _collChange,
-		bool _isCollIncrease,
-		uint256 _debtChange,
-		bool _isDebtIncrease,
-		uint256 _price
-	) internal view returns (uint256) {
-		uint256 totalColl = getEntireSystemColl(_asset);
-		uint256 totalDebt = getEntireSystemDebt(_asset);
-
-		totalColl = _isCollIncrease ? totalColl.add(_collChange) : totalColl.sub(_collChange);
-		totalDebt = _isDebtIncrease ? totalDebt.add(_debtChange) : totalDebt.sub(_debtChange);
-
-		uint256 newTCR = VestaMath._computeCR(totalColl, totalDebt, _price);
-		return newTCR;
 	}
 
 	function getCompositeDebt(address _asset, uint256 _debt)
