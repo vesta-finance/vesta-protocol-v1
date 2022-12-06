@@ -367,6 +367,18 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		uint256 _amountIn,
 		IVestaDexTrader.ManualExchange[] calldata _manualExchange
 	) external {
+		_closeTrove(_asset, _amountIn, _manualExchange);
+	}
+
+	function closeTrove(address _asset) external override {
+		_closeTrove(_asset, 0, new IVestaDexTrader.ManualExchange[](0));
+	}
+
+	function _closeTrove(
+		address _asset,
+		uint256 _amountIn,
+		IVestaDexTrader.ManualExchange[] memory _manualExchange
+	) internal {
 		ITroveManager troveManagerCached = troveManager;
 		IActivePool activePoolCached = vestaParams.activePool();
 		IVSTToken VSTTokenCached = VSTToken;
@@ -379,10 +391,13 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 		uint256 userVST = VSTTokenCached.balanceOf(msg.sender);
 
-		if (userVST < debt) {
+		if (debt > userVST) {
 			uint256 amountNeeded = debt - userVST;
 
-			require(_manualExchange.length > 0, "Manual Exchange is empty");
+			require(
+				_manualExchange.length > 0,
+				"BorrowerOps: Caller doesnt have enough VST to make repayment"
+			);
 
 			if (_amountIn == 0) {
 				_amountIn = dexTrader.getAmountIn(amountNeeded, _manualExchange);
@@ -401,35 +416,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 				"AutoSwapping Failed, Try increasing slippage inside ManualExchange"
 			);
 		}
-
-		_requireSufficientVSTBalance(
-			VSTTokenCached,
-			msg.sender,
-			debt.sub(vestaParams.VST_GAS_COMPENSATION(_asset))
-		);
-
-		troveManagerCached.removeStake(_asset, msg.sender);
-		troveManagerCached.closeTrove(_asset, msg.sender);
-
-		emit TroveUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeTrove);
-
-		// Burn the repaid VST from the user's balance and the gas compensation from the Gas Pool
-		_repayVST(_asset, activePoolCached, VSTTokenCached, msg.sender, debt);
-
-		// Send the collateral back to the user
-		activePoolCached.sendAsset(_asset, msg.sender, coll);
-	}
-
-	function closeTrove(address _asset) external override {
-		ITroveManager troveManagerCached = troveManager;
-		IActivePool activePoolCached = vestaParams.activePool();
-		IVSTToken VSTTokenCached = VSTToken;
-
-		_requireTroveisActive(_asset, troveManagerCached, msg.sender);
-
-		troveManagerCached.applyPendingRewards(_asset, msg.sender);
-		uint256 coll = troveManagerCached.getTroveColl(_asset, msg.sender);
-		uint256 debt = troveManagerCached.getTroveDebt(_asset, msg.sender);
 
 		_requireSufficientVSTBalance(
 			VSTTokenCached,
