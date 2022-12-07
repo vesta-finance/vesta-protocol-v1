@@ -53,8 +53,5 @@ contract BorrowerOperationsTester is BorrowerOperations {
 			0
 		);
 	}
-
-	// Payable fallback function
-	receive() external payable {}
 }
 

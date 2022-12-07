@@ -16,6 +16,7 @@ import "./Dependencies/CheckContract.sol";
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IInterestManager.sol";
 import "./Interfaces/IVestaDexTrader.sol";
+import "./Interfaces/IWETH.sol";
 
 contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	using SafeMathUpgradeable for uint256;
@@ -48,6 +49,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	IInterestManager public interestManager;
 
 	IVestaDexTrader public dexTrader;
+
+	address public constant WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
 
 	struct ContractsCache {
 		ITroveManager troveManager;
@@ -379,6 +382,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		uint256 _amountIn,
 		IVestaDexTrader.ManualExchange[] memory _manualExchange
 	) internal {
+		if (_asset == WETH) _asset = ETH_REF_ADDRESS;
+
 		ITroveManager troveManagerCached = troveManager;
 		IActivePool activePoolCached = vestaParams.activePool();
 		IVSTToken VSTTokenCached = VSTToken;
@@ -393,6 +398,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 		if (debt > userVST) {
 			uint256 amountNeeded = debt - userVST;
+			address tokenIn = _asset;
 
 			require(
 				_manualExchange.length > 0,
@@ -407,9 +413,14 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			activePoolCached.sendAsset(_asset, address(this), _amountIn);
 			troveManagerCached.decreaseTroveColl(_asset, msg.sender, _amountIn);
 
-			IERC20Upgradeable(_asset).safeApprove(address(dexTrader), _amountIn);
+			if (_asset == ETH_REF_ADDRESS) {
+				tokenIn = WETH;
+				IWETH(WETH).deposit{ value: _amountIn }();
+			}
 
-			dexTrader.exchange(msg.sender, _asset, _amountIn, _manualExchange);
+			IERC20Upgradeable(tokenIn).safeApprove(address(dexTrader), _amountIn);
+
+			dexTrader.exchange(msg.sender, tokenIn, _amountIn, _manualExchange);
 
 			require(
 				VSTTokenCached.balanceOf(msg.sender) < debt,
@@ -795,5 +806,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 		return _amount;
 	}
+
+	receive() external payable {}
 }
 
