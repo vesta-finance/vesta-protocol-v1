@@ -3,7 +3,7 @@
 pragma solidity ^0.8.10;
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/ISortedTroves.sol";
-import "./Interfaces/IPriceFeed.sol";
+import "./Interfaces/IPriceFeedV2.sol";
 import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 
@@ -20,9 +20,9 @@ contract HintHelpers is VestaBase, CheckContract {
 
 	ISortedTroves public sortedTroves;
 	ITroveManager public troveManager;
-	IPriceFeed public priceFeed;
 
 	bool public isInitialized;
+	IPriceFeedV2 public priceFeed;
 
 	// --- Events ---
 
@@ -56,7 +56,7 @@ contract HintHelpers is VestaBase, CheckContract {
 
 	function setPriceFeed(address _priceFeedAddress) external onlyOwner {
 		checkContract(_priceFeedAddress);
-		priceFeed = IPriceFeed(_priceFeedAddress);
+		priceFeed = IPriceFeedV2(_priceFeedAddress);
 	}
 
 	// --- Functions ---
@@ -210,27 +210,42 @@ contract HintHelpers is VestaBase, CheckContract {
 		}
 	}
 
-	/* getLiquidatableAmount(address _asset) - returns total amount of VST liquidatable from an asset.
-    
-    This function goes thru vault from most at risk to least and counts the amount of VST liquidatable until it hits a vault
-	that is not liquidatable.
-    */
-	function getLiquidatableAmount(address _asset) external view returns (uint256 result_) {
-		uint256 price = priceFeed.fetchPrice(_asset);
+	/**
+	@notice getLiquidatableAmount(address _asset) - returns total amount of VST liquidatable from an asset.
+	    This function goes thru vault from most at risk to least and counts the amount of VST liquidatable until it hits a vault
+		that is not liquidatable.
+	@param _asset address of the asset, ZERO_ADDRESS for ETH
+	@param _assetPrice the price of the asset in 1e18 format.
+	@return result_ total amount of VST liquidatable from an asset
+	@dev if `_assetPrice` is zero, it will uses PriceFeed's pricing
+	*/
+	function getLiquidatableAmount(address _asset, uint256 _assetPrice)
+		external
+		view
+		returns (uint256 result_)
+	{
+		if (_assetPrice == 0) {
+			_assetPrice = priceFeed.getExternalPrice(_asset);
+		}
+
 		uint256 MCR = vestaParams.MCR(_asset);
 
 		address currentVaultBorrower = sortedTroves.getLast(_asset);
 		address firstTrove = sortedTroves.getFirst(_asset);
 		bool currentVaultLiquidatable = true;
 
-		while(currentVaultLiquidatable) {
-			uint256 currentICR = troveManager.getCurrentICR(_asset, currentVaultBorrower, price);
+		while (currentVaultLiquidatable) {
+			uint256 currentICR = troveManager.getCurrentICR(
+				_asset,
+				currentVaultBorrower,
+				_assetPrice
+			);
 
 			if (currentICR < MCR) {
 				result_ += troveManager.getTroveDebt(_asset, currentVaultBorrower);
 
 				if (currentVaultBorrower == firstTrove) return result_;
-				currentVaultBorrower = troveManager.getPrev(_asset, currentVaultBorrower);
+				currentVaultBorrower = sortedTroves.getPrev(_asset, currentVaultBorrower);
 			} else {
 				currentVaultLiquidatable = false;
 			}
@@ -249,3 +264,4 @@ contract HintHelpers is VestaBase, CheckContract {
 		return VestaMath._computeCR(_coll, _debt, _price);
 	}
 }
+

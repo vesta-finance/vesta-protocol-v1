@@ -27,25 +27,6 @@ contract BorrowerOperationsTester is BorrowerOperations {
 			);
 	}
 
-	function getNewTCRFromTroveChange(
-		address _asset,
-		uint256 _collChange,
-		bool isCollIncrease,
-		uint256 _debtChange,
-		bool isDebtIncrease,
-		uint256 _price
-	) external view returns (uint256) {
-		return
-			_getNewTCRFromTroveChange(
-				_asset,
-				_collChange,
-				isCollIncrease,
-				_debtChange,
-				isDebtIncrease,
-				_price
-			);
-	}
-
 	function getUSDValue(uint256 _coll, uint256 _price) external pure returns (uint256) {
 		return _getUSDValue(_coll, _price);
 	}
@@ -72,7 +53,5 @@ contract BorrowerOperationsTester is BorrowerOperations {
 			0
 		);
 	}
-
-	// Payable fallback function
-	receive() external payable {}
 }
+

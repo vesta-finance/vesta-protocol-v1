@@ -42,3 +42,4 @@ interface IPriceFeed {
 
 	function fetchPrice(address _token) external returns (uint256);
 }
+
