@@ -326,7 +326,7 @@ contract ActivePool is
 		bool _staking
 	) internal {
 		if (_staking) {
-			try _stakingModule.stake(_behalfOf, _amount) {} catch {}
+			_stakingModule.stake(_behalfOf, _amount);
 			return;
 		}
 

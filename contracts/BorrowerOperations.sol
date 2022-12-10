@@ -423,7 +423,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			dexTrader.exchange(msg.sender, tokenIn, _amountIn, _manualExchange);
 
 			require(
-				VSTTokenCached.balanceOf(msg.sender) < debt,
+				VSTTokenCached.balanceOf(msg.sender) >= debt,
 				"AutoSwapping Failed, Try increasing slippage inside ManualExchange"
 			);
 		}
