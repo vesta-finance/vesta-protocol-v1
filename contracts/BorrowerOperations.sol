@@ -412,6 +412,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			activePoolCached.unstake(_asset, msg.sender, _amountIn);
 			activePoolCached.sendAsset(_asset, address(this), _amountIn);
 			troveManagerCached.decreaseTroveColl(_asset, msg.sender, _amountIn);
+			coll -= _amountIn;
 
 			if (_asset == ETH_REF_ADDRESS) {
 				tokenIn = WETH;
@@ -809,4 +810,3 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	receive() external payable {}
 }
-
