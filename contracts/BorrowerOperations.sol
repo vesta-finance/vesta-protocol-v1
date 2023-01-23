@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.10;
+
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -344,8 +345,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		emit TroveUpdated(
 			vars.asset,
 			_borrower,
-			vars.newDebt,
-			vars.newColl,
+			vars.newDebt != 0 ? vars.newDebt : vars.debt,
+			vars.newColl != 0 ? vars.newColl : vars.coll,
 			vars.stake,
 			BorrowerOperation.adjustTrove
 		);
@@ -810,3 +811,4 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	receive() external payable {}
 }
+
