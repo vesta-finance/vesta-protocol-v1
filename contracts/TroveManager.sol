@@ -7,6 +7,7 @@ import "./Dependencies/VestaBase.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Interfaces/IRedemption.sol";
 import "./Interfaces/IInterestManager.sol";
+import "./Interfaces/ISavingModuleStabilityPool.sol";
 
 contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	using SafeMathUpgradeable for uint256;
@@ -106,6 +107,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	//asset => uint256;
 	mapping(address => uint256) private unpaidInterest;
 
+	ISavingModuleStabilityPool public savingModuleStabilityPool;
+
 	modifier onlyBorrowerOperations() {
 		require(
 			msg.sender == borrowerOperationsAddress,
@@ -153,6 +156,13 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 	function setInterestManager(address _interestManager) external onlyOwner {
 		interestManager = IInterestManager(_interestManager);
+	}
+
+	function setSavingModuleStabilityPool(address _savingModuleStabilityPool)
+		external
+		onlyOwner
+	{
+		savingModuleStabilityPool = ISavingModuleStabilityPool(_savingModuleStabilityPool);
 	}
 
 	// --- Trove Liquidation functions ---
@@ -457,6 +467,26 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		// Move liquidated ETH and VST to the appropriate pools
 		stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
+
+		if (totals.totalDebtToRedistribute + totals.totalCollToRedistribute > 0) {
+			(
+				totals.totalDebtToOffset,
+				totals.totalCollToSendToSP,
+				totals.totalDebtToRedistribute,
+				totals.totalCollToRedistribute
+			) = _getOffsetAndRedistributionVals(
+				totals.totalDebtToRedistribute,
+				totals.totalCollToRedistribute,
+				savingModuleStabilityPool.getTotalVSTDeposits()
+			);
+
+			savingModuleStabilityPool.offset(
+				_asset,
+				totals.totalDebtToOffset,
+				totals.totalCollToSendToSP
+			);
+		}
+
 		_redistributeDebtAndColl(
 			_asset,
 			activePoolCached,

@@ -164,10 +164,6 @@ contract ActivePool is
 		address _account,
 		uint256 _amount
 	) external override nonReentrant callerIsBOorTroveMorSP {
-		if (stabilityPoolManager.isStabilityPool(msg.sender)) {
-			assert(address(stabilityPoolManager.getAssetStabilityPool(_asset)) == msg.sender);
-		}
-
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) return;
 
@@ -346,3 +342,4 @@ contract ActivePool is
 		emit ActivePoolAssetBalanceUpdated(ETH_REF_ADDRESS, assetsBalance[ETH_REF_ADDRESS]);
 	}
 }
+
