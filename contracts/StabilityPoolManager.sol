@@ -46,10 +46,6 @@ contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPo
 		CheckContract(asset);
 		CheckContract(stabilityPool);
 		require(!validStabilityPools[stabilityPool], "StabilityPool already created.");
-		require(
-			IStabilityPool(stabilityPool).getAssetType() == asset,
-			"Stability Pool doesn't have the same asset type. Is it initialized?"
-		);
 
 		stabilityPools[asset] = stabilityPool;
 		validStabilityPools[stabilityPool] = true;
@@ -79,3 +75,4 @@ contract StabilityPoolManager is OwnableUpgradeable, CheckContract, IStabilityPo
 		return stabilityPools[_asset];
 	}
 }
+
