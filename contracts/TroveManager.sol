@@ -1336,16 +1336,5 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	{
 		return userUnpaidInterest[_user][_asset];
 	}
-
-	function resetInterests(
-		address _collateral,
-		uint256 index,
-		uint256 to
-	) {
-		uint256 max = sortedTroves.getSize(_collateral);
-		if (to > max) to = max;
-
-		for (uint256 i = index; i < max; ++i) {}
-	}
 }
 
