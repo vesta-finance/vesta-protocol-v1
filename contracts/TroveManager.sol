@@ -107,7 +107,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 	//asset => uint256;
 	mapping(address => uint256) private unpaidInterest;
 
-	ISavingModuleStabilityPool public savingModuleStabilityPool;
+	ISavingModuleStabilityPool public centalStabilityPool;
 
 	modifier onlyBorrowerOperations() {
 		require(
@@ -158,11 +158,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		interestManager = IInterestManager(_interestManager);
 	}
 
-	function setSavingModuleStabilityPool(address _savingModuleStabilityPool)
-		external
-		onlyOwner
-	{
-		savingModuleStabilityPool = ISavingModuleStabilityPool(_savingModuleStabilityPool);
+	function setCentralStabilityPool(address _savingModuleStabilityPool) external onlyOwner {
+		centalStabilityPool = ISavingModuleStabilityPool(_savingModuleStabilityPool);
 	}
 
 	// --- Trove Liquidation functions ---
@@ -333,14 +330,12 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 			ICollSurplusPool(address(0)),
 			address(0)
 		);
-		IStabilityPool stabilityPoolCached = stabilityPoolManager.getAssetStabilityPool(_asset);
-
 		LocalVariables_OuterLiquidationFunction memory vars;
 
 		LiquidationTotals memory totals;
 
 		vars.price = vestaParams.priceFeed().fetchPrice(_asset);
-		vars.VSTInStabPool = stabilityPoolCached.getTotalVSTDeposits();
+		vars.VSTInStabPool = centalStabilityPool.getTotalVSTDeposits();
 
 		totals = _getTotalsFromLiquidateTrovesSequence_NormalMode(
 			_asset,
@@ -354,7 +349,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
 		// Move liquidated ETH and VST to the appropriate pools
-		stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
+		centalStabilityPool.offset(_asset, totals.totalDebtToOffset, totals.totalCollToSendToSP);
 		_redistributeDebtAndColl(
 			_asset,
 			contractsCache.activePool,
@@ -446,12 +441,11 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		IActivePool activePoolCached = vestaParams.activePool();
 		IDefaultPool defaultPoolCached = vestaParams.defaultPool();
-		IStabilityPool stabilityPoolCached = stabilityPoolManager.getAssetStabilityPool(_asset);
 
 		LocalVariables_OuterLiquidationFunction memory vars;
 		LiquidationTotals memory totals;
 
-		vars.VSTInStabPool = stabilityPoolCached.getTotalVSTDeposits();
+		vars.VSTInStabPool = centalStabilityPool.getTotalVSTDeposits();
 		vars.price = vestaParams.priceFeed().fetchPrice(_asset);
 
 		totals = _getTotalsFromBatchLiquidate_NormalMode(
@@ -466,26 +460,7 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
 		// Move liquidated ETH and VST to the appropriate pools
-		stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
-
-		if (totals.totalDebtToRedistribute + totals.totalCollToRedistribute > 0) {
-			(
-				totals.totalDebtToOffset,
-				totals.totalCollToSendToSP,
-				totals.totalDebtToRedistribute,
-				totals.totalCollToRedistribute
-			) = _getOffsetAndRedistributionVals(
-				totals.totalDebtToRedistribute,
-				totals.totalCollToRedistribute,
-				savingModuleStabilityPool.getTotalVSTDeposits()
-			);
-
-			savingModuleStabilityPool.offset(
-				_asset,
-				totals.totalDebtToOffset,
-				totals.totalCollToSendToSP
-			);
-		}
+		centalStabilityPool.offset(_asset, totals.totalDebtToOffset, totals.totalCollToSendToSP);
 
 		_redistributeDebtAndColl(
 			_asset,
