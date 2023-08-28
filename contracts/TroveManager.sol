@@ -940,7 +940,8 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 
 		uint256 TroveOwnersArrayLength = TroveOwners[_asset].length;
 
-		interestManager.exit(_asset, _borrower);
+		uint256 addedInterest = interestManager.exit(_asset, _borrower);
+		vestaParams.activePool().increaseVSTDebt(_asset, addedInterest);
 
 		uint256 totalInterest = userUnpaidInterest[_borrower][_asset];
 
