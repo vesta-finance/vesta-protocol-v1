@@ -47,6 +47,7 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 
 	mapping(address => bool) internal hasVSTAccess;
 
+	//Unused, to avoid confusion due of spagetthi codebase, only TroveManager uses InterestManager
 	IInterestManager public interestManager;
 
 	IVestaDexTrader public dexTrader;
@@ -150,10 +151,6 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			BorrowerOperation.openTrove
 		);
 		emit VSTBorrowingFeePaid(vars.asset, msg.sender, vars.VSTFee);
-	}
-
-	function setInterestManager(address _interestManager) external onlyOwner {
-		interestManager = IInterestManager(_interestManager);
 	}
 
 	function setDexTrader(address _dexTrader) external onlyOwner {
@@ -369,18 +366,20 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 	function closeTroveWithDexTrader(
 		address _asset,
 		uint256 _amountIn,
+		uint256 _maxAmountIn,
 		IVestaDexTrader.ManualExchange[] calldata _manualExchange
 	) external {
-		_closeTrove(_asset, _amountIn, _manualExchange);
+		_closeTrove(_asset, _amountIn, _maxAmountIn, _manualExchange);
 	}
 
 	function closeTrove(address _asset) external override {
-		_closeTrove(_asset, 0, new IVestaDexTrader.ManualExchange[](0));
+		_closeTrove(_asset, 0, 0, new IVestaDexTrader.ManualExchange[](0));
 	}
 
 	function _closeTrove(
 		address _asset,
 		uint256 _amountIn,
+		uint256 _maxAmountIn,
 		IVestaDexTrader.ManualExchange[] memory _manualExchange
 	) internal {
 		if (_asset == WETH) _asset = ETH_REF_ADDRESS;
@@ -409,6 +408,11 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 			if (_amountIn == 0) {
 				_amountIn = dexTrader.getAmountIn(amountNeeded, _manualExchange);
 			}
+
+			require(
+				_maxAmountIn == 0 || _maxAmountIn >= _amountIn,
+				"AutoSwapping Failed: Amount In goes above the max amount allowed by the user"
+			);
 
 			activePoolCached.unstake(_asset, msg.sender, _amountIn);
 			activePoolCached.sendAsset(_asset, address(this), _amountIn);
@@ -584,8 +588,8 @@ contract BorrowerOperations is VestaBase, CheckContract, IBorrowerOperations {
 		uint256 _VSTAmount,
 		uint256 _netDebtIncrease
 	) internal {
-		_activePool.increaseVSTDebt(_asset, _netDebtIncrease);
-		_VSTToken.mint(_asset, _account, _VSTAmount);
+		if (_netDebtIncrease != 0) _activePool.increaseVSTDebt(_asset, _netDebtIncrease);
+		if (_VSTAmount != 0) _VSTToken.mint(_asset, _account, _VSTAmount);
 	}
 
 	// Burn the specified amount of VST from _account and decreases the total active debt
