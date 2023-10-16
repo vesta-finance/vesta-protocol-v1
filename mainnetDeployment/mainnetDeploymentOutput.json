@@ -128,5 +128,10 @@
 	"TroveRedemption": {
 		"address": "0x3F2B806932740497D4e2cAE31000b2eE8B1A4a72",
 		"txHash": "0x70fb9b4dcf1a1fc95ef26b215cc8ac8f979904db01b11042f6e2e93ad03d1a4e"
+	},
+	"TroveRedemption2": {
+		"address": "0xC5be0094A5980235d31233B8A9b6BCB578444f65",
+		"txHash": ""
 	}
 }
+
