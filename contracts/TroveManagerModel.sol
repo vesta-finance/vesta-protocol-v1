@@ -53,8 +53,6 @@ struct LocalVariables_AssetBorrowerPrice {
 	address _asset;
 	address _borrower;
 	uint256 _price;
-	address _upper;
-	address _lower;
 }
 
 struct LiquidationValues {
@@ -87,7 +85,7 @@ struct RedemptionTotals {
 	uint256 remainingVST;
 	uint256 totalVSTToRedeem;
 	uint256 totalAssetDrawn;
-	uint256 ETHFee;
+	uint256 penaltyFee;
 	uint256 ETHToSendToRedeemer;
 	uint256 decayedBaseRate;
 	uint256 price;
@@ -99,3 +97,4 @@ struct SingleRedemptionValues {
 	uint256 ETHLot;
 	bool cancelledPartial;
 }
+

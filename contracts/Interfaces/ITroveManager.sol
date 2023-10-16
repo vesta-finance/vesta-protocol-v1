@@ -142,7 +142,7 @@ interface ITroveManager is IVestaBase {
 		uint256 _attemptedVSTAmount,
 		uint256 _actualVSTAmount,
 		uint256 _AssetSent,
-		uint256 _AssetFee
+		uint256 _penalty
 	);
 	event TroveUpdated(
 		address indexed _asset,

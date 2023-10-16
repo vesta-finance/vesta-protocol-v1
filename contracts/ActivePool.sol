@@ -64,6 +64,17 @@ contract ActivePool is
 		_;
 	}
 
+	modifier callerIsBorrowerOperationOrDefaultPoolOrOwner() {
+		require(
+			msg.sender == borrowerOperationsAddress ||
+				msg.sender == address(defaultPool) ||
+				msg.sender == owner(),
+			"ActivePool: Caller is neither BO nor Default Pool nor Owner"
+		);
+
+		_;
+	}
+
 	modifier callerIsBOorTroveMorSP() {
 		require(
 			msg.sender == borrowerOperationsAddress ||
@@ -211,7 +222,7 @@ contract ActivePool is
 	function receivedERC20(address _asset, uint256 _amount)
 		external
 		override
-		callerIsBorrowerOperationOrDefaultPool
+		callerIsBorrowerOperationOrDefaultPoolOrOwner
 	{
 		assetsBalance[_asset] += _amount;
 		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalance[_asset]);
@@ -337,7 +348,7 @@ contract ActivePool is
 		_stakingModule.unstake(_behalfOf, _amount);
 	}
 
-	receive() external payable callerIsBorrowerOperationOrDefaultPool {
+	receive() external payable callerIsBorrowerOperationOrDefaultPoolOrOwner {
 		assetsBalance[ETH_REF_ADDRESS] = assetsBalance[ETH_REF_ADDRESS].add(msg.value);
 		emit ActivePoolAssetBalanceUpdated(ETH_REF_ADDRESS, assetsBalance[ETH_REF_ADDRESS]);
 	}

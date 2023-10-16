@@ -923,6 +923,81 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		_activePool.sendAsset(_asset, address(_defaultPool), _coll);
 	}
 
+	function setRedemptionContract(address _redemption) external onlyOwner {
+		redemptor = IRedemption(_redemption);
+	}
+
+	function redeemCollateral(
+		address _asset,
+		uint256 _VSTamount,
+		uint256 _maxIterations
+	) external {
+		redemptor.redeemCollateral(_asset, msg.sender, _VSTamount, _maxIterations);
+	}
+
+	function executeFullRedemption(
+		address _asset,
+		address _borrower,
+		uint256 _newColl
+	) external onlyRedemption {
+		_removeStake(_asset, _borrower);
+		_closeTrove(_asset, _borrower, Status.closedByRedemption);
+
+		// send ETH from Active Pool to CollSurplus Pool
+		collSurplusPool.accountSurplus(_asset, _borrower, _newColl);
+		vestaParams.activePool().sendAsset(_asset, address(collSurplusPool), _newColl);
+
+		emit TroveUpdated(_asset, _borrower, 0, 0, 0, TroveManagerOperation.redeemCollateral);
+	}
+
+	function executePartialRedemption(
+		address _asset,
+		address _borrower,
+		uint256 _assetLot,
+		uint256 _newDebt,
+		uint256 _newColl,
+		uint256 _newNICR
+	) external onlyRedemption {
+		sortedTroves.reInsert(_asset, _borrower, _newNICR, address(0), address(0));
+		vestaParams.activePool().unstake(_asset, _borrower, _assetLot);
+
+		_increaseTroveDebt(_asset, _borrower, 0); //Trigger Interest Rate
+
+		Troves[_borrower][_asset].debt = _newDebt;
+		Troves[_borrower][_asset].coll = _newColl;
+		_updateStakeAndTotalStakes(_asset, _borrower);
+
+		emit TroveUpdated(
+			_asset,
+			_borrower,
+			_newDebt,
+			_newColl,
+			Troves[_borrower][_asset].stake,
+			TroveManagerOperation.redeemCollateral
+		);
+	}
+
+	function finalizeRedemption(
+		address _asset,
+		address _receiver,
+		uint256 _vstAmount,
+		uint256 _vstToRedeem,
+		uint256 _penalty,
+		uint256 _totalRedemptionRewards
+	) external onlyRedemption {
+		IActivePool activePool = vestaParams.activePool();
+
+		uint256 assetToSendToRedeemer = _totalRedemptionRewards;
+
+		emit Redemption(_asset, _vstAmount, _vstToRedeem, _totalRedemptionRewards, _penalty);
+
+		// Burn the total VST that is cancelled with debt, and send the redeemed ETH to msg.sender
+		vstToken.burn(_receiver, _vstToRedeem);
+		// Update Active Pool VST, and send ETH to account
+		activePool.decreaseVSTDebt(_asset, _vstToRedeem);
+		activePool.sendAsset(_asset, _receiver, assetToSendToRedeemer);
+	}
+
 	function closeTrove(address _asset, address _borrower)
 		external
 		override
@@ -1266,6 +1341,14 @@ contract TroveManager is VestaBase, CheckContract, ITroveManager {
 		address _borrower,
 		uint256 _debtIncrease
 	) external override onlyBorrowerOperations returns (uint256) {
+		return _increaseTroveDebt(_asset, _borrower, _debtIncrease);
+	}
+
+	function _increaseTroveDebt(
+		address _asset,
+		address _borrower,
+		uint256 _debtIncrease
+	) private returns (uint256) {
 		require(!nitroSafeguard, NITRO_REVERT_MSG);
 
 		uint256 interest = interestManager.increaseDebt(_asset, _borrower, _debtIncrease);
